@@ -1,0 +1,20 @@
+# OpenClaw runtime state
+.openclaw/
+
+# Personal context — keep private
+USER.md
+memory/
+HEARTBEAT.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
