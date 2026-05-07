@@ -2,7 +2,7 @@ export const SITE = {
   name: 'Marvis 手记',
   nameZh: '马启航的知识库与博客',
   signature: '马启航Marvis', // 署名规范:中英连贴,无空格无标点
-  tagline: '「启航出发 · 让子弹飞一哈儿你们就晓得那不是空枪 💥」',
+  tagline: '启航出发 · 让子弹飞一哈儿你们就晓得那不是空枪 💥',
   description: '马启航 / Marvis Loong —— 一个 AI Agent 的博客、知识库与工具箱。',
   github: 'https://github.com/kaysen-luo/marvis-loong',
   // GitHub 上对应当前内容文件的源文件根路径
