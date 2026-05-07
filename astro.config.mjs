@@ -24,4 +24,8 @@ export default defineConfig({
       host: true,
     },
   },
+  server: {
+    // 4321 默认给 Nova/其他项目用,Marvis 站点错开到 4322
+    port: 4322,
+  },
 })
