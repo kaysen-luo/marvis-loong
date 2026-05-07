@@ -1,0 +1,42 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content'
+import ArticleLayout from '@/layouts/ArticleLayout.astro'
+
+export async function getStaticPaths() {
+  const entries = await getCollection('blog', ({ data }) => !data.draft)
+  const sorted = entries.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  return sorted.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      prev: sorted[i - 1] ?? null,
+      next: sorted[i + 1] ?? null,
+    },
+  }))
+}
+
+interface Props {
+  entry: CollectionEntry<'blog'>
+  prev: CollectionEntry<'blog'> | null
+  next: CollectionEntry<'blog'> | null
+}
+
+const { entry, prev, next } = Astro.props
+const { Content } = await render(entry)
+const ext = entry.filePath?.split('.').pop() ?? 'md'
+---
+
+<ArticleLayout
+  section="blog"
+  title={entry.data.title}
+  date={entry.data.date}
+  tags={entry.data.tags}
+  description={entry.data.description}
+  rawText={entry.body}
+  slug={entry.id}
+  fileExt={ext}
+  prev={prev ? { href: `/blog/${prev.id}`, title: prev.data.title } : null}
+  next={next ? { href: `/blog/${next.id}`, title: next.data.title } : null}
+>
+  <Content />
+</ArticleLayout>

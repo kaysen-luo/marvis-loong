@@ -1,0 +1,173 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content'
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import Breadcrumb from '@/components/Breadcrumb.astro'
+import PostCard from '@/components/PostCard.astro'
+import { SITE } from '@/config'
+
+type AnyEntry = CollectionEntry<'blog'> | CollectionEntry<'wiki'> | CollectionEntry<'tools'>
+
+interface Props {
+  section: 'blog' | 'wiki' | 'tools'
+}
+
+const { section } = Astro.props
+const meta = SITE.sections[section]
+
+const all = (await getCollection(section, ({ data }: AnyEntry) => !data.draft)) as AnyEntry[]
+const sorted = all.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+
+const allTags = Array.from(new Set(sorted.flatMap((e) => e.data.tags ?? []))).sort()
+---
+
+<BaseLayout title={meta.title} description={meta.subtitle}>
+  <div class="container section-page">
+    <Breadcrumb items={[{ href: '/', label: '首页' }, { label: meta.title }]} />
+
+    <header class="section-header">
+      <h1 class="section-title">{meta.title}</h1>
+      <p class="section-subtitle">{meta.subtitle}</p>
+    </header>
+
+    {
+      allTags.length > 0 && (
+        <div class="tag-filter" role="navigation" aria-label="标签过滤" data-tag-filter data-base={meta.href}>
+          <a href={meta.href} class="tag-link active" data-tag="">
+            全部
+            <span class="count">{sorted.length}</span>
+          </a>
+          {allTags.map((tag) => {
+            const count = sorted.filter((e) => (e.data.tags ?? []).includes(tag)).length
+            return (
+              <a href={`${meta.href}?tag=${encodeURIComponent(tag)}`} class="tag-link" data-tag={tag}>
+                {tag}
+                <span class="count">{count}</span>
+              </a>
+            )
+          })}
+        </div>
+      )
+    }
+
+    <ul class="post-list" data-post-list>
+      {
+        sorted.map((entry) => (
+          <li data-tags={(entry.data.tags ?? []).join('|')}>
+            <PostCard
+              href={`${meta.href}/${entry.id}`}
+              title={entry.data.title}
+              date={entry.data.date}
+              description={entry.data.description ?? (entry.data.placeholder ? '敬请期待 🐉' : undefined)}
+              tags={entry.data.tags ?? []}
+            />
+          </li>
+        ))
+      }
+    </ul>
+    <div class="empty" data-empty hidden>这个标签下还没有文章 🐉</div>
+  </div>
+</BaseLayout>
+
+<script>
+  // 客户端 tag 过滤(URL ?tag=xxx)
+  function applyFilter() {
+    const params = new URLSearchParams(window.location.search)
+    const activeTag = params.get('tag') || ''
+
+    document.querySelectorAll<HTMLAnchorElement>('[data-tag-filter] .tag-link').forEach((el) => {
+      el.classList.toggle('active', (el.dataset.tag || '') === activeTag)
+    })
+
+    const list = document.querySelector<HTMLElement>('[data-post-list]')
+    const empty = document.querySelector<HTMLElement>('[data-empty]')
+    if (!list) return
+    let visible = 0
+    list.querySelectorAll<HTMLLIElement>('li').forEach((li) => {
+      const tags = (li.dataset.tags || '').split('|').filter(Boolean)
+      const show = !activeTag || tags.includes(activeTag)
+      li.style.display = show ? '' : 'none'
+      if (show) visible++
+    })
+    if (empty) empty.hidden = visible !== 0
+  }
+
+  applyFilter()
+  window.addEventListener('popstate', applyFilter)
+
+  // 拦截 tag 链接,使用 history pushState 实现无刷新切换
+  document.querySelectorAll<HTMLAnchorElement>('[data-tag-filter] .tag-link').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault()
+      const url = new URL(el.href, window.location.origin)
+      window.history.pushState({}, '', url.pathname + url.search)
+      applyFilter()
+    })
+  })
+</script>
+
+<style>
+  .section-page {
+    padding: 56px 24px 80px;
+  }
+  .section-header {
+    margin-bottom: 40px;
+  }
+  .section-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 8px;
+  }
+  .section-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+  }
+
+  .tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+  .tag-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: all var(--transition);
+  }
+  .tag-link:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+  .tag-link.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .tag-link .count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .tag-link.active .count {
+    color: var(--accent);
+  }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+</style>

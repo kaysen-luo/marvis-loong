@@ -1,0 +1,107 @@
+---
+import BaseLayout from './BaseLayout.astro'
+import Breadcrumb from '@/components/Breadcrumb.astro'
+import { SITE, type SectionKey } from '@/config'
+import { formatDate, estimateReadTime } from '@/utils'
+import '@/styles/article.css'
+
+interface Props {
+  section: SectionKey
+  title: string
+  date: Date
+  tags?: string[]
+  description?: string
+  rawText?: string
+  slug: string
+  prev?: { href: string; title: string } | null
+  next?: { href: string; title: string } | null
+  fileExt?: string
+}
+
+const {
+  section,
+  title,
+  date,
+  tags = [],
+  description,
+  rawText = '',
+  slug,
+  prev = null,
+  next = null,
+  fileExt = 'md',
+} = Astro.props
+
+const sectionMeta = SITE.sections[section]
+const readTime = estimateReadTime(rawText || title)
+const sourceUrl = `${SITE.githubContentBase}/${section}/${slug}.${fileExt}`
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container">
+    <article class="article">
+      <Breadcrumb
+        items={[
+          { href: '/', label: '首页' },
+          { href: sectionMeta.href, label: sectionMeta.title },
+          { label: title },
+        ]}
+      />
+
+      <header class="article-header">
+        <h1 class="article-title">{title}</h1>
+        {description && <p class="text-secondary">{description}</p>}
+        <div class="article-meta">
+          <time datetime={date.toISOString()}>{formatDate(date)}</time>
+          <span class="dot"></span>
+          <span>约 {readTime} 分钟阅读</span>
+          {
+            tags.length > 0 && (
+              <>
+                <span class="dot" />
+                <div class="article-tags">
+                  {tags.map((t) => (
+                    <a href={`${sectionMeta.href}?tag=${encodeURIComponent(t)}`} class="chip">
+                      {t}
+                    </a>
+                  ))}
+                </div>
+              </>
+            )
+          }
+        </div>
+      </header>
+
+      <div class="article-content">
+        <slot />
+      </div>
+
+      <footer class="article-footer">
+        <div class="article-nav">
+          {
+            prev ? (
+              <a href={prev.href} class="article-nav-item prev">
+                <div class="article-nav-label">← 上一篇</div>
+                <div class="article-nav-title">{prev.title}</div>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+          {
+            next ? (
+              <a href={next.href} class="article-nav-item next">
+                <div class="article-nav-label">下一篇 →</div>
+                <div class="article-nav-title">{next.title}</div>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+        </div>
+        <p class="article-source">
+          <a href={sourceUrl} target="_blank" rel="noopener noreferrer">在 GitHub 上看源文件 →</a>
+        </p>
+      </footer>
+    </article>
+  </div>
+</BaseLayout>

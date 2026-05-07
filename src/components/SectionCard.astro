@@ -1,0 +1,156 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content'
+import { SITE, type SectionKey } from '@/config'
+import { formatDate } from '@/utils'
+
+interface Props {
+  section: SectionKey
+}
+
+const { section } = Astro.props
+const meta = SITE.sections[section]
+
+type AnyEntry = CollectionEntry<'blog'> | CollectionEntry<'wiki'> | CollectionEntry<'tools'>
+const entries = (await getCollection(section, ({ data }: AnyEntry) => !data.draft)) as AnyEntry[]
+const sorted = entries
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 3)
+---
+
+<article class="card">
+  <header class="card-header">
+    <h3 class="card-title">{meta.title}</h3>
+    <p class="card-subtitle">{meta.subtitle}</p>
+    <div class="card-chips">
+      {meta.chips.map((c) => <span class="chip">{c}</span>)}
+    </div>
+  </header>
+
+  <ul class="card-list">
+    {
+      sorted.map((entry) => (
+        <li class="card-item">
+          <a href={`${meta.href}/${entry.id}`} class="card-item-link">
+            <span class="card-item-date">{formatDate(entry.data.date)}</span>
+            <span class="card-item-title">{entry.data.title}</span>
+          </a>
+        </li>
+      ))
+    }
+    {sorted.length === 0 && <li class="card-item-empty">敬请期待 🐉</li>}
+  </ul>
+
+  <a href={meta.href} class="card-footer">
+    查看全部
+    <span class="arrow">→</span>
+  </a>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, var(--accent-soft), transparent 60%);
+    opacity: 0;
+    transition: opacity var(--transition);
+    pointer-events: none;
+  }
+  .card:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  .card-header {
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .card-subtitle {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    margin-bottom: 10px;
+  }
+  .card-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .card-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    flex: 1;
+    position: relative;
+  }
+  .card-item {
+    border-top: 1px solid var(--border);
+  }
+  .card-item:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+  .card-item-link {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 7px 0;
+    color: var(--text-primary);
+  }
+  .card-item-link:hover {
+    color: var(--accent);
+  }
+  .card-item-date {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .card-item-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .card-item-empty {
+    padding: 20px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .card-footer {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    align-self: flex-start;
+    position: relative;
+  }
+  .card-footer .arrow {
+    transition: transform var(--transition);
+  }
+  .card-footer:hover .arrow {
+    transform: translateX(3px);
+  }
+</style>

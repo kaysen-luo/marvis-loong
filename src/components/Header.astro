@@ -1,0 +1,287 @@
+---
+import { SITE } from '@/config'
+
+const navItems = SITE.navItems
+const currentPath = Astro.url.pathname
+---
+
+<header class="nav">
+  <div class="nav-inner container">
+    <a href="/" class="brand">
+      <span class="brand-name">{SITE.name}</span>
+      <span class="brand-emoji">🐉</span>
+    </a>
+
+    <nav class="nav-links" aria-label="主导航">
+      {
+        navItems.map((item) => {
+          const active = currentPath === item.href || currentPath.startsWith(item.href + '/')
+          return (
+            <a href={item.href} class:list={['nav-link', { active }]}>
+              {item.label}
+            </a>
+          )
+        })
+      }
+    </nav>
+
+    <div class="nav-actions">
+      <button id="search-btn" class="icon-btn" aria-label="搜索 (⌘K)" title="搜索 (⌘K)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <span class="kbd">⌘K</span>
+      </button>
+
+      <button id="theme-btn" class="icon-btn icon-only" aria-label="切换深色/浅色" title="切换深色/浅色">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+
+      <a href={SITE.github} target="_blank" rel="noopener noreferrer" class="icon-btn icon-only" aria-label="GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Search modal placeholder -->
+<div id="search-modal" class="modal" role="dialog" aria-hidden="true" aria-label="搜索" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel">
+    <div class="modal-search-input">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" placeholder="搜索文章..." disabled />
+      <kbd>ESC</kbd>
+    </div>
+    <div class="modal-empty">
+      <span class="emoji">🚧</span>
+      <p>Coming Soon</p>
+      <span class="text-muted">全文搜索还在路上,先用栏目页吧 🐉</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    background: rgba(10, 11, 20, 0.72);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: 60px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand:hover {
+    color: var(--accent);
+  }
+  .brand-emoji {
+    font-size: 14px;
+  }
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    justify-self: center;
+  }
+  .nav-link {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+  }
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
+  .nav-link.active {
+    color: var(--text-primary);
+    background: var(--accent-soft);
+  }
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-self: end;
+  }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    transition: all var(--transition);
+    font-size: 13px;
+  }
+  .icon-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: var(--bg-hover);
+  }
+  .icon-btn.icon-only {
+    padding: 0;
+    width: 32px;
+    justify-content: center;
+    border-color: transparent;
+  }
+  .icon-btn.icon-only:hover {
+    border-color: var(--border);
+  }
+  .kbd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+  }
+
+  @media (max-width: 720px) {
+    .nav-inner {
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+    .nav-links {
+      display: none;
+    }
+    .kbd {
+      display: none;
+    }
+  }
+
+  /* Modal */
+  .modal[hidden] {
+    display: none !important;
+  }
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 15vh;
+  }
+  .modal.open {
+    display: flex;
+  }
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+  }
+  .modal-panel {
+    position: relative;
+    width: min(560px, 92vw);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .modal-search-input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .modal-search-input input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+  }
+  .modal-search-input kbd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .modal-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+  .modal-empty .emoji {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .modal-empty p {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+</style>
+
+<script>
+  const modal = document.getElementById('search-modal')
+  const searchBtn = document.getElementById('search-btn')
+  const themeBtn = document.getElementById('theme-btn')
+
+  function openModal() {
+    modal?.removeAttribute('hidden')
+    modal?.classList.add('open')
+    modal?.setAttribute('aria-hidden', 'false')
+  }
+  function closeModal() {
+    modal?.classList.remove('open')
+    modal?.setAttribute('aria-hidden', 'true')
+    modal?.setAttribute('hidden', '')
+  }
+
+  searchBtn?.addEventListener('click', openModal)
+  modal?.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal))
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault()
+      openModal()
+    } else if (e.key === 'Escape') {
+      closeModal()
+    }
+  })
+
+  // Theme toggle — light mode 还没做,先 toast
+  themeBtn?.addEventListener('click', () => {
+    showToast('浅色模式还没做好,稍等 🐉')
+  })
+
+  function showToast(msg: string) {
+    let toast = document.getElementById('global-toast')
+    if (!toast) {
+      toast = document.createElement('div')
+      toast.id = 'global-toast'
+      toast.className = 'toast'
+      document.body.appendChild(toast)
+    }
+    toast.textContent = msg
+    toast.classList.add('show')
+    window.setTimeout(() => toast?.classList.remove('show'), 2400)
+  }
+</script>

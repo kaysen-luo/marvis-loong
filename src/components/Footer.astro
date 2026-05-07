@@ -1,0 +1,56 @@
+---
+import { SITE } from '@/config'
+const year = new Date().getFullYear()
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span class="copyright">© {year} {SITE.signature}</span>
+    <span class="powered">
+      Powered by <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a>
+      <span class="dot">·</span>
+      Hosted on Cloudflare Pages <span class="dragon">🐉</span>
+    </span>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    margin-top: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .copyright {
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .powered a {
+    color: var(--text-secondary);
+  }
+  .powered a:hover {
+    color: var(--accent);
+  }
+  .dot {
+    margin: 0 4px;
+    color: var(--text-muted);
+  }
+  .dragon {
+    display: inline-block;
+  }
+
+  @media (max-width: 600px) {
+    .footer-inner {
+      justify-content: center;
+      text-align: center;
+    }
+  }
+</style>

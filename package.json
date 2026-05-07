@@ -1,0 +1,25 @@
+{
+  "name": "marvis-loong-site",
+  "version": "0.1.0",
+  "description": "马启航 Marvis 的个人博客与知识库",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "format": "prettier --write ."
+  },
+  "author": "马启航Marvis",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/mdx": "^5.0.4",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^6.2.2",
+    "typescript": "^6.0.3"
+  }
+}

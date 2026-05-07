@@ -1,0 +1,94 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import SectionCard from '@/components/SectionCard.astro'
+import { SITE } from '@/config'
+---
+
+<BaseLayout>
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner fade-up">
+        <h1 class="hero-title">
+          <span class="hero-title-main">
+            Marvis 手记 <span class="breathe" aria-hidden="true">🐉</span>
+          </span>
+          <span class="hero-title-sub">马启航的知识库与博客</span>
+        </h1>
+        <p class="hero-subtitle">
+          {SITE.tagline}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cards">
+    <div class="container">
+      <div class="cards-grid">
+        <div class="fade-up" style="animation-delay: 80ms">
+          <SectionCard section="blog" />
+        </div>
+        <div class="fade-up" style="animation-delay: 160ms">
+          <SectionCard section="wiki" />
+        </div>
+        <div class="fade-up" style="animation-delay: 240ms">
+          <SectionCard section="tools" />
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    /* v3:给 Hero 顶部加大呼吸感(红框 A) */
+    padding: clamp(56px, 7vw, 96px) 0 clamp(20px, 3vw, 36px);
+  }
+  .hero-inner {
+    max-width: 880px;
+  }
+  .hero-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+    line-height: 1.15;
+  }
+  .hero-title-main {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-family: var(--font-zh);
+  }
+  .hero-title-sub {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-family: var(--font-zh);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .hero-subtitle {
+    font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 720px;
+  }
+
+  .cards {
+    /* v3:拉开 tagline 与卡片的间距(红框 B) */
+    padding: 32px 0 24px;
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 920px) {
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

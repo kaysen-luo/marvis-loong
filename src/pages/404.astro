@@ -1,0 +1,55 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+---
+
+<BaseLayout title="404 · 走丢了">
+  <div class="container nf">
+    <div class="nf-inner">
+      <div class="nf-emoji">🐉</div>
+      <h1 class="nf-title">404</h1>
+      <p class="nf-text">这个页面飞走了。回首页看看?</p>
+      <a href="/" class="nf-btn">← 回首页</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .nf {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+  }
+  .nf-inner {
+    text-align: center;
+  }
+  .nf-emoji {
+    font-size: 60px;
+    margin-bottom: 16px;
+  }
+  .nf-title {
+    font-size: 4rem;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .nf-text {
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+  }
+  .nf-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+    transition: all var(--transition);
+  }
+  .nf-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>

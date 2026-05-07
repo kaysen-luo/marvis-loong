@@ -1,20 +1,21 @@
-# OpenClaw runtime state
-.openclaw/
+# build
+dist/
+.astro/
 
-# Personal context — keep private
-USER.md
-memory/
-HEARTBEAT.md
+# deps
+node_modules/
 
-# OS
-.DS_Store
-Thumbs.db
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
 
-# Editor
+# env
+.env
+.env.local
+.env.*.local
+
+# editor
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# Logs
-*.log
+.DS_Store
