@@ -104,7 +104,7 @@
 }
 
 .article-content code:not(pre code) {
-  background: var(--bg-elevated);
+  background: var(--code-bg);
   border: 1px solid var(--border);
   padding: 1px 6px;
   border-radius: 4px;
@@ -113,7 +113,6 @@
 }
 
 .article-content pre {
-  background: var(--bg-elevated) !important;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px 20px;

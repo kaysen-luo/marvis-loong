@@ -32,7 +32,8 @@ const currentPath = Astro.url.pathname
       </button>
 
       <button id="theme-btn" class="icon-btn icon-only" aria-label="切换深色/浅色" title="切换深色/浅色">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
       </button>
 
       <a href={SITE.github} target="_blank" rel="noopener noreferrer" class="icon-btn icon-only" aria-label="GitHub">
@@ -66,7 +67,7 @@ const currentPath = Astro.url.pathname
     z-index: 50;
     backdrop-filter: saturate(180%) blur(14px);
     -webkit-backdrop-filter: saturate(180%) blur(14px);
-    background: rgba(10, 11, 20, 0.72);
+    background: var(--nav-bg);
     border-bottom: 1px solid var(--border);
   }
   .nav-inner {
@@ -267,21 +268,21 @@ const currentPath = Astro.url.pathname
     }
   })
 
-  // Theme toggle — light mode 还没做,先 toast
+  // Theme toggle — A 方案: localStorage 优先 → 系统跟随 → 手动覆盖
   themeBtn?.addEventListener('click', () => {
-    showToast('浅色模式还没做好,稍等 🐉')
+    const current = document.documentElement.getAttribute('data-theme') || 'dark'
+    const next = current === 'dark' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', next)
+    try { localStorage.setItem('theme', next) } catch {}
   })
 
-  function showToast(msg: string) {
-    let toast = document.getElementById('global-toast')
-    if (!toast) {
-      toast = document.createElement('div')
-      toast.id = 'global-toast'
-      toast.className = 'toast'
-      document.body.appendChild(toast)
+  // 跟随系统:仅当用户未手动覆盖(localStorage 无 theme)时才同步
+  const mql = window.matchMedia('(prefers-color-scheme: light)')
+  mql.addEventListener?.('change', (e) => {
+    let stored: string | null = null
+    try { stored = localStorage.getItem('theme') } catch {}
+    if (!stored) {
+      document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark')
     }
-    toast.textContent = msg
-    toast.classList.add('show')
-    window.setTimeout(() => toast?.classList.remove('show'), 2400)
-  }
+  })
 </script>
