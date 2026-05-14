@@ -5,10 +5,51 @@ dist/
 # deps
 node_modules/
 
+# Personal context — keep private
+USER.md
+memory/
+HEARTBEAT.md
+MEMORY.md
+CLAUDE.md.draft
+.fallback-state.json
+
+# === 干活产物 / 项目数据(商业敏感,严禁推 GitHub) ===
+projects/
+deliverables/
+handoff/
+backups/
+tmp-shots/
+playbooks/
+*.tmp
+.tmp-*
+
+# === 本地脚本(含 token 引用 / 路径硬编码,不上传) ===
+scripts/
+
+# === 大文件 / 源材料 ===
+*.pdf
+*.psd
+*.sketch
+*.fig
+*.mp4
+*.mov
+
+# === 临时素材 / 调试输出 ===
+cc-60min-guide.txt
+*.draft
+
+# Backup of this file itself
+.gitignore.bak
+
+# Internal OpenClaw extension state
+.clawhub/
+
 # logs
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
+*.log
+*.out
 
 # env
 .env
@@ -19,3 +60,5 @@ yarn-debug.log*
 .vscode/
 .idea/
 .DS_Store
+*.swp
+*.swo
