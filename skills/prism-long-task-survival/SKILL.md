@@ -1,11 +1,13 @@
 ---
 name: prism-long-task-survival
-description: "Recognize and route around Prism gateway's 7-12 min SSE stream cutoff when running long Claude tasks. Covers the chunking SOP, known dead-ends, and the proven primary route: offload long browser/工程 work to an isolated OpenClaw subagent (with spawn-survival, gateway-scope workarounds, and verify-before-deliver steps)."
+description: "Recognize and route around Prism gateway's SSE stream cutoff on long Claude tasks (sonnet 7-12 min PoC-verified; opus far earlier). Covers the chunking SOP, known dead-ends, and the primary route — offload long browser/工程 work to an isolated OpenClaw subagent — noting the spawn entry itself still rides the same cutoff and must be verify-or-respawn'd, plus gateway-scope workarounds and verify-before-deliver steps."
 ---
 
 # Surviving long tasks on Prism
 
-Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills SSE streams in the **7-12 minute window** for sonnet, ~90 s for opus 4.7. Two rounds of PoC (May 2026, `~/.openclaw/workspace/projects/marvis-infra/acp-prism-poc/`) proved this is server-side and **not fixable by any client-side knob**.
+Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills SSE streams on long requests. **PoC-verified: `sonnet[1m]` (= Sonnet 4.6 1M-context) cut in the 7–12 min window (3 runs, May 2026); `claude-opus-4.8` cut at ~352 s / 5m52s (1 run, 2026-06-05) — opus hits the wall EARLIER than sonnet on this gateway.** The old "~90 s for opus" figure was second-hand (opus 4.7, team report, never reproduced) — see the opus note in §"What's actually broken". Three PoC rounds (May–Jun 2026, `~/.openclaw/workspace/projects/marvis-infra/acp-prism-poc/`) proved this is server-side and **not fixable by any client-side knob**.
+
+> **Naming (one definition, reused below):** the sonnet model actually tested on Prism is `sonnet[1m]` = **Sonnet 4.6 1M-context** (Prism's catalog has no 4.5). Later mentions just say "sonnet".
 
 ## When to read this
 
@@ -19,6 +21,10 @@ Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills
 
 ## What's actually broken
 
+> **Data last verified: 2026-05 (PoC rounds 1–2) for sonnet; 2026-06-05 (round 3) for opus 4.8. Models actually tested: `sonnet[1m]` = Sonnet 4.6 1M-context, and `claude-opus-4.8`. Re-test required after any model or gateway change.**
+>
+> **opus data provenance (important):** the old "~90 s" number was for **opus 4.7** and came from a **K师-team verbal report — it was NEVER reproduced in our own PoC** (rounds 1–2 both skipped opus once sonnet already failed). Round 3 (2026-06-05) measured **opus 4.8** directly via bare streaming curl: **cut at t≈352 s (5 min 52 s)** — fail-slow silent stop (last data at 342 s, stream then hung ~10 s, curl exited 18 `transfer closed with outstanding read data remaining`), died **mid HTML-output**, no `message_stop`. So the real opus 4.8 cutoff is **~352 s / minute-scale, NOT the old 90 s** — and notably **earlier than sonnet's fastest cut (7m22s)**: on this gateway opus hits the wall *sooner* than sonnet, not at 90 s. Evidence: `acp-prism-poc/round3/logs/opus48-r1.{stamped.log,meta.txt,curl.err}`.
+
 - The break is at Prism's gateway layer, not at Anthropic, not at CC, not at the ACP bridge.
 - Fail-fast variant: `API Error: The socket connection was closed unexpectedly` from `fetch` / Anthropic SDK.
 - Fail-slow variant (more common): TCP stays ESTABLISHED, no data arrives, no error. Client hangs forever unless something has a timer.
@@ -27,11 +33,11 @@ Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills
 
 ## SOP — chunking (only known thing that works today)
 
-1. **Cap single Prism request at ~5 min wall time.** Includes extended-thinking. Leave 30% margin under the 7-min lower bound.
+1. **Cap single Prism request at ~5 min wall time.** Includes extended-thinking. **Basis: 3 observed sonnet cuts at 7m22s / ~10:15 / ~12min — fastest seen is 7m22s, never seen <7min, but the sample is only 3 serial single-machine runs.** The failure behaves like a **max-request-duration hard cap** (the stream was still flowing right up to the cut), so total wall time is the lever — not idle gaps. 5 min keeps ~30% margin under the fastest observed cut; treat it as a **conservative value, not proven-safe**, and re-measure if you ever see a cut <7 min (esp. under load / peak hours — untested).
 2. **Cap single output at ~300 lines** of user-facing text. Empirically this stays inside the safe window even for sonnet's verbose modes.
 3. **Split big work into N small turns.** Pattern: outline first (1 turn), then one section per turn, with explicit "you only output section K, stop". Each turn re-establishes a fresh stream.
 4. **Persist intermediate state in files**, not in conversation. Each turn reads what previous turns wrote, appends its piece, writes back. Recovery is then a re-run of one chunk, not the whole task.
-5. **For tasks that genuinely can't be chunked** (one big file ≥2k lines, one big SVG): don't use Prism. Use the OpenClaw subagent escape hatch (see below) or escalate to K师 to get an Anthropic-direct token.
+5. **For tasks that genuinely can't be chunked** (one big file ≥2k lines, one big SVG): don't use Prism. Use the OpenClaw subagent escape hatch (see below) or escalate to K师 to get an Anthropic-direct token. 🔴 **Anthropic-direct token rule:** keep it in env var / keychain only — **never written to any workspace file, never committed, never logged in plaintext**. Read once, `unset` after use, rotated by K师 after the task (same discipline as the Notion token in TOOLS.md).
 
 ## Failure signals — recognize these fast
 
@@ -49,15 +55,20 @@ These have been tested or analyzed and **do not work**:
 - ❌ Writing a custom Python ACP client to bypass CC. Round 1 did this; broke identically.
 - ❌ Setting bigger `MAX_THINKING_TOKENS`. Doesn't help, thinking is what blows the budget.
 - ❌ Bumping CC's `--max-turns`. Per-turn break is the problem.
-- ❌ Switching to opus 4.7 hoping it'd be faster. Opus breaks ~90 s on Prism per K师 reports; far worse than sonnet.
+- ❌ Switching to opus hoping it'd be faster. Opus breaks **earlier** than sonnet on Prism — round-3 measured opus 4.8 cut at **~352 s (5m52s)**, vs sonnet's fastest 7m22s. (The old "~90 s" was opus 4.7 hearsay; the real number is minute-scale but still worse than sonnet.) Opus is the wrong lever for long single-stream tasks.
 
-## Escape hatch — OpenClaw subagent (the proven primary route)
+## Escape hatch — OpenClaw subagent (primary route; its spawn entry still rides the same cutoff)
 
-OpenClaw's `subagent` capability runs on a different LLM path that is **not Prism**, and a spawned subagent runs in its **own isolated session** — its tool calls and streaming do NOT flow through the main session's SSE stream. This is now the **default route for any long task**, not just a last resort. Verified end-to-end 2026-06-04 on a 20-min browser-scrape + rebuild job (GreenDeal API docs, 35 pages).
+> ⚠️ **Caveat up front:** the subagent **runs** off-Prism (its own isolated session, streaming does NOT flow through the main SSE stream), but the **`sessions_spawn` entry call itself still flows through the main session's stream** — so a long spawn can be eaten by the very cutoff you're escaping. This is the primary route **only with** the verify-or-respawn step (SOP step 6 below) treated as **mandatory, not optional**.
+
+OpenClaw's `subagent` capability runs on a different LLM path that is **not Prism**, and a spawned subagent runs in its **own isolated session** — its tool calls and streaming do NOT flow through the main session's SSE stream. This is the **default route for any long task**, not just a last resort. Verified end-to-end 2026-06-04 on a 20-min browser-scrape + rebuild job (GreenDeal API docs, 35 pages).
 
 - Hand it off to a subagent with explicit task scope.
 - Don't pipe Prism's output through OpenClaw — use OpenClaw's own model.
-- This burns the budget on a different provider; check with the user first if cost matters.
+- This burns budget on a different (non-Prism) provider. **No measured cost ratio exists yet — don't invent one.** Decision rule instead of a blank "ask the user":
+  - **Auto-use the subagent route (no need to ask)** when the task genuinely can't be chunked under 5 min: one file ≥2k lines, one indivisible SVG/asset, or a multi-min browser/工程 job. **First confirm it really can't be chunked** — i.e. you actually tried an outline split and a single indivisible block still exceeds 5 min. If you just didn't bother trying to split, that's NOT "can't chunk".
+  - **Ask K师 first** only when the task *could* be chunked on Prism but you're choosing the subagent route for convenience/speed — that's a real cost trade-off worth a human call.
+  - If/when someone measures the actual OpenClaw-vs-Prism cost ratio, replace this rule with the number.
 
 ### Why the main session keeps getting cut (the real failure mode, 2026-06-04)
 
@@ -85,7 +96,7 @@ A one-shot cron whose job is `launchctl kickstart` the gateway will **kill its o
 
 ## For anyone writing a new LLM client on Prism
 
-- Set a **client-side idle timeout** on the SSE stream (e.g. 90 s no data → kill + retry the chunk). Don't trust the server to error out.
+- Set **both** a client-side idle timeout (e.g. 90 s no data → kill + retry the chunk) **and a wall-clock cap per request** (proactively wrap up / kill at ~5 min total, since the cut behaves like a max-request-duration limit, not pure idle). The idle timer catches fail-slow stalls; the wall-clock cap catches the always-streaming-until-hard-limit case. Don't trust the server to error out on either.
 - Implement **chunk-level retries**, not request-level. A failed chunk should resume from the last persisted state, not restart from scratch.
 - Build the chunking into the abstraction. Don't expose "send one giant prompt" as a viable API.
 - Log every byte-of-stream timestamp; without that you can't tell fail-fast from fail-slow.
@@ -94,7 +105,7 @@ A one-shot cron whose job is `launchctl kickstart` the gateway will **kill its o
 
 If escalating to whoever runs `copilot.xchunzhao.top`, the ask is concrete:
 
-- Their gateway (nginx / Caddy / Cloudflare / Bun) has a `proxy_read_timeout` / max-request-duration around **600 s for sonnet, 90 s for opus**. Need this bumped to ≥1800 s.
+- Their gateway (nginx / Caddy / Cloudflare / Bun) has a `proxy_read_timeout` / max-request-duration around **600 s for sonnet, ~350 s for opus 4.8** (round-3 measured). Need this bumped to ≥1800 s.
 - Or: enable HTTP/2 long-lived stream pass-through with keepalive PING.
 - Or: provision a path that bypasses the gateway and goes Anthropic-direct for Marvis-team tokens.
 
