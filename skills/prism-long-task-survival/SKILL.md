@@ -1,6 +1,6 @@
 ---
 name: prism-long-task-survival
-description: "Recognize and route around Prism gateway's SSE stream cutoff on long Claude tasks (sonnet 7-12 min PoC-verified; opus far earlier). Covers the chunking SOP, known dead-ends, and the primary route — offload long browser/工程 work to an isolated OpenClaw subagent — noting the spawn entry itself still rides the same cutoff and must be verify-or-respawn'd, plus gateway-scope workarounds and verify-before-deliver steps."
+description: "Recognize and route around Prism gateway's SSE stream cutoff on long Claude tasks (sonnet 7-12 min PoC-verified; opus far earlier — 1 run). Covers the chunking SOP, known dead-ends, and the primary route — offload long browser/工程 work to an isolated OpenClaw subagent — noting the spawn entry itself still rides the same cutoff and must be verify-or-respawn'd, plus gateway-scope workarounds and verify-before-deliver steps."
 ---
 
 # Surviving long tasks on Prism
@@ -33,7 +33,7 @@ Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills
 
 ## SOP — chunking (only known thing that works today)
 
-1. **Cap single Prism request at ~5 min wall time.** Includes extended-thinking. **Basis: 3 observed sonnet cuts at 7m22s / ~10:15 / ~12min — fastest seen is 7m22s, never seen <7min, but the sample is only 3 serial single-machine runs.** The failure behaves like a **max-request-duration hard cap** (the stream was still flowing right up to the cut), so total wall time is the lever — not idle gaps. 5 min keeps ~30% margin under the fastest observed cut; treat it as a **conservative value, not proven-safe**, and re-measure if you ever see a cut <7 min (esp. under load / peak hours — untested).
+1. **Cap single Prism request at ~5 min wall time.** Includes extended-thinking. **Basis: 3 observed sonnet cuts at 7m22s (442.7s) / ~10:15 / ~12min — fastest seen is 7m22s, never seen <7min, but the sample is only 3 serial single-machine runs.** All later mentions of the sonnet fastest-cut basis reuse `7m22s` (one canonical value, defined here). The failure behaves like a **max-request-duration hard cap** (the stream was still flowing right up to the cut), so total wall time is the lever — not idle gaps. 5 min keeps ~30% margin under the fastest observed cut; treat it as a **conservative value, not proven-safe**, and re-measure if you ever see a cut <7 min (esp. under load / peak hours — untested).
 2. **Cap single output at ~300 lines** of user-facing text. Empirically this stays inside the safe window even for sonnet's verbose modes.
 3. **Split big work into N small turns.** Pattern: outline first (1 turn), then one section per turn, with explicit "you only output section K, stop". Each turn re-establishes a fresh stream.
 4. **Persist intermediate state in files**, not in conversation. Each turn reads what previous turns wrote, appends its piece, writes back. Recovery is then a re-run of one chunk, not the whole task.
@@ -55,7 +55,7 @@ These have been tested or analyzed and **do not work**:
 - ❌ Writing a custom Python ACP client to bypass CC. Round 1 did this; broke identically.
 - ❌ Setting bigger `MAX_THINKING_TOKENS`. Doesn't help, thinking is what blows the budget.
 - ❌ Bumping CC's `--max-turns`. Per-turn break is the problem.
-- ❌ Switching to opus hoping it'd be faster. Opus breaks **earlier** than sonnet on Prism — round-3 measured opus 4.8 cut at **~352 s (5m52s)**, vs sonnet's fastest 7m22s. (The old "~90 s" was opus 4.7 hearsay; the real number is minute-scale but still worse than sonnet.) Opus is the wrong lever for long single-stream tasks.
+- ❌ Switching to opus hoping it'd be faster. Opus breaks **earlier** than sonnet on Prism **(1 run, 2026-06-05 — single sample, treat as directional not proven)** — round-3 measured opus 4.8 cut at **~352 s (5m52s)**, vs sonnet's fastest 7m22s. (The old "~90 s" was opus 4.7 hearsay; the real number is minute-scale but still worse than sonnet.) Opus is the wrong lever for long single-stream tasks.
 
 ## Escape hatch — OpenClaw subagent (primary route; its spawn entry still rides the same cutoff)
 
