@@ -5,7 +5,7 @@ description: "Recognize and route around Prism gateway's SSE stream cutoff on lo
 
 # Surviving long tasks on Prism
 
-Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills SSE streams on long requests. **PoC-verified: `sonnet[1m]` (= Sonnet 4.6 1M-context) cut in the 7–12 min window (3 runs, May 2026); `claude-opus-4.8` cut at ~352 s / 5m52s (1 run, 2026-06-05) — opus hits the wall EARLIER than sonnet on this gateway.** The old "~90 s for opus" figure was second-hand (opus 4.7, team report, never reproduced) — see the opus note in §"What's actually broken". Three PoC rounds (May–Jun 2026, `~/.openclaw/workspace/projects/marvis-infra/acp-prism-poc/`) proved this is server-side and **not fixable by any client-side knob**.
+Prism (the team's `https://copilot.xchunzhao.workers.dev` Claude gateway) silently kills SSE streams on long requests. **PoC-verified: `sonnet[1m]` (= Sonnet 4.6 1M-context) cut in the 7–12 min window (3 runs, May 2026); `claude-opus-4.8` cut at ~352 s / 5m52s (1 run, 2026-06-05; same-backend-confirmed — see provenance in §"What's actually broken") — opus hits the wall EARLIER than sonnet on this gateway.** The old "~90 s for opus" figure was second-hand (opus 4.7, team report, never reproduced) — see the opus note in §"What's actually broken". Three PoC rounds (May–Jun 2026, `~/.openclaw/workspace/projects/marvis-infra/acp-prism-poc/`) proved this is server-side and **not fixable by any client-side knob**.
 
 > **Naming (one definition, reused below):** the sonnet model actually tested on Prism is `sonnet[1m]` = **Sonnet 4.6 1M-context** (Prism's catalog has no 4.5). Later mentions just say "sonnet".
 
@@ -14,7 +14,7 @@ Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills
 - You're about to run a Claude task on Prism whose total time (thinking + output) might exceed ~6 min
 - Marvis / CC just reported "Stream idle timeout - partial response received" or "socket connection was closed unexpectedly"
 - The agent silently stopped streaming, TCP still ESTABLISHED, last chunk was mid-sentence
-- You're writing a new LLM client that targets `copilot.xchunzhao.top` and want to skip the obvious traps
+- You're writing a new LLM client that targets `copilot.xchunzhao.workers.dev` and want to skip the obvious traps
 - Someone (彦祖) suggests "just bump the CC timeout" — **read §"Dead ends" before agreeing**
 - **The main session keeps dying mid-reply / the user has to resend** when you run a long task (big spawn, multi-min exec, gateway restart) — read §"Escape hatch" for why and the isolated-subagent SOP
 - You're about to run a **long browser scrape / multi-page generation / 工程 task** and want the proven pattern that doesn't get cut
@@ -23,7 +23,7 @@ Prism (the team's `https://copilot.xchunzhao.top` Claude gateway) silently kills
 
 > **Data last verified: 2026-05 (PoC rounds 1–2) for sonnet; 2026-06-05 (round 3) for opus 4.8. Models actually tested: `sonnet[1m]` = Sonnet 4.6 1M-context, and `claude-opus-4.8`. Re-test required after any model or gateway change.**
 >
-> **opus data provenance (important):** the old "~90 s" number was for **opus 4.7** and came from a **K师-team verbal report — it was NEVER reproduced in our own PoC** (rounds 1–2 both skipped opus once sonnet already failed). Round 3 (2026-06-05) measured **opus 4.8** directly via bare streaming curl: **cut at t≈352 s (5 min 52 s)** — fail-slow silent stop (last data at 342 s, stream then hung ~10 s, curl exited 18 `transfer closed with outstanding read data remaining`), died **mid HTML-output**, no `message_stop`. So the real opus 4.8 cutoff is **~352 s / minute-scale, NOT the old 90 s** — and notably **earlier than sonnet's fastest cut (7m22s)**: on this gateway opus hits the wall *sooner* than sonnet, not at 90 s. Evidence: `acp-prism-poc/round3/logs/opus48-r1.{stamped.log,meta.txt,curl.err}`.
+> **opus data provenance (important):** the old "~90 s" number was for **opus 4.7** and came from a **K师-team verbal report — it was NEVER reproduced in our own PoC** (rounds 1–2 both skipped opus once sonnet already failed). Round 3 (2026-06-05) measured **opus 4.8** directly via bare streaming curl: **cut at t≈352 s (5 min 52 s)** — fail-slow silent stop (last data at 342 s, stream then hung ~10 s, curl exited 18 `transfer closed with outstanding read data remaining`), died **mid HTML-output**, no `message_stop`. So the real opus 4.8 cutoff is **~352 s / minute-scale, NOT the old 90 s** — and notably **earlier than sonnet's fastest cut (7m22s)**: on this gateway opus hits the wall *sooner* than sonnet, not at 90 s. Evidence: `acp-prism-poc/round3/logs/opus48-r1.{stamped.log,meta.txt,curl.err}`. (Note: the round-1–3 PoCs hit the gateway via its since-retired `copilot.xchunzhao.top` entry — confirmed by the gateway owner (relayed via K师, 2026-06-09) to be the **same Prism backend** as the current `copilot.xchunzhao.workers.dev` (sole difference was proxy routing; `.top` is now decommissioned, its forwarding node lapsed). The cutoff is a property of that one backend, so these numbers hold for the current `.workers.dev` gateway.)
 
 - The break is at Prism's gateway layer, not at Anthropic, not at CC, not at the ACP bridge.
 - Fail-fast variant: `API Error: The socket connection was closed unexpectedly` from `fetch` / Anthropic SDK.
@@ -55,7 +55,7 @@ These have been tested or analyzed and **do not work**:
 - ❌ Writing a custom Python ACP client to bypass CC. Round 1 did this; broke identically.
 - ❌ Setting bigger `MAX_THINKING_TOKENS`. Doesn't help, thinking is what blows the budget.
 - ❌ Bumping CC's `--max-turns`. Per-turn break is the problem.
-- ❌ Switching to opus hoping it'd be faster. Opus breaks **earlier** than sonnet on Prism **(1 run, 2026-06-05 — single sample, treat as directional not proven)** — round-3 measured opus 4.8 cut at **~352 s (5m52s)**, vs sonnet's fastest 7m22s. (The old "~90 s" was opus 4.7 hearsay; the real number is minute-scale but still worse than sonnet.) Opus is the wrong lever for long single-stream tasks.
+- ❌ Switching to opus hoping it'd be faster. Opus breaks **earlier** than sonnet on Prism **(1 run, 2026-06-05 — single sample, but confirmed same-backend as the current gateway; see §"What's actually broken" provenance)** — round-3 measured opus 4.8 cut at **~352 s (5m52s)**, vs sonnet's fastest 7m22s. (The old "~90 s" was opus 4.7 hearsay; the real number is minute-scale but still worse than sonnet.) Opus is the wrong lever for long single-stream tasks.
 
 ## Escape hatch — OpenClaw subagent (primary route; its spawn entry still rides the same cutoff)
 
@@ -103,9 +103,9 @@ A one-shot cron whose job is `launchctl kickstart` the gateway will **kill its o
 
 ## Asking Prism owners for a real fix
 
-If escalating to whoever runs `copilot.xchunzhao.top`, the ask is concrete:
+If escalating to whoever runs `copilot.xchunzhao.workers.dev`, the ask is concrete:
 
-- Their gateway (nginx / Caddy / Cloudflare / Bun) has a `proxy_read_timeout` / max-request-duration around **600 s for sonnet, ~350 s for opus 4.8** (round-3 measured). Need this bumped to ≥1800 s.
+- Their gateway (nginx / Caddy / Cloudflare / Bun) has a `proxy_read_timeout` / max-request-duration around **600 s for sonnet, ~350 s for opus 4.8** (round-3 measured, 1-run, same-backend-confirmed). Need this bumped to ≥1800 s.
 - Or: enable HTTP/2 long-lived stream pass-through with keepalive PING.
 - Or: provision a path that bypasses the gateway and goes Anthropic-direct for Marvis-team tokens.
 
