@@ -1,4 +1,7 @@
 # Tools 类隐藏产物:允许直链访问,但不进搜索引擎索引
 # 博客首页/导航不提供入口,只有拿到链接的人能进
+# CF Pages 会把 /game-prd-tool.html 308 → /game-prd-tool (pretty URL),两个路径都要 noindex
 /game-prd-tool.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+/game-prd-tool
   X-Robots-Tag: noindex, nofollow, noarchive
