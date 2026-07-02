@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game PRD Tool · 游戏 PRD 填表工具</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 14px; line-height: 1.6; color: #e4e4e7;
+    background: #14141c;
+    background-image:
+      radial-gradient(ellipse 60% 45% at 12% 8%, rgba(129,140,248,0.18), transparent 60%),
+      radial-gradient(ellipse 55% 40% at 90% 100%, rgba(56,189,248,0.14), transparent 62%),
+      radial-gradient(ellipse 40% 30% at 100% 0%, rgba(217,70,239,0.08), transparent 65%),
+      linear-gradient(180deg, #16161f 0%, #12121a 100%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(129,140,248,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(129,140,248,0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 100%);
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  a { color: #818cf8; text-decoration: none; } a:hover { text-decoration: underline; }
+  :root {
+    --bg-0: #14141c; --bg-1: #1a1a24; --bg-2: #22222e; --bg-3: #2d2d3a;
+    --border-1: #2f2f3d; --border-2: #40404f;
+    --text-1: #e8e8ef; --text-2: #a8a8b8; --text-3: #7a7a8c;
+    --accent: #a5b4fc; --accent-strong: #818cf8;
+    --accent-bg: rgba(165,180,252,0.14); --accent-bg-strong: rgba(165,180,252,0.24);
+    --accent-glow: 0 0 20px rgba(129,140,248,0.35), 0 0 40px rgba(129,140,248,0.15);
+    --danger: #f87171; --warning: #fbbf24; --ok: #34d399;
+    --radius-sm: 4px; --radius: 6px; --radius-lg: 10px;
+    --topbar-h: 56px; --nav-w: 240px;
+  }
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+    background: rgba(18,18,26,0.72);
+    backdrop-filter: saturate(160%) blur(16px);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    border-bottom: 1px solid rgba(129,140,248,0.16);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.35);
+    display: flex; align-items: center; padding: 0 20px; gap: 14px; z-index: 100;
+  }
+  .topbar__brand { font-weight: 600; font-size: 15px; color: var(--text-1); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .topbar__brand .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px rgba(129,140,248,0.9), 0 0 16px rgba(129,140,248,0.5);
+    animation: dot-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes dot-pulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(129,140,248,0.9), 0 0 16px rgba(129,140,248,0.4); }
+    50% { box-shadow: 0 0 12px rgba(129,140,248,1), 0 0 24px rgba(129,140,248,0.7); }
+  }
+  .topbar__title { flex: 1; display: flex; gap: 10px; align-items: center; min-width: 0; }
+  .topbar__title input {
+    background: transparent; border: 1px solid transparent; color: var(--text-1);
+    padding: 6px 8px; border-radius: var(--radius-sm); font-size: 14px; min-width: 100px;
+  }
+  .topbar__title input:hover { border-color: var(--border-1); }
+  .topbar__title input:focus { outline: none; border-color: var(--accent); background: var(--bg-1); }
+  .topbar__title .sep { color: var(--text-3); font-size: 12px; }
+  .topbar__status { font-size: 12px; color: var(--text-3); margin-right: 8px; white-space: nowrap; }
+  .topbar__status.saved { color: var(--ok); }
+  .topbar__actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 7px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border-2); background: var(--bg-2);
+    color: var(--text-1); cursor: pointer; font-size: 13px;
+    transition: background 120ms, border-color 120ms, transform 60ms;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg-3); }
+  .btn:active { transform: translateY(1px); }
+  .btn--primary {
+    background: var(--accent-strong); color: white; border-color: var(--accent-strong);
+    box-shadow: 0 4px 14px rgba(99,102,241,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  }
+  .btn--primary:hover {
+    background: var(--accent); border-color: var(--accent);
+    box-shadow: 0 6px 20px rgba(129,140,248,0.5), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  }
+  .btn--ghost { background: transparent; }
+  .btn--danger { color: var(--danger); border-color: rgba(248,113,113,0.3); }
+  .btn--danger:hover { background: rgba(248,113,113,0.1); border-color: var(--danger); }
+  .btn--sm { padding: 4px 9px; font-size: 12px; }
+  .layout { min-height: 100vh; padding-top: var(--topbar-h); }
+  .nav {
+    position: fixed; top: var(--topbar-h); bottom: 0; left: 0; width: var(--nav-w);
+    background: rgba(20,20,28,0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-right: 1px solid rgba(129,140,248,0.12);
+    padding: 14px 10px; overflow-y: auto; z-index: 50;
+  }
+  .nav__title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); padding: 6px 10px 10px; }
+  .nav__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+  .nav__item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: var(--radius); cursor: pointer; color: var(--text-2);
+    font-size: 13px; user-select: none; transition: background 120ms, color 120ms;
+    text-decoration: none;
+  }
+  .nav__item:hover { background: var(--bg-2); color: var(--text-1); text-decoration: none; }
+  .nav__item.active { background: var(--accent-bg); color: var(--accent); box-shadow: inset 2px 0 0 var(--accent), 0 0 20px rgba(129,140,248,0.15); }
+  .nav__item .num {
+    width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-3); border-radius: var(--radius-sm); font-size: 11px; color: var(--text-3); flex-shrink: 0;
+  }
+  .nav__item.active .num { background: var(--accent-bg-strong); color: var(--accent); }
+  .main { margin-left: var(--nav-w); padding: 24px 32px 80px; max-width: 1100px; box-sizing: border-box; position: relative; z-index: 1; }
+  .section {
+    margin-bottom: 32px; scroll-margin-top: calc(var(--topbar-h) + 16px);
+    background: rgba(26,26,36,0.5);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid rgba(129,140,248,0.10);
+    border-radius: 12px;
+    padding: 24px 28px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .section__head { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-1); }
+  .section__title { font-size: 22px; font-weight: 600; color: var(--text-1); display: flex; align-items: center; gap: 12px; }
+  .section__title .num { font-size: 13px; color: var(--text-3); font-weight: 500; background: var(--bg-2); padding: 2px 8px; border-radius: var(--radius-sm); }
+  .section__help { font-size: 13px; color: var(--text-3); margin-top: 6px; line-height: 1.5; }
+  .field { margin-bottom: 14px; }
+  .field__label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
+  .field__label .req { color: var(--accent); margin-left: 2px; }
+  .field__help { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+  .field input[type="text"], .field input[type="url"], .field input[type="number"],
+  .field input[type="date"], .field select, .field textarea {
+    width: 100%; background: var(--bg-1); border: 1px solid var(--border-1); color: var(--text-1);
+    padding: 8px 10px; border-radius: var(--radius); font-size: 13px;
+    transition: border-color 120ms, background 120ms;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); background: var(--bg-2); }
+  .field textarea { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.6; }
+  .field--inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field--inline-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field--row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-1); background: var(--bg-1);
+    color: var(--text-2); cursor: pointer; font-size: 12px; user-select: none; transition: all 120ms;
+  }
+  .chip:hover { color: var(--text-1); border-color: var(--border-2); }
+  .chip.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border-1); border-radius: var(--radius); background: var(--bg-1); }
+  .tbl { width: 100%; border-collapse: collapse; min-width: 600px; }
+  .tbl th, .tbl td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border-1); font-size: 13px; vertical-align: middle; }
+  .tbl th { background: var(--bg-2); font-weight: 500; color: var(--text-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: var(--bg-2); }
+  .tbl input, .tbl textarea, .tbl select {
+    width: 100%; background: transparent; border: 1px solid transparent; color: var(--text-1);
+    padding: 5px 7px; border-radius: var(--radius-sm); font-size: 13px;
+  }
+  .tbl input:focus, .tbl textarea:focus, .tbl select:focus { outline: none; border-color: var(--accent); background: var(--bg-2); }
+  .tbl textarea { resize: vertical; min-height: 32px; font-family: inherit; line-height: 1.4; }
+  .tbl td.actions { width: 60px; text-align: center; }
+  .tbl-toolbar { padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--border-1); }
+  .tbl-toolbar .hint { font-size: 11px; color: var(--text-3); }
+  .icon-btn {
+    width: 24px; height: 24px; border-radius: 4px; border: none; background: transparent;
+    color: var(--text-3); cursor: pointer; font-size: 14px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: var(--bg-3); color: var(--danger); }
+  .card {
+    border: 1px solid var(--border-1); background: var(--bg-1);
+    border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; position: relative;
+  }
+  .card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .card__head input {
+    flex: 1; background: transparent; border: 1px solid transparent;
+    padding: 4px 8px; border-radius: var(--radius-sm); color: var(--text-1);
+    font-size: 15px; font-weight: 500;
+  }
+  .card__head input:hover { border-color: var(--border-1); }
+  .card__head input:focus { outline: none; border-color: var(--accent); background: var(--bg-2); }
+  .card__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card__grid--full { grid-template-columns: 1fr; }
+  @media (max-width: 900px) { .card__grid { grid-template-columns: 1fr; } }
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .swatch {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 8px; border: 1px solid var(--border-1); border-radius: var(--radius);
+    background: var(--bg-1); min-width: 90px; position: relative;
+  }
+  .swatch__color { width: 56px; height: 56px; border-radius: var(--radius); cursor: pointer; border: 2px solid var(--border-2); transition: transform 120ms; }
+  .swatch__color:hover { transform: scale(1.05); }
+  .swatch__label { background: transparent; border: 1px solid transparent; text-align: center; color: var(--text-2); font-size: 11px; width: 100%; padding: 2px 4px; border-radius: var(--radius-sm); }
+  .swatch__label:focus { outline: none; border-color: var(--accent); background: var(--bg-2); }
+  .swatch__hex { font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace; font-size: 10px; color: var(--text-3); }
+  .swatch__del {
+    position: absolute; top: 4px; right: 4px;
+    width: 18px; height: 18px; border-radius: 50%; border: none;
+    background: var(--bg-3); color: var(--text-3); cursor: pointer; font-size: 11px;
+    line-height: 1; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 120ms;
+  }
+  .swatch:hover .swatch__del { opacity: 1; }
+  .swatch__del:hover { background: var(--danger); color: white; }
+  .check-list { display: flex; flex-direction: column; gap: 6px; }
+  .check-item {
+    display: flex; align-items: center; gap: 10px; padding: 6px 8px;
+    border-radius: var(--radius); background: var(--bg-1); border: 1px solid var(--border-1);
+  }
+  .check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
+  .check-item input[type="text"] { flex: 1; background: transparent; border: 1px solid transparent; color: var(--text-1); padding: 4px 6px; border-radius: var(--radius-sm); }
+  .check-item input[type="text"]:focus { outline: none; border-color: var(--accent); background: var(--bg-2); }
+  .iron-list { display: flex; flex-direction: column; gap: 8px; }
+  .iron-item {
+    display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+    border-radius: var(--radius); background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.25);
+  }
+  .iron-item__icon { color: var(--warning); flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+  .iron-item__input {
+    flex: 1; background: transparent; border: 1px solid transparent; color: var(--text-1);
+    padding: 4px 6px; border-radius: var(--radius-sm); font-size: 13px;
+  }
+  .iron-item__input:focus { outline: none; border-color: var(--warning); background: var(--bg-2); }
+  .img-list { display: flex; gap: 10px; flex-wrap: wrap; }
+  .img-thumb {
+    width: 120px; height: 120px; border-radius: var(--radius);
+    border: 1px dashed var(--border-2); background: var(--bg-1);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-3); font-size: 12px;
+    position: relative; overflow: hidden;
+  }
+  .img-thumb:hover { border-color: var(--accent); color: var(--accent); }
+  .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .img-thumb__del {
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+    border-radius: 50%; border: none; background: rgba(0,0,0,0.7); color: white;
+    cursor: pointer; font-size: 12px;
+    display: none; align-items: center; justify-content: center;
+  }
+  .img-thumb:hover .img-thumb__del { display: flex; }
+  .modal-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: var(--bg-1); border: 1px solid var(--border-1);
+    border-radius: var(--radius-lg); width: 100%; max-width: 900px; max-height: 85vh;
+    display: flex; flex-direction: column;
+  }
+  .modal__head {
+    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-1);
+  }
+  .modal__title { font-size: 15px; font-weight: 600; }
+  .modal__body { flex: 1; overflow-y: auto; padding: 0; }
+  .modal__body pre {
+    margin: 0; padding: 16px 20px; background: var(--bg-0); color: var(--text-1);
+    font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace; font-size: 12px;
+    line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;
+  }
+  .modal__foot { padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--border-1); }
+  .toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--bg-3); color: var(--text-1); padding: 10px 14px;
+    border-radius: var(--radius); border: 1px solid var(--border-2);
+    font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    animation: slideIn 240ms ease-out; min-width: 200px;
+  }
+  .toast.ok { border-color: var(--ok); color: var(--ok); }
+  .toast.err { border-color: var(--danger); color: var(--danger); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  @media (max-width: 900px) {
+    .nav { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-1); }
+    .nav__list { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+    .nav__item { white-space: nowrap; }
+    .nav__title { display: none; }
+    .main { margin-left: 0; padding: 20px 16px 80px; }
+    .topbar__title input { min-width: 60px; }
+    .field--inline, .field--inline-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__brand"><span class="dot"></span><span>Game PRD Tool</span></div>
+  <div class="topbar__title">
+    <input type="text" id="meta-name-top" placeholder="项目名" aria-label="项目名">
+    <span class="sep">·</span>
+    <input type="text" id="meta-version-top" placeholder="版本" aria-label="版本" style="max-width:120px">
+  </div>
+  <div class="topbar__status" id="status-text">未保存</div>
+  <div class="topbar__actions">
+    <button class="btn btn--ghost btn--sm" id="btn-save">保存草稿</button>
+    <button class="btn btn--sm" id="btn-export-md">导出 .md</button>
+    <button class="btn btn--sm" id="btn-export-json">导出 .json</button>
+    <button class="btn btn--ghost btn--sm btn--danger" id="btn-clear">清空</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="nav">
+    <div class="nav__title">12 模块</div>
+    <ul class="nav__list" id="nav-list"></ul>
+  </aside>
+  <main class="main" id="main-content">
+
+    <!-- §1 项目元信息 -->
+    <section class="section" id="sec-meta" data-num="1" data-name="项目元信息">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">01</span>项目元信息</h2>
+        <p class="section__help">最基本的身份卡。所有 AI 子代理读 PRD 第一眼看这里。</p>
+      </div>
+      <div class="field field--inline">
+        <div>
+          <label class="field__label">项目名 <span class="req">*</span></label>
+          <input type="text" data-field="meta.name" placeholder="例: 太空空间站防御">
+        </div>
+        <div>
+          <label class="field__label">版本号 <span class="req">*</span></label>
+          <input type="text" data-field="meta.version" placeholder="例: v9-PRD">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">一句话定位 <span class="req">*</span></label>
+        <input type="text" data-field="meta.tagline" placeholder="例: 移动端競屏 Roguelite 空间站射击, 单局 3-5 分钟">
+      </div>
+      <div class="field field--inline-3">
+        <div>
+          <label class="field__label">作者</label>
+          <input type="text" data-field="meta.author" placeholder="K师">
+        </div>
+        <div>
+          <label class="field__label">日期</label>
+          <input type="date" data-field="meta.date">
+        </div>
+        <div>
+          <label class="field__label">目标平台</label>
+          <input type="text" data-field="meta.platform" placeholder="例: 移动端競屏 Canvas 2D 单文件 HTML">
+        </div>
+      </div>
+    </section>
+
+    <!-- §2 核心玩法 -->
+    <section class="section" id="sec-core" data-num="2" data-name="核心玩法">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">02</span>核心玩法</h2>
+        <p class="section__help">核心循环 = 5 秒能讲完的事。例: “射击-躲门-升级武器-打 BOSS”。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">核心循环 (5 秒讲完) <span class="req">*</span></label>
+        <textarea data-field="core.loop" placeholder="例: 滚动飞行 → 射敌 → 收武器 → 推状态门数值 → 撞主角结算 → 打 BOSS"></textarea>
+      </div>
+      <div class="field">
+        <label class="field__label">玩家动词 (≤5 个, 逗号分隔) <span class="req">*</span></label>
+        <input type="text" data-field="core.verbs" placeholder="例: 左右拖动, 自动射击, 撞拾取">
+        <div class="field__help">动词越少越好, 动词应该是玩家背背背重复做的。</div>
+      </div>
+      <div class="field">
+        <label class="field__label">核心爭感</label>
+        <textarea data-field="core.feel" placeholder="例: 看着状态条跳动, 多射 1 火多跳 1 格, 双位数上升的多巴胺"></textarea>
+      </div>
+      <div class="field">
+        <label class="field__label">像素/身份描述</label>
+        <textarea data-field="core.identity" placeholder="例: 你是一名空间站后勤進供员, 驾驶小货郎穿越财物隧道, 一路吃碎片、走到主控站, 最后炸掉 BOSS 插托。"></textarea>
+      </div>
+    </section>
+
+    <!-- §3 平台与输入 -->
+    <section class="section" id="sec-platform" data-num="3" data-name="平台与输入">
+      <div class="section__head"><h2 class="section__title"><span class="num">03</span>平台与输入</h2>
+        <p class="section__help">选定形态后其他一切 (UI/手感/布局) 都要跟这里对齐。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">平台形态</label>
+        <div class="chip-group" data-chips="platform.form" data-options="移动端|桌面端|跨平台"></div>
+      </div>
+      <div class="field">
+        <label class="field__label">屏幕方向</label>
+        <div class="chip-group" data-chips="platform.orientation" data-options="競屏|横屏|两者都支持"></div>
+      </div>
+      <div class="field">
+        <label class="field__label">输入方式</label>
+        <div class="chip-group" data-chips="platform.input" data-options="触摸|键鼠|手柄|鼠标|多输入"></div>
+      </div>
+      <div class="field field--inline">
+        <div>
+          <label class="field__label">设计基准分辨率</label>
+          <input type="text" data-field="platform.resolution" placeholder="例: 750x1334 (iPhone SE 基准尺)">
+        </div>
+        <div>
+          <label class="field__label">最低设备要求</label>
+          <input type="text" data-field="platform.minDevice" placeholder="例: iOS 15 / Android 9 / Chrome 90+">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">其他约束</label>
+        <textarea data-field="platform.notes" placeholder="例: 必须单文件 HTML 可脱机跑, 不用任何外部资源 CDN"></textarea>
+      </div>
+    </section>
+
+    <!-- §4 数值表 -->
+    <section class="section" id="sec-data" data-num="4" data-name="数值表">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">04</span>数值表</h2>
+        <p class="section__help">所有可调参数值都放这里, 支持动态加行。AI 看表比看话清楚。</p>
+      </div>
+
+      <div class="field">
+        <label class="field__label">敌人表</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="data.enemies" data-cols='[{"key":"name","label":"名称","width":"15%"},{"key":"hp","label":"HP","width":"10%"},{"key":"speed","label":"速度","width":"10%"},{"key":"damage","label":"伤害","width":"10%"},{"key":"behavior","label":"行为","width":"30%"},{"key":"drop","label":"掉落","width":"25%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar">
+            <span class="hint">提示: 点单元格可编辑 · 点右侧 × 删行</span>
+            <button class="btn btn--sm" data-add-row="data.enemies">+ 加行</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label">武器表</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="data.weapons" data-cols='[{"key":"name","label":"名称","width":"15%"},{"key":"damage","label":"单发伤害","width":"12%"},{"key":"fireRate","label":"开火间隔(ms)","width":"13%"},{"key":"projCount","label":"弹量","width":"8%"},{"key":"pattern","label":"弹幕型","width":"22%"},{"key":"notes","label":"备注","width":"30%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="data.weapons">+ 加行</button></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label">资源表 (金币 / 能量 / 水晶 等)</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="data.resources" data-cols='[{"key":"name","label":"名称","width":"15%"},{"key":"source","label":"来源","width":"25%"},{"key":"sink","label":"消耗点","width":"25%"},{"key":"cap","label":"上限","width":"10%"},{"key":"notes","label":"备注","width":"25%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="data.resources">+ 加行</button></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label">难度曲线 (按时间)</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="data.curve" data-cols='[{"key":"time","label":"时间","width":"12%"},{"key":"enemySpawnRate","label":"敌人出生/s","width":"15%"},{"key":"enemyHpMult","label":"HP倍率","width":"12%"},{"key":"event","label":"关键事件","width":"30%"},{"key":"notes","label":"备注","width":"31%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="data.curve">+ 加行</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §5 视觉规范 -->
+    <section class="section" id="sec-visual" data-num="5" data-name="视觉规范">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">05</span>视觉规范</h2>
+        <p class="section__help">点颜色块会弹出原生 color picker 。颜色名主要让 AI 读 (例: “主色/进度色/警告色”)。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">主色板 (点颜色块改色 / 点 + 加颜色)</label>
+        <div class="swatches" id="swatches"></div>
+        <div style="margin-top:10px"><button class="btn btn--sm" id="btn-add-swatch">+ 加颜色</button></div>
+      </div>
+      <div class="field field--inline-3">
+        <div>
+          <label class="field__label">主字号</label>
+          <input type="text" data-field="visual.fontMain" placeholder="例: 16px">
+        </div>
+        <div>
+          <label class="field__label">次字号</label>
+          <input type="text" data-field="visual.fontSub" placeholder="例: 12px">
+        </div>
+        <div>
+          <label class="field__label">标题字号</label>
+          <input type="text" data-field="visual.fontTitle" placeholder="例: 24px">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">UI 占用百分比 (顶bar / 底bar / 中间玩法区)</label>
+        <input type="text" data-field="visual.uiRatio" placeholder="例: 顶 8% / 底 12% / 中间 80%">
+      </div>
+      <div class="field">
+        <label class="field__label">画风参考 (链接 / 话术)</label>
+        <textarea data-field="visual.reference" placeholder="例: Vampire Survivors 的像素画风 + Hades 的震动反馈, 参考: https://..."></textarea>
+      </div>
+    </section>
+
+    <!-- §6 关卡/场景 -->
+    <section class="section" id="sec-level" data-num="6" data-name="关卡/场景">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">06</span>关卡/场景</h2>
+        <p class="section__help">按时间轴 (00:00 / 00:10 / 00:30...) 或按 stage 列。表达节奏、老拍。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">场景 / 节奏表</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="level.timeline" data-cols='[{"key":"time","label":"时间/Stage","width":"12%"},{"key":"scene","label":"场景","width":"20%"},{"key":"event","label":"关键事件","width":"30%"},{"key":"music","label":"音乐","width":"15%"},{"key":"goal","label":"玩家目标","width":"23%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="level.timeline">+ 加行</button></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">总体关卡设计说明</label>
+        <textarea data-field="level.notes" placeholder="例: 单局 5 分钟, 0-60s 教学, 60-180s 中期, 180s+ BOSS 门"></textarea>
+      </div>
+    </section>
+
+    <!-- §7 系统/机制 -->
+    <section class="section" id="sec-mech" data-num="7" data-name="系统/机制">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">07</span>系统/机制</h2>
+        <p class="section__help">每个机制一张卡片: 名字 / 输入条件 / 输出效果 / 视觉表现 / 数据 schema / 不允许做的。</p>
+      </div>
+      <div id="mech-list"></div>
+      <button class="btn btn--sm" id="btn-add-mech" style="margin-top:10px">+ 加机制卡</button>
+    </section>
+
+    <!-- §8 UI/HUD 元素 -->
+    <section class="section" id="sec-ui" data-num="8" data-name="UI/HUD 元素">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">08</span>UI/HUD 元素</h2>
+        <p class="section__help">顶bar / 底bar / 浮层 / 数字位 — 每项标清位置 + 内容 + 字号。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">UI 元素表</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="ui.elements" data-cols='[{"key":"area","label":"区域","width":"15%"},{"key":"element","label":"元素","width":"18%"},{"key":"position","label":"位置","width":"20%"},{"key":"content","label":"内容示例","width":"25%"},{"key":"font","label":"字号","width":"10%"},{"key":"notes","label":"备注","width":"12%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="ui.elements">+ 加行</button></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">UI 设计总原则</label>
+        <textarea data-field="ui.principles" placeholder="例: HUD 不超过屏幕 15%, 字号不小于 14px, 重要数据用冷调/警告用暖调"></textarea>
+      </div>
+    </section>
+
+    <!-- §9 资源清单 -->
+    <section class="section" id="sec-assets" data-num="9" data-name="资源清单">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">09</span>资源清单</h2>
+        <p class="section__help">图/音/字体 — 一项一行, 支持加行。对付 subagent 要主动取素材的场景。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">资源表</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="assets.list" data-cols='[{"key":"type","label":"类型","width":"12%"},{"key":"name","label":"名称","width":"20%"},{"key":"source","label":"来源/路径","width":"33%"},{"key":"format","label":"格式/规格","width":"15%"},{"key":"notes","label":"备注","width":"20%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="assets.list">+ 加行</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §10 验收/自检 -->
+    <section class="section" id="sec-qa" data-num="10" data-name="验收/自检">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">10</span>验收/自检</h2>
+        <p class="section__help">验收 = “我怎么知道这个做对了” 。自检项 = 可勾选的检查项。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">体验目标 (一句话)</label>
+        <textarea data-field="qa.goal" placeholder="例: 玩家第一局 90 秒内能独立看懂所有 HUD 数字含义"></textarea>
+      </div>
+      <div class="field">
+        <label class="field__label">自检项 (checkbox 清单)</label>
+        <div class="check-list" id="check-list"></div>
+        <div style="margin-top:8px"><button class="btn btn--sm" id="btn-add-check">+ 加检查项</button></div>
+      </div>
+      <div class="field">
+        <label class="field__label">截图标杆 (链接或描述)</label>
+        <textarea data-field="qa.reference" placeholder="例: https://... 的射击表现作为手感标杆"></textarea>
+      </div>
+    </section>
+
+    <!-- §11 内容铁律 -->
+    <section class="section" id="sec-rules" data-num="11" data-name="内容铁律">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">11</span>内容铁律</h2>
+        <p class="section__help">“不允许做的” — 防 subagent 自作主张。这个区块会以 <code>&gt; ⚠️</code> blockquote 输出到 markdown 。</p>
+      </div>
+      <div class="field">
+        <label class="field__label">铁律列表</label>
+        <div class="iron-list" id="iron-list"></div>
+        <div style="margin-top:8px"><button class="btn btn--sm" id="btn-add-iron">+ 加铁律</button></div>
+      </div>
+    </section>
+
+    <!-- §12 参考材料 -->
+    <section class="section" id="sec-ref" data-num="12" data-name="参考材料">
+      <div class="section__head">
+        <h2 class="section__title"><span class="num">12</span>参考材料</h2>
+        <p class="section__help">竞品 + 风格 reference + K师手绘草图。手绘可上传, 存为 base64 进入 JSON</p>
+      </div>
+      <div class="field">
+        <label class="field__label">竞品清单</label>
+        <div class="tbl-wrap">
+          <table class="tbl" data-tbl="ref.competitors" data-cols='[{"key":"name","label":"名称","width":"22%"},{"key":"link","label":"链接","width":"30%"},{"key":"reason","label":"引用点","width":"48%"}]'>
+            <thead></thead><tbody></tbody>
+          </table>
+          <div class="tbl-toolbar"><span class="hint"></span><button class="btn btn--sm" data-add-row="ref.competitors">+ 加行</button></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">风格 reference</label>
+        <textarea data-field="ref.style" placeholder="例: Vampire Survivors 画面密度, Hades 震动反馈, NieR 颜色"></textarea>
+      </div>
+      <div class="field">
+        <label class="field__label">手绘草图 / 其他图片 (点击上传)</label>
+        <div class="img-list" id="img-list"></div>
+        <input type="file" id="img-input" accept="image/*" style="display:none" multiple>
+      </div>
+      <div class="field">
+        <label class="field__label">其他补充说明</label>
+        <textarea data-field="ref.notes" placeholder="可选"></textarea>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-mask" id="modal">
+  <div class="modal">
+    <div class="modal__head">
+      <div class="modal__title" id="modal-title">预览</div>
+      <button class="btn btn--ghost btn--sm" id="modal-close">×</button>
+    </div>
+    <div class="modal__body"><pre id="modal-body"></pre></div>
+    <div class="modal__foot">
+      <button class="btn btn--ghost btn--sm" id="modal-copy">复制</button>
+      <button class="btn btn--primary btn--sm" id="modal-download">下载</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+
+<script>
+"use strict";
+
+// ====================================================================
+// STATE
+// ====================================================================
+var STORAGE_KEY = 'game-prd-tool-v1';
+var SECTIONS = [
+  { id: 'sec-meta',     num: 1,  name: '项目元信息' },
+  { id: 'sec-core',     num: 2,  name: '核心玩法' },
+  { id: 'sec-platform', num: 3,  name: '平台与输入' },
+  { id: 'sec-data',     num: 4,  name: '数值表' },
+  { id: 'sec-visual',   num: 5,  name: '视觉规范' },
+  { id: 'sec-level',    num: 6,  name: '关卡/场景' },
+  { id: 'sec-mech',     num: 7,  name: '系统/机制' },
+  { id: 'sec-ui',       num: 8,  name: 'UI/HUD 元素' },
+  { id: 'sec-assets',   num: 9,  name: '资源清单' },
+  { id: 'sec-qa',       num: 10, name: '验收/自检' },
+  { id: 'sec-rules',    num: 11, name: '内容铁律' },
+  { id: 'sec-ref',      num: 12, name: '参考材料' }
+];
+
+function emptyState() {
+  return {
+    meta:    { name: '', version: '', tagline: '', author: '', date: '', platform: '' },
+    core:    { loop: '', verbs: '', feel: '', identity: '' },
+    platform:{ form: [], orientation: [], input: [], resolution: '', minDevice: '', notes: '' },
+    data:    { enemies: [], weapons: [], resources: [], curve: [] },
+    visual:  { palette: [], fontMain: '', fontSub: '', fontTitle: '', uiRatio: '', reference: '' },
+    level:   { timeline: [], notes: '' },
+    mechanisms: [],
+    ui:      { elements: [], principles: '' },
+    assets:  { list: [] },
+    qa:      { goal: '', checks: [], reference: '' },
+    rules:   [],
+    ref:     { competitors: [], style: '', sketches: [], notes: '' }
+  };
+}
+
+var state = emptyState();
+var saveTimer = null;
+var lastSavedAt = 0;
+
+// ====================================================================
+// UTIL
+// ====================================================================
+function $(sel, root) { return (root || document).querySelector(sel); }
+function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+
+function toast(msg, type) {
+  var wrap = $('#toast-wrap');
+  var el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(function () { el.style.opacity = '0'; el.style.transition = 'opacity 240ms'; setTimeout(function () { el.remove(); }, 260); }, 2400);
+}
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function fmtTime(ts) {
+  var d = new Date(ts);
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+function getByPath(obj, path) {
+  return path.split('.').reduce(function (o, k) { return o == null ? undefined : o[k]; }, obj);
+}
+function setByPath(obj, path, val) {
+  var keys = path.split('.');
+  var last = keys.pop();
+  var target = keys.reduce(function (o, k) { if (o[k] == null) o[k] = {}; return o[k]; }, obj);
+  target[last] = val;
+}
+function downloadBlob(filename, content, mime) {
+  var blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 200);
+}
+function slugify(s) {
+  return (s || 'untitled').toString().trim()
+    .replace(/[\s\/\\]+/g, '-')
+    .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
+    .slice(0, 60);
+}
+function mdTableCell(s) {
+  return String(s == null ? '' : s).replace(/\|/g, '\\|').replace(/\n/g, '<br>');
+}
+
+// ====================================================================
+// NAV
+// ====================================================================
+function buildNav() {
+  var list = $('#nav-list');
+  list.innerHTML = '';
+  SECTIONS.forEach(function (s) {
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.className = 'nav__item';
+    a.href = '#' + s.id;
+    a.dataset.target = s.id;
+    a.innerHTML = '<span class="num">' + pad2(s.num) + '</span><span>' + s.name + '</span>';
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var el = document.getElementById(s.id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', '#' + s.id);
+        setActiveNav(s.id);
+      }
+    });
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+  setActiveNav(SECTIONS[0].id);
+}
+function setActiveNav(id) {
+  $$('.nav__item').forEach(function (a) { a.classList.toggle('active', a.dataset.target === id); });
+}
+function onScrollHighlight() {
+  var offsets = SECTIONS.map(function (s) {
+    var el = document.getElementById(s.id);
+    return el ? { id: s.id, top: el.getBoundingClientRect().top } : null;
+  }).filter(Boolean);
+  var trigger = 80;
+  var active = offsets[0] && offsets[0].id;
+  for (var i = 0; i < offsets.length; i++) { if (offsets[i].top <= trigger) active = offsets[i].id; }
+  if (active) setActiveNav(active);
+}
+
+// ====================================================================
+// SIMPLE FIELDS
+// ====================================================================
+function bindSimpleFields() {
+  $$('[data-field]').forEach(function (el) {
+    var path = el.dataset.field;
+    el.addEventListener('input', function () {
+      setByPath(state, path, el.value);
+      scheduleSave();
+    });
+  });
+}
+function renderSimpleFields() {
+  $$('[data-field]').forEach(function (el) {
+    var v = getByPath(state, el.dataset.field);
+    el.value = (v == null) ? '' : v;
+  });
+  syncTopbar();
+}
+function syncTopbar() {
+  $('#meta-name-top').value = state.meta.name || '';
+  $('#meta-version-top').value = state.meta.version || '';
+}
+function bindTopbar() {
+  $('#meta-name-top').addEventListener('input', function (e) {
+    state.meta.name = e.target.value;
+    var peer = $('[data-field="meta.name"]'); if (peer) peer.value = e.target.value;
+    scheduleSave();
+  });
+  $('#meta-version-top').addEventListener('input', function (e) {
+    state.meta.version = e.target.value;
+    var peer = $('[data-field="meta.version"]'); if (peer) peer.value = e.target.value;
+    scheduleSave();
+  });
+}
+
+// ====================================================================
+// CHIPS
+// ====================================================================
+function buildChips() {
+  $$('[data-chips]').forEach(function (host) {
+    var path = host.dataset.chips;
+    var options = (host.dataset.options || '').split('|').filter(Boolean);
+    host.innerHTML = options.map(function (opt) {
+      return '<span class="chip" data-val="' + opt + '">' + opt + '</span>';
+    }).join('');
+    host.addEventListener('click', function (e) {
+      var chip = e.target.closest('.chip');
+      if (!chip) return;
+      var val = chip.dataset.val;
+      var arr = getByPath(state, path) || [];
+      if (!Array.isArray(arr)) arr = [];
+      var idx = arr.indexOf(val);
+      if (idx >= 0) arr.splice(idx, 1); else arr.push(val);
+      setByPath(state, path, arr);
+      renderChips(host);
+      scheduleSave();
+    });
+  });
+}
+function renderChips(host) {
+  var path = host.dataset.chips;
+  var arr = getByPath(state, path) || [];
+  $$('.chip', host).forEach(function (c) { c.classList.toggle('active', arr.indexOf(c.dataset.val) >= 0); });
+}
+function renderAllChips() { $$('[data-chips]').forEach(renderChips); }
+
+// ====================================================================
+// TABLES
+// ====================================================================
+function buildTable(tbl) {
+  var cols = JSON.parse(tbl.dataset.cols);
+  var thead = tbl.querySelector('thead');
+  thead.innerHTML = '<tr>' +
+    cols.map(function (c) { return '<th style="width:' + (c.width || 'auto') + '">' + c.label + '</th>'; }).join('') +
+    '<th class="actions"></th></tr>';
+}
+function renderTable(tbl) {
+  var path = tbl.dataset.tbl;
+  var cols = JSON.parse(tbl.dataset.cols);
+  var rows = getByPath(state, path) || [];
+  var tbody = tbl.querySelector('tbody');
+  tbody.innerHTML = '';
+  rows.forEach(function (row, i) {
+    var tr = document.createElement('tr');
+    cols.forEach(function (c) {
+      var td = document.createElement('td');
+      var val = (row[c.key] == null) ? '' : row[c.key];
+      var longCols = ['behavior','event','notes','goal','pattern','reason','content','source','sink'];
+      if (longCols.indexOf(c.key) >= 0 || (typeof val === 'string' && val.length > 40)) {
+        td.innerHTML = '<textarea rows="1" data-row="' + i + '" data-key="' + c.key + '"></textarea>';
+      } else {
+        td.innerHTML = '<input type="text" data-row="' + i + '" data-key="' + c.key + '">';
+      }
+      td.querySelector('input,textarea').value = val;
+      tr.appendChild(td);
+    });
+    var tdA = document.createElement('td');
+    tdA.className = 'actions';
+    tdA.innerHTML = '<button class="icon-btn" data-del="' + i + '" title="删除本行">×</button>';
+    tr.appendChild(tdA);
+    tbody.appendChild(tr);
+  });
+}
+function bindTables() {
+  $$('[data-tbl]').forEach(function (tbl) {
+    buildTable(tbl);
+    var path = tbl.dataset.tbl;
+    tbl.addEventListener('input', function (e) {
+      var el = e.target.closest('[data-row]');
+      if (!el) return;
+      var i = +el.dataset.row, k = el.dataset.key;
+      var rows = getByPath(state, path) || [];
+      if (rows[i]) { rows[i][k] = el.value; scheduleSave(); }
+    });
+    tbl.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-del]');
+      if (!btn) return;
+      var i = +btn.dataset.del;
+      var rows = getByPath(state, path) || [];
+      rows.splice(i, 1);
+      renderTable(tbl);
+      scheduleSave();
+    });
+  });
+  $$('[data-add-row]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var path = btn.dataset.addRow;
+      var tbl = document.querySelector('[data-tbl="' + path + '"]');
+      var cols = JSON.parse(tbl.dataset.cols);
+      var blank = {}; cols.forEach(function (c) { blank[c.key] = ''; });
+      var arr = getByPath(state, path);
+      if (!Array.isArray(arr)) { arr = []; setByPath(state, path, arr); }
+      arr.push(blank);
+      renderTable(tbl);
+      scheduleSave();
+    });
+  });
+}
+
+// ====================================================================
+// SWATCHES
+// ====================================================================
+function renderSwatches() {
+  var host = $('#swatches');
+  host.innerHTML = '';
+  state.visual.palette.forEach(function (sw, i) {
+    var el = document.createElement('div');
+    el.className = 'swatch';
+    el.innerHTML =
+      '<input type="color" class="swatch__color" data-i="' + i + '" value="' + (sw.color || '#818cf8') + '">' +
+      '<input type="text" class="swatch__label" data-i-label="' + i + '" value="' + (sw.label || '').replace(/"/g, '&quot;') + '" placeholder="名称">' +
+      '<span class="swatch__hex">' + (sw.color || '#818cf8').toUpperCase() + '</span>' +
+      '<button class="swatch__del" data-i-del="' + i + '" title="删除">×</button>';
+    host.appendChild(el);
+  });
+}
+function bindSwatches() {
+  $('#btn-add-swatch').addEventListener('click', function () {
+    var palette = ['#818cf8', '#34d399', '#f87171', '#fbbf24', '#a78bfa', '#22d3ee'];
+    var i = state.visual.palette.length;
+    state.visual.palette.push({ label: '颜色 ' + (i + 1), color: palette[i % palette.length] });
+    renderSwatches();
+    scheduleSave();
+  });
+  $('#swatches').addEventListener('input', function (e) {
+    var c = e.target.closest('.swatch__color');
+    if (c) {
+      var i = +c.dataset.i;
+      state.visual.palette[i].color = c.value;
+      var hex = c.parentElement.querySelector('.swatch__hex');
+      if (hex) hex.textContent = c.value.toUpperCase();
+      scheduleSave();
+      return;
+    }
+    var l = e.target.closest('.swatch__label');
+    if (l) {
+      var j = +l.dataset.iLabel;
+      state.visual.palette[j].label = l.value;
+      scheduleSave();
+    }
+  });
+  $('#swatches').addEventListener('click', function (e) {
+    var d = e.target.closest('[data-i-del]');
+    if (!d) return;
+    var i = +d.dataset.iDel;
+    state.visual.palette.splice(i, 1);
+    renderSwatches();
+    scheduleSave();
+  });
+}
+
+// ====================================================================
+// MECHANISM CARDS
+// ====================================================================
+function renderMechs() {
+  var host = $('#mech-list');
+  host.innerHTML = '';
+  state.mechanisms.forEach(function (m, i) {
+    var div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML =
+      '<div class="card__head">' +
+        '<input type="text" data-mech="' + i + '" data-key="name" placeholder="机制名 (例: 隐身闪避)">' +
+        '<button class="icon-btn" data-mech-del="' + i + '" title="删除本卡">×</button>' +
+      '</div>' +
+      '<div class="card__grid">' +
+        '<div class="field"><label class="field__label">输入条件</label><textarea data-mech="' + i + '" data-key="inputs" placeholder="例: 双击屏幕 + cd 剩 0"></textarea></div>' +
+        '<div class="field"><label class="field__label">输出效果</label><textarea data-mech="' + i + '" data-key="outputs" placeholder="例: 0.5s 无敌, 重置 cd 8s"></textarea></div>' +
+        '<div class="field"><label class="field__label">视觉表现</label><textarea data-mech="' + i + '" data-key="visual" placeholder="例: 人物变透明 + 洒出粒子"></textarea></div>' +
+        '<div class="field"><label class="field__label">数据 schema</label><textarea data-mech="' + i + '" data-key="schema" placeholder="例: { cd: 8000, duration: 500 }"></textarea></div>' +
+        '<div class="field" style="grid-column:1/-1"><label class="field__label" style="color:var(--warning)">不允许做的</label><textarea data-mech="' + i + '" data-key="forbid" placeholder="例: 不可叠加闪避 / 不可闪避间接伤害"></textarea></div>' +
+      '</div>';
+    ['name', 'inputs', 'outputs', 'visual', 'schema', 'forbid'].forEach(function (k) {
+      var el = div.querySelector('[data-mech="' + i + '"][data-key="' + k + '"]');
+      if (el) el.value = m[k] || '';
+    });
+    host.appendChild(div);
+  });
+}
+function bindMechs() {
+  $('#btn-add-mech').addEventListener('click', function () {
+    state.mechanisms.push({ name: '', inputs: '', outputs: '', visual: '', schema: '', forbid: '' });
+    renderMechs();
+    scheduleSave();
+  });
+  $('#mech-list').addEventListener('input', function (e) {
+    var el = e.target.closest('[data-mech]');
+    if (!el) return;
+    var i = +el.dataset.mech, k = el.dataset.key;
+    if (state.mechanisms[i]) { state.mechanisms[i][k] = el.value; scheduleSave(); }
+  });
+  $('#mech-list').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-mech-del]');
+    if (!b) return;
+    var i = +b.dataset.mechDel;
+    state.mechanisms.splice(i, 1);
+    renderMechs();
+    scheduleSave();
+  });
+}
+</script>
+<script>
+"use strict";
+
+// ====================================================================
+// CHECK LIST (§10)
+// ====================================================================
+function renderChecks() {
+  var host = $('#check-list');
+  host.innerHTML = '';
+  state.qa.checks.forEach(function (c, i) {
+    var el = document.createElement('div');
+    el.className = 'check-item';
+    el.innerHTML =
+      '<input type="checkbox" data-check="' + i + '" data-key="done" ' + (c.done ? 'checked' : '') + '>' +
+      '<input type="text" data-check="' + i + '" data-key="text" placeholder="例: HUD 所有数字 >= 14px">' +
+      '<button class="icon-btn" data-check-del="' + i + '" title="删除">×</button>';
+    el.querySelector('[data-key="text"]').value = c.text || '';
+    host.appendChild(el);
+  });
+}
+function bindChecks() {
+  $('#btn-add-check').addEventListener('click', function () {
+    state.qa.checks.push({ done: false, text: '' });
+    renderChecks();
+    scheduleSave();
+  });
+  $('#check-list').addEventListener('input', function (e) {
+    var el = e.target.closest('[data-check]');
+    if (!el) return;
+    var i = +el.dataset.check, k = el.dataset.key;
+    if (!state.qa.checks[i]) return;
+    if (k === 'done') state.qa.checks[i].done = el.checked;
+    else state.qa.checks[i][k] = el.value;
+    scheduleSave();
+  });
+  $('#check-list').addEventListener('change', function (e) {
+    var el = e.target.closest('input[type="checkbox"][data-check]');
+    if (!el) return;
+    var i = +el.dataset.check;
+    if (state.qa.checks[i]) { state.qa.checks[i].done = el.checked; scheduleSave(); }
+  });
+  $('#check-list').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-check-del]');
+    if (!b) return;
+    var i = +b.dataset.checkDel;
+    state.qa.checks.splice(i, 1);
+    renderChecks();
+    scheduleSave();
+  });
+}
+
+// ====================================================================
+// IRON RULES (§11)
+// ====================================================================
+function renderIron() {
+  var host = $('#iron-list');
+  host.innerHTML = '';
+  state.rules.forEach(function (r, i) {
+    var el = document.createElement('div');
+    el.className = 'iron-item';
+    el.innerHTML =
+      '<span class="iron-item__icon">⚠️</span>' +
+      '<input type="text" class="iron-item__input" data-iron="' + i + '" placeholder="例: 不准擅自换 UI 样式, 不准跳过状态门">' +
+      '<button class="icon-btn" data-iron-del="' + i + '" title="删除">×</button>';
+    el.querySelector('input').value = r || '';
+    host.appendChild(el);
+  });
+}
+function bindIron() {
+  $('#btn-add-iron').addEventListener('click', function () {
+    state.rules.push('');
+    renderIron();
+    scheduleSave();
+  });
+  $('#iron-list').addEventListener('input', function (e) {
+    var el = e.target.closest('[data-iron]');
+    if (!el) return;
+    var i = +el.dataset.iron;
+    state.rules[i] = el.value;
+    scheduleSave();
+  });
+  $('#iron-list').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-iron-del]');
+    if (!b) return;
+    var i = +b.dataset.ironDel;
+    state.rules.splice(i, 1);
+    renderIron();
+    scheduleSave();
+  });
+}
+
+// ====================================================================
+// IMAGES (§12 sketches)
+// ====================================================================
+function renderImages() {
+  var host = $('#img-list');
+  host.innerHTML = '';
+  state.ref.sketches.forEach(function (s, i) {
+    var el = document.createElement('div');
+    el.className = 'img-thumb';
+    el.innerHTML =
+      '<img src="' + s.dataUrl + '" alt="' + (s.name || '') + '">' +
+      '<button class="img-thumb__del" data-img-del="' + i + '" title="删除">×</button>';
+    host.appendChild(el);
+  });
+  var adder = document.createElement('div');
+  adder.className = 'img-thumb';
+  adder.id = 'img-thumb-add';
+  adder.textContent = '+ 添加图片';
+  adder.addEventListener('click', function () { $('#img-input').click(); });
+  host.appendChild(adder);
+}
+function bindImages() {
+  $('#img-input').addEventListener('change', function (e) {
+    var files = Array.from(e.target.files || []);
+    var pending = files.length;
+    if (!pending) return;
+    files.forEach(function (f) {
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        state.ref.sketches.push({ name: f.name, dataUrl: ev.target.result });
+        if (--pending === 0) { renderImages(); scheduleSave(); }
+      };
+      reader.readAsDataURL(f);
+    });
+    e.target.value = '';
+  });
+  $('#img-list').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-img-del]');
+    if (!b) return;
+    var i = +b.dataset.imgDel;
+    state.ref.sketches.splice(i, 1);
+    renderImages();
+    scheduleSave();
+  });
+}
+
+// ====================================================================
+// SAVE / LOAD / CLEAR
+// ====================================================================
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 600);
+}
+function saveNow() {
+  saveTimer = null;
+  try {
+    var payload = JSON.stringify({ version: 1, savedAt: Date.now(), state: state });
+    localStorage.setItem(STORAGE_KEY, payload);
+    lastSavedAt = Date.now();
+    var st = $('#status-text');
+    st.textContent = '已保存 ' + fmtTime(lastSavedAt);
+    st.classList.add('saved');
+  } catch (e) {
+    console.error('save failed', e);
+    var st2 = $('#status-text');
+    st2.textContent = '保存失败 (localStorage 可能已满)';
+    st2.classList.remove('saved');
+  }
+}
+function loadFromStorage() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    var obj = JSON.parse(raw);
+    if (!obj || typeof obj !== 'object') return false;
+    var loaded = obj.state || obj;
+    var fresh = emptyState();
+    state = Object.assign({}, fresh, loaded);
+    Object.keys(fresh).forEach(function (k) {
+      if (state[k] == null) state[k] = fresh[k];
+      else if (typeof fresh[k] === 'object' && !Array.isArray(fresh[k])) {
+        state[k] = Object.assign({}, fresh[k], state[k] || {});
+      }
+    });
+    if (obj.savedAt) {
+      lastSavedAt = obj.savedAt;
+      $('#status-text').textContent = '已加载草稿 ' + fmtTime(lastSavedAt);
+      $('#status-text').classList.add('saved');
+    }
+    return true;
+  } catch (e) {
+    console.error('load failed', e);
+    return false;
+  }
+}
+function clearAll() {
+  if (!confirm('确定要清空所有表单数据? 此操作不可恢复.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = emptyState();
+  renderAll();
+  toast('已清空', 'ok');
+  $('#status-text').textContent = '已清空';
+  $('#status-text').classList.remove('saved');
+}
+
+// ====================================================================
+// RENDER ALL
+// ====================================================================
+function renderAll() {
+  renderSimpleFields();
+  renderAllChips();
+  $$('[data-tbl]').forEach(renderTable);
+  renderSwatches();
+  renderMechs();
+  renderChecks();
+  renderIron();
+  renderImages();
+}
+
+// ====================================================================
+// EXPORT: MARKDOWN
+// ====================================================================
+function buildMarkdown() {
+  var s = state;
+  var L = [];
+  var meta = s.meta || {};
+  L.push('# ' + (meta.name || '未命名项目') + ' · PRD ' + (meta.version || ''));
+  L.push('');
+  if (meta.tagline) L.push('> ' + meta.tagline);
+  L.push('');
+  L.push('---');
+  L.push('');
+
+  L.push('## 1. 项目元信息');
+  L.push('');
+  L.push('| 字段 | 值 |');
+  L.push('|---|---|');
+  L.push('| 项目名 | ' + (meta.name || '') + ' |');
+  L.push('| 版本号 | ' + (meta.version || '') + ' |');
+  L.push('| 一句话定位 | ' + (meta.tagline || '') + ' |');
+  L.push('| 作者 | ' + (meta.author || '') + ' |');
+  L.push('| 日期 | ' + (meta.date || '') + ' |');
+  L.push('| 目标平台 | ' + (meta.platform || '') + ' |');
+  L.push('');
+
+  L.push('## 2. 核心玩法');
+  L.push('');
+  L.push('### 核心循环 (5 秒讲完)');
+  L.push('');
+  L.push(s.core.loop || '(未填)');
+  L.push('');
+  L.push('### 玩家动词');
+  L.push('');
+  L.push(s.core.verbs || '(未填)');
+  L.push('');
+  if (s.core.feel) { L.push('### 核心爽感'); L.push(''); L.push(s.core.feel); L.push(''); }
+  if (s.core.identity) { L.push('### 像素/身份描述'); L.push(''); L.push(s.core.identity); L.push(''); }
+
+  L.push('## 3. 平台与输入');
+  L.push('');
+  L.push('- **平台形态**: ' + (s.platform.form || []).join(', '));
+  L.push('- **屏幕方向**: ' + (s.platform.orientation || []).join(', '));
+  L.push('- **输入方式**: ' + (s.platform.input || []).join(', '));
+  if (s.platform.resolution) L.push('- **设计基准分辨率**: ' + s.platform.resolution);
+  if (s.platform.minDevice) L.push('- **最低设备要求**: ' + s.platform.minDevice);
+  if (s.platform.notes) { L.push(''); L.push('**其他约束**:'); L.push(''); L.push(s.platform.notes); }
+  L.push('');
+
+  L.push('## 4. 数值表');
+  L.push('');
+  function emitTbl(title, rows, cols) {
+    L.push('### ' + title);
+    L.push('');
+    if (!rows || !rows.length) { L.push('_(未填)_'); L.push(''); return; }
+    L.push('| ' + cols.map(function (c) { return c.label; }).join(' | ') + ' |');
+    L.push('|' + cols.map(function () { return '---'; }).join('|') + '|');
+    rows.forEach(function (r) {
+      L.push('| ' + cols.map(function (c) { return mdTableCell(r[c.key]); }).join(' | ') + ' |');
+    });
+    L.push('');
+  }
+  emitTbl('敌人表', s.data.enemies, [
+    { key: 'name', label: '名称' }, { key: 'hp', label: 'HP' }, { key: 'speed', label: '速度' },
+    { key: 'damage', label: '伤害' }, { key: 'behavior', label: '行为' }, { key: 'drop', label: '掉落' }
+  ]);
+  emitTbl('武器表', s.data.weapons, [
+    { key: 'name', label: '名称' }, { key: 'damage', label: '单发伤害' }, { key: 'fireRate', label: '开火间隔(ms)' },
+    { key: 'projCount', label: '弹量' }, { key: 'pattern', label: '弹幕型' }, { key: 'notes', label: '备注' }
+  ]);
+  emitTbl('资源表', s.data.resources, [
+    { key: 'name', label: '名称' }, { key: 'source', label: '来源' },
+    { key: 'sink', label: '消耗点' }, { key: 'cap', label: '上限' }, { key: 'notes', label: '备注' }
+  ]);
+  emitTbl('难度曲线', s.data.curve, [
+    { key: 'time', label: '时间' }, { key: 'enemySpawnRate', label: '敌人出生/s' },
+    { key: 'enemyHpMult', label: 'HP倍率' }, { key: 'event', label: '关键事件' }, { key: 'notes', label: '备注' }
+  ]);
+
+  L.push('## 5. 视觉规范');
+  L.push('');
+  if (s.visual.palette && s.visual.palette.length) {
+    L.push('### 主色板');
+    L.push('');
+    L.push('| 名称 | HEX |');
+    L.push('|---|---|');
+    s.visual.palette.forEach(function (sw) {
+      L.push('| ' + (sw.label || '-') + ' | `' + (sw.color || '').toUpperCase() + '` |');
+    });
+    L.push('');
+  }
+  L.push('### 字号档位');
+  L.push('');
+  L.push('- 主字号: ' + (s.visual.fontMain || '未填'));
+  L.push('- 次字号: ' + (s.visual.fontSub || '未填'));
+  L.push('- 标题字号: ' + (s.visual.fontTitle || '未填'));
+  L.push('');
+  if (s.visual.uiRatio) { L.push('### UI 占用百分比'); L.push(''); L.push(s.visual.uiRatio); L.push(''); }
+  if (s.visual.reference) { L.push('### 画风参考'); L.push(''); L.push(s.visual.reference); L.push(''); }
+
+  L.push('## 6. 关卡/场景');
+  L.push('');
+  emitTbl('节奏表', s.level.timeline, [
+    { key: 'time', label: '时间/Stage' }, { key: 'scene', label: '场景' },
+    { key: 'event', label: '关键事件' }, { key: 'music', label: '音乐' }, { key: 'goal', label: '玩家目标' }
+  ]);
+  if (s.level.notes) { L.push('### 总体关卡设计说明'); L.push(''); L.push(s.level.notes); L.push(''); }
+
+  L.push('## 7. 系统/机制');
+  L.push('');
+  if (!s.mechanisms || !s.mechanisms.length) {
+    L.push('_(未添加任何机制卡片)_');
+    L.push('');
+  } else {
+    s.mechanisms.forEach(function (m) {
+      L.push('### ' + (m.name || '(未命名机制)'));
+      L.push('');
+      if (m.inputs)  L.push('- **输入条件**: ' + m.inputs);
+      if (m.outputs) L.push('- **输出效果**: ' + m.outputs);
+      if (m.visual)  L.push('- **视觉表现**: ' + m.visual);
+      if (m.schema)  L.push('- **数据 schema**: `' + m.schema + '`');
+      if (m.forbid) {
+        L.push('');
+        L.push('> ⚠️ **不允许做的**: ' + m.forbid);
+      }
+      L.push('');
+    });
+  }
+
+  L.push('## 8. UI/HUD 元素');
+  L.push('');
+  emitTbl('UI 元素表', s.ui.elements, [
+    { key: 'area', label: '区域' }, { key: 'element', label: '元素' },
+    { key: 'position', label: '位置' }, { key: 'content', label: '内容示例' },
+    { key: 'font', label: '字号' }, { key: 'notes', label: '备注' }
+  ]);
+  if (s.ui.principles) { L.push('### UI 设计总原则'); L.push(''); L.push(s.ui.principles); L.push(''); }
+
+  L.push('## 9. 资源清单');
+  L.push('');
+  emitTbl('资源表', s.assets.list, [
+    { key: 'type', label: '类型' }, { key: 'name', label: '名称' },
+    { key: 'source', label: '来源/路径' }, { key: 'format', label: '格式/规格' }, { key: 'notes', label: '备注' }
+  ]);
+
+  L.push('## 10. 验收/自检');
+  L.push('');
+  if (s.qa.goal) { L.push('### 体验目标'); L.push(''); L.push(s.qa.goal); L.push(''); }
+  if (s.qa.checks && s.qa.checks.length) {
+    L.push('### 自检清单');
+    L.push('');
+    s.qa.checks.forEach(function (c) {
+      L.push('- [' + (c.done ? 'x' : ' ') + '] ' + (c.text || ''));
+    });
+    L.push('');
+  }
+  if (s.qa.reference) { L.push('### 截图标杆'); L.push(''); L.push(s.qa.reference); L.push(''); }
+
+  L.push('## 11. 内容铁律');
+  L.push('');
+  if (!s.rules || !s.rules.length) {
+    L.push('_(未填)_');
+  } else {
+    s.rules.forEach(function (r) { if (r && r.trim()) L.push('> ⚠️ ' + r); });
+  }
+  L.push('');
+
+  L.push('## 12. 参考材料');
+  L.push('');
+  if (s.ref.competitors && s.ref.competitors.length) {
+    L.push('### 竞品');
+    L.push('');
+    L.push('| 名称 | 链接 | 引用点 |');
+    L.push('|---|---|---|');
+    s.ref.competitors.forEach(function (c) {
+      L.push('| ' + mdTableCell(c.name) + ' | ' + mdTableCell(c.link) + ' | ' + mdTableCell(c.reason) + ' |');
+    });
+    L.push('');
+  }
+  if (s.ref.style) { L.push('### 风格 reference'); L.push(''); L.push(s.ref.style); L.push(''); }
+  if (s.ref.sketches && s.ref.sketches.length) {
+    L.push('### 手绘草图 / 图片');
+    L.push('');
+    s.ref.sketches.forEach(function (sk) {
+      L.push('- ' + (sk.name || '(图片)') + ' (base64 内嵌, 详见 JSON 导出)');
+    });
+    L.push('');
+  }
+  if (s.ref.notes) { L.push('### 补充说明'); L.push(''); L.push(s.ref.notes); L.push(''); }
+
+  return L.join('\n');
+}
+
+function buildJSON() {
+  return JSON.stringify(state, null, 2);
+}
+
+// ====================================================================
+// MODAL
+// ====================================================================
+function showModal(title, body, filename, mime) {
+  $('#modal-title').textContent = title;
+  $('#modal-body').textContent = body;
+  $('#modal').classList.add('show');
+  $('#modal-download').onclick = function () { downloadBlob(filename, body, mime); };
+  $('#modal-copy').onclick = function () {
+    try {
+      navigator.clipboard.writeText(body).then(function () { toast('已复制', 'ok'); });
+    } catch (e) { toast('复制失败', 'err'); }
+  };
+}
+function bindModal() {
+  $('#modal-close').addEventListener('click', function () { $('#modal').classList.remove('show'); });
+  $('#modal').addEventListener('click', function (e) {
+    if (e.target.id === 'modal') $('#modal').classList.remove('show');
+  });
+}
+
+// ====================================================================
+// EXPORT BUTTONS
+// ====================================================================
+function exportMd() {
+  var md = buildMarkdown();
+  var slug = slugify(state.meta.name || 'untitled');
+  var ver = slugify(state.meta.version || 'v1');
+  var filename = slug + '-PRD-' + ver + '.md';
+  showModal('Markdown 预览', md, filename, 'text/markdown;charset=utf-8');
+  downloadBlob(filename, md, 'text/markdown;charset=utf-8');
+  toast('已导出 ' + filename, 'ok');
+}
+function exportJson() {
+  var js = buildJSON();
+  var slug = slugify(state.meta.name || 'untitled');
+  var ver = slugify(state.meta.version || 'v1');
+  var filename = slug + '-PRD-' + ver + '.json';
+  showModal('JSON 预览', js, filename, 'application/json;charset=utf-8');
+  downloadBlob(filename, js, 'application/json;charset=utf-8');
+  toast('已导出 ' + filename, 'ok');
+}
+
+// ====================================================================
+// BOOT
+// ====================================================================
+function boot() {
+  buildNav();
+  bindTopbar();
+  bindSimpleFields();
+  buildChips();
+  bindTables();
+  bindSwatches();
+  bindMechs();
+  bindChecks();
+  bindIron();
+  bindImages();
+  bindModal();
+  $('#btn-save').addEventListener('click', function () { saveNow(); toast('已保存', 'ok'); });
+  $('#btn-clear').addEventListener('click', clearAll);
+  $('#btn-export-md').addEventListener('click', exportMd);
+  $('#btn-export-json').addEventListener('click', exportJson);
+  window.addEventListener('scroll', onScrollHighlight, { passive: true });
+  window.addEventListener('hashchange', function () {
+    var id = location.hash.replace('#', '');
+    if (id) setActiveNav(id);
+  });
+  setInterval(function () { if (saveTimer == null) saveNow(); }, 30000);
+
+  loadFromStorage();
+  renderAll();
+  if (location.hash) {
+    var id = location.hash.replace('#', '');
+    var el = document.getElementById(id);
+    if (el) { el.scrollIntoView({ block: 'start' }); setActiveNav(id); }
+  }
+}
+
+// expose for tests / programmatic access
+window.__prd = {
+  get state() { return state; },
+  set state(v) { state = v; renderAll(); },
+  buildMarkdown: buildMarkdown,
+  buildJSON: buildJSON,
+  exportMd: exportMd,
+  exportJson: exportJson,
+  saveNow: saveNow,
+  loadFromStorage: loadFromStorage,
+  clearAll: clearAll,
+  emptyState: emptyState,
+  STORAGE_KEY: STORAGE_KEY,
+  SECTIONS: SECTIONS,
+  renderAll: renderAll
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+</script>
+
+</body>
+</html>
+
