@@ -1,0 +1,9 @@
+name = "gpt-draft"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+account_id = "78897509d255d9c47b99b681f21f4447"
+
+# KV binding — id will be filled after `wrangler kv namespace create GAME_PRD_DRAFTS`
+[[kv_namespaces]]
+binding = "DRAFTS"
+id = "b7808fa7d2554113af273bc1b7e1c974"

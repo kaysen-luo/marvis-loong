@@ -64,3 +64,8 @@ yarn-debug.log*
 *.swo
 
 .openclaw/
+
+# cloud drafts
+public/*.bak-pre-*
+workers/**/node_modules
+workers/**/.wrangler

@@ -276,6 +276,44 @@
   }
   .toast.ok { border-color: var(--ok); color: var(--ok); }
   .toast.err { border-color: var(--danger); color: var(--danger); }
+  /* --- Cloud drafts (MVS-010 B) --- */
+  .cloud-wrap { position: relative; display: inline-block; }
+  .cloud-menu {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 220;
+    min-width: 200px; background: var(--bg-2); border: 1px solid var(--border-2);
+    border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    padding: 4px 0; display: none;
+  }
+  .cloud-menu.show { display: block; }
+  .cloud-menu__item {
+    display: block; width: 100%; text-align: left;
+    padding: 8px 14px; background: transparent; border: none;
+    color: var(--text-1); font-size: 13px; cursor: pointer;
+  }
+  .cloud-menu__item:hover { background: var(--bg-3); color: var(--accent); }
+  .cloud-menu__item[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .cloud-menu__sep { height: 1px; background: var(--border-1); margin: 4px 0; }
+  .cloud-modal-body { padding: 18px 20px; color: var(--text-1); font-size: 13px; line-height: 1.65; }
+  .cloud-modal-body p { margin: 0 0 10px; }
+  .cloud-modal-body input[type="password"],
+  .cloud-modal-body input[type="text"] {
+    width: 100%; padding: 8px 10px; background: var(--bg-0); color: var(--text-1);
+    border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+    font-size: 13px; margin-top: 6px;
+  }
+  .cloud-modal-body input:focus { outline: none; border-color: var(--accent); }
+  .cloud-modal-body .help { color: var(--text-3); font-size: 12px; margin-top: 8px; }
+  .cloud-list { display: flex; flex-direction: column; gap: 6px; }
+  .cloud-list__row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    background: var(--bg-0); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  }
+  .cloud-list__name { flex: 1; font-weight: 500; color: var(--text-1); word-break: break-all; }
+  .cloud-list__meta { color: var(--text-3); font-size: 11px; margin-right: 8px; white-space: nowrap; }
+  .cloud-list__row .btn { padding: 3px 8px; font-size: 11px; }
+  .cloud-list__empty { text-align: center; color: var(--text-3); padding: 20px; font-size: 12px; }
+  .cloud-badge { display: inline-block; padding: 1px 6px; margin-left: 6px; border-radius: 4px;
+    background: rgba(96,165,250,0.15); color: var(--accent); font-size: 10px; letter-spacing: 0.02em; }
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   @media (max-width: 900px) {
     .nav { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-1); }
@@ -302,6 +340,18 @@
     <button class="btn btn--ghost btn--sm" id="btn-save">保存草稿</button>
     <button class="btn btn--sm" id="btn-export-md">导出 .md</button>
     <button class="btn btn--sm" id="btn-export-json">导出 .json</button>
+    <div class="cloud-wrap">
+      <button class="btn btn--ghost btn--sm" id="btn-cloud" aria-haspopup="true" aria-expanded="false">☁️ 云端 <span id="cloud-badge" class="cloud-badge" style="display:none">已启用</span></button>
+      <div class="cloud-menu" id="cloud-menu" role="menu">
+        <button class="cloud-menu__item" data-cloud-act="enable">🔑 启用云端 (输入密码)</button>
+        <button class="cloud-menu__item" data-cloud-act="save" disabled>⬆️ 保存到云端</button>
+        <button class="cloud-menu__item" data-cloud-act="load" disabled>⬇️ 从云端加载</button>
+        <button class="cloud-menu__item" data-cloud-act="list" disabled>📋 云端草稿列表</button>
+        <div class="cloud-menu__sep"></div>
+        <button class="cloud-menu__item" data-cloud-act="switch" disabled>🔄 切换账号</button>
+        <button class="cloud-menu__item" data-cloud-act="disable" disabled>🚪 退出云端模式</button>
+      </div>
+    </div>
     <button class="btn btn--ghost btn--sm btn--danger" id="btn-clear">清空</button>
   </div>
 </header>
@@ -639,6 +689,22 @@
     <div class="modal__foot">
       <button class="btn btn--ghost btn--sm" id="modal-copy">复制</button>
       <button class="btn btn--primary btn--sm" id="modal-download">下载</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="modal-cloud">
+  <div class="modal" style="max-width:520px">
+    <div class="modal__head">
+      <div class="modal__title" id="modal-cloud-title">云端</div>
+      <button class="btn btn--ghost btn--sm" id="modal-cloud-close">×</button>
+    </div>
+    <div class="modal__body">
+      <div class="cloud-modal-body" id="modal-cloud-body"></div>
+    </div>
+    <div class="modal__foot" id="modal-cloud-foot">
+      <button class="btn btn--ghost btn--sm" id="modal-cloud-cancel">取消</button>
+      <button class="btn btn--primary btn--sm" id="modal-cloud-ok">确定</button>
     </div>
   </div>
 </div>
@@ -1472,6 +1538,452 @@ function exportJson() {
 // ====================================================================
 // BOOT
 // ====================================================================
+// ====================================================================
+// CLOUD DRAFTS (MVS-010 B · zero-knowledge)
+// ====================================================================
+var CLOUD_API_URL = 'https://gpt-draft.luomycn.workers.dev';
+var CLOUD_ENABLED_KEY = 'game-prd-tool-cloud-enabled';
+var CLOUD_SALT_STORE_KEY = 'game-prd-tool-cloud-salt';
+var CLOUD_OWNER_MARKER = 'gpt-draft-owner-v1';
+var CLOUD_PBKDF2_ITER = 210000;
+var CLOUD_SALT_BYTES = 16;
+var CLOUD_IV_BYTES = 12;
+
+var cloudSession = null; // {key: CryptoKey, owner: string, salt: Uint8Array}
+var cloudLastSyncedAt = 0;
+
+function cloudBufToB64(buf) {
+  var bytes = new Uint8Array(buf);
+  var s = '';
+  for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
+}
+function cloudB64ToBuf(b64) {
+  var bin = atob(b64);
+  var arr = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+function cloudBufToHex(buf) {
+  var bytes = new Uint8Array(buf);
+  var s = '';
+  for (var i = 0; i < bytes.length; i++) {
+    var h = bytes[i].toString(16);
+    if (h.length < 2) h = '0' + h;
+    s += h;
+  }
+  return s;
+}
+
+function cloudCryptoOk() {
+  return !!(window.crypto && window.crypto.subtle);
+}
+
+async function cloudDeriveKeyAndOwner(password, saltBytes) {
+  if (!cloudCryptoOk()) throw new Error('web crypto unavailable');
+  var enc = new TextEncoder();
+  var baseKey = await crypto.subtle.importKey(
+    'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']
+  );
+  var aesKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: CLOUD_PBKDF2_ITER, hash: 'SHA-256' },
+    baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+  var rawBits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: saltBytes, iterations: CLOUD_PBKDF2_ITER, hash: 'SHA-256' },
+    baseKey, 256
+  );
+  var hmacKey = await crypto.subtle.importKey(
+    'raw', rawBits, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  var ownerSig = await crypto.subtle.sign('HMAC', hmacKey, enc.encode(CLOUD_OWNER_MARKER));
+  var ownerHex = cloudBufToHex(ownerSig).slice(0, 16);
+  return { key: aesKey, owner: ownerHex };
+}
+
+async function cloudEncrypt(plainJSON) {
+  if (!cloudSession) throw new Error('cloud session missing');
+  var iv = crypto.getRandomValues(new Uint8Array(CLOUD_IV_BYTES));
+  var enc = new TextEncoder();
+  var ct = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: iv },
+    cloudSession.key,
+    enc.encode(plainJSON)
+  );
+  return {
+    ciphertext: cloudBufToB64(ct),
+    iv: cloudBufToB64(iv),
+    salt: cloudBufToB64(cloudSession.salt)
+  };
+}
+
+async function cloudDecrypt(ciphertextB64, ivB64) {
+  if (!cloudSession) throw new Error('cloud session missing');
+  var iv = cloudB64ToBuf(ivB64);
+  var ct = cloudB64ToBuf(ciphertextB64);
+  var pt = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: iv },
+    cloudSession.key,
+    ct
+  );
+  return new TextDecoder().decode(pt);
+}
+
+async function cloudApi(path, opts) {
+  opts = opts || {};
+  var res;
+  try {
+    res = await fetch(CLOUD_API_URL + path, opts);
+  } catch (netErr) {
+    var e = new Error('network');
+    e.kind = 'network';
+    throw e;
+  }
+  if (res.status === 429) {
+    var re = new Error('rate limited');
+    re.kind = 'rate';
+    throw re;
+  }
+  if (res.status === 404) return { __notFound: true };
+  if (!res.ok) {
+    var text = await res.text().catch(function () { return ''; });
+    var he = new Error('http ' + res.status + ' ' + text);
+    he.kind = 'http';
+    he.status = res.status;
+    throw he;
+  }
+  return res.json();
+}
+
+function cloudSetEnabledFlag(v) {
+  try {
+    if (v) localStorage.setItem(CLOUD_ENABLED_KEY, '1');
+    else localStorage.removeItem(CLOUD_ENABLED_KEY);
+  } catch (e) { /* ignore */ }
+}
+function cloudIsEnabledFlag() {
+  try { return localStorage.getItem(CLOUD_ENABLED_KEY) === '1'; } catch (e) { return false; }
+}
+
+function cloudRefreshMenuState() {
+  var enabled = !!cloudSession;
+  var enableBtn = document.querySelector('[data-cloud-act="enable"]');
+  if (enableBtn) enableBtn.textContent = enabled ? '🔒 已启用云端' : '🔑 启用云端 (输入密码)';
+  if (enableBtn) enableBtn.disabled = enabled;
+  ['save', 'load', 'list', 'switch', 'disable'].forEach(function (act) {
+    var btn = document.querySelector('[data-cloud-act="' + act + '"]');
+    if (btn) btn.disabled = !enabled;
+  });
+  var badge = $('#cloud-badge');
+  if (badge) {
+    badge.style.display = enabled ? 'inline-block' : 'none';
+    if (enabled && cloudSession) badge.textContent = '账号 ' + cloudSession.owner;
+  }
+}
+
+function cloudModal(opts) {
+  return new Promise(function (resolve) {
+    var mask = $('#modal-cloud');
+    $('#modal-cloud-title').textContent = opts.title || '云端';
+    $('#modal-cloud-body').innerHTML = opts.bodyHtml || '';
+    var okBtn = $('#modal-cloud-ok');
+    var cancelBtn = $('#modal-cloud-cancel');
+    var closeBtn = $('#modal-cloud-close');
+    okBtn.textContent = opts.okText || '确定';
+    cancelBtn.textContent = opts.cancelText || '取消';
+    okBtn.style.display = opts.hideOk ? 'none' : '';
+    mask.classList.add('show');
+    function cleanup(v) {
+      mask.classList.remove('show');
+      okBtn.removeEventListener('click', okH);
+      cancelBtn.removeEventListener('click', cancelH);
+      closeBtn.removeEventListener('click', cancelH);
+      resolve(v);
+    }
+    function okH() { cleanup({ ok: true, root: $('#modal-cloud-body') }); }
+    function cancelH() { cleanup({ ok: false }); }
+    okBtn.addEventListener('click', okH);
+    cancelBtn.addEventListener('click', cancelH);
+    closeBtn.addEventListener('click', cancelH);
+    setTimeout(function () {
+      var f = mask.querySelector('input');
+      if (f) f.focus();
+    }, 30);
+  });
+}
+
+function cloudEscapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function cloudFmtDate(ts) {
+  if (!ts) return '—';
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+         ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+
+async function cloudPromptPassword(reason) {
+  var help = reason || '密码只在你的浏览器里，不会发送到服务器。忘了就找不回。建议记本地。';
+  var res = await cloudModal({
+    title: '🔑 启用云端草稿',
+    bodyHtml:
+      '<p>云端采用零知识加密（zero-knowledge）：密码永远不离开浏览器，服务端只见密文。</p>' +
+      '<p><strong>设置密码</strong></p>' +
+      '<input type="password" id="cloud-pw" autocomplete="new-password" placeholder="至少 8 位">' +
+      '<div class="help">' + cloudEscapeHtml(help) + '</div>'
+  });
+  if (!res.ok) return null;
+  var pw = res.root.querySelector('#cloud-pw').value || '';
+  if (pw.length < 8) {
+    toast('密码至少 8 位', 'err');
+    return null;
+  }
+  return pw;
+}
+
+async function cloudEnable(silent) {
+  if (!cloudCryptoOk()) { toast('浏览器不支持 Web Crypto', 'err'); return false; }
+  var pw = await cloudPromptPassword();
+  if (!pw) return false;
+  var saltHex = null;
+  try { saltHex = localStorage.getItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  var salt;
+  if (saltHex && /^[a-f0-9]+$/i.test(saltHex) && saltHex.length === CLOUD_SALT_BYTES * 2) {
+    salt = new Uint8Array(CLOUD_SALT_BYTES);
+    for (var i = 0; i < CLOUD_SALT_BYTES; i++) salt[i] = parseInt(saltHex.substr(i * 2, 2), 16);
+  } else {
+    salt = crypto.getRandomValues(new Uint8Array(CLOUD_SALT_BYTES));
+    try { localStorage.setItem(CLOUD_SALT_STORE_KEY, cloudBufToHex(salt)); } catch (e) { /* ignore */ }
+  }
+  try {
+    var derived = await cloudDeriveKeyAndOwner(pw, salt);
+    cloudSession = { key: derived.key, owner: derived.owner, salt: salt };
+    cloudSetEnabledFlag(true);
+    cloudRefreshMenuState();
+    if (!silent) toast('☁️ 云端已启用（账号 ' + derived.owner + '）', 'ok');
+    return true;
+  } catch (e) {
+    console.error(e);
+    toast('密钥派生失败', 'err');
+    return false;
+  }
+}
+
+function cloudDisable(silent) {
+  cloudSession = null;
+  cloudSetEnabledFlag(false);
+  try { localStorage.removeItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  cloudRefreshMenuState();
+  if (!silent) toast('已退出云端模式', 'ok');
+}
+
+async function cloudSwitch() {
+  cloudSession = null;
+  try { localStorage.removeItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  cloudRefreshMenuState();
+  await cloudEnable();
+}
+
+async function cloudSave() {
+  if (!cloudSession) { toast('请先启用云端', 'err'); return; }
+  var defaultName = (state.meta && state.meta.name) ? state.meta.name : '未命名草稿';
+  var res = await cloudModal({
+    title: '⬆️ 保存到云端',
+    bodyHtml:
+      '<p>设置一个草稿名（重名会覆盖云端旧版本）。</p>' +
+      '<input type="text" id="cloud-name" value="' + cloudEscapeHtml(defaultName) + '" maxlength="120">'
+  });
+  if (!res.ok) return;
+  var name = (res.root.querySelector('#cloud-name').value || '').trim();
+  if (!name) { toast('名字不能为空', 'err'); return; }
+  try {
+    var plain = JSON.stringify({ version: 1, savedAt: Date.now(), state: state });
+    var enc = await cloudEncrypt(plain);
+    var resp = await cloudApi('/draft?owner=' + encodeURIComponent(cloudSession.owner) + '&name=' + encodeURIComponent(name), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(enc)
+    });
+    if (resp.__notFound) throw new Error('unexpected 404 on PUT');
+    cloudLastSyncedAt = resp.updatedAt || Date.now();
+    var st = $('#status-text');
+    st.textContent = '已同步云端 ' + fmtTime(cloudLastSyncedAt);
+    st.classList.add('saved');
+    toast('☁️ 已保存到云端', 'ok');
+  } catch (e) {
+    console.error(e);
+    if (e.kind === 'network') toast('云端不可达，已保存本地', 'err');
+    else if (e.kind === 'rate') toast('请求过频，稍后再试', 'err');
+    else toast('云端保存失败：' + (e.message || 'unknown'), 'err');
+  }
+}
+
+function cloudListRowHtml(name, updatedAt, size, showLoadBtn) {
+  return '<div class="cloud-list__row" data-cloud-row="' + cloudEscapeHtml(name) + '">' +
+         '<div class="cloud-list__name">' + cloudEscapeHtml(name) + '</div>' +
+         '<div class="cloud-list__meta">' + cloudFmtDate(updatedAt) + ' · ' + (size || 0) + 'B</div>' +
+         (showLoadBtn ? '<button class="btn btn--primary btn--sm" data-cloud-load>加载</button>' : '') +
+         '<button class="btn btn--ghost btn--sm btn--danger" data-cloud-del>删除</button>' +
+         '</div>';
+}
+
+async function cloudFetchList() {
+  return cloudApi('/list?owner=' + encodeURIComponent(cloudSession.owner));
+}
+
+async function cloudList() {
+  if (!cloudSession) { toast('请先启用云端', 'err'); return; }
+  try {
+    var data = await cloudFetchList();
+    var items = (data && data.drafts) || [];
+    var body = items.length
+      ? '<div class="cloud-list">' + items.map(function (d) {
+          return cloudListRowHtml(d.name, d.updatedAt, d.size, false);
+        }).join('') + '</div>'
+      : '<div class="cloud-list__empty">云端还没有草稿，先去「保存到云端」存一份。</div>';
+    await cloudModal({
+      title: '📋 云端草稿列表',
+      bodyHtml: body,
+      hideOk: true,
+      cancelText: '关闭'
+    });
+  } catch (e) {
+    console.error(e);
+    if (e.kind === 'network') toast('云端不可达', 'err');
+    else if (e.kind === 'rate') toast('请求过频', 'err');
+    else toast('拉列表失败：' + (e.message || ''), 'err');
+  }
+}
+
+async function cloudLoadPick() {
+  if (!cloudSession) { toast('请先启用云端', 'err'); return; }
+  try {
+    var data = await cloudFetchList();
+    var items = (data && data.drafts) || [];
+    var body = items.length
+      ? '<div class="cloud-list">' + items.map(function (d) {
+          return cloudListRowHtml(d.name, d.updatedAt, d.size, true);
+        }).join('') + '</div>'
+      : '<div class="cloud-list__empty">云端还没有草稿，先去「保存到云端」存一份。</div>';
+    await cloudModal({
+      title: '⬇️ 从云端加载',
+      bodyHtml: body,
+      hideOk: true,
+      cancelText: '关闭'
+    });
+  } catch (e) {
+    console.error(e);
+    if (e.kind === 'network') toast('云端不可达', 'err');
+    else if (e.kind === 'rate') toast('请求过频', 'err');
+    else toast('拉列表失败：' + (e.message || ''), 'err');
+  }
+}
+
+async function cloudLoadByName(name) {
+  try {
+    var data = await cloudApi('/draft?owner=' + encodeURIComponent(cloudSession.owner) + '&name=' + encodeURIComponent(name));
+    if (data.__notFound) { toast('云端没找到这份草稿', 'err'); return; }
+    var plain;
+    try {
+      plain = await cloudDecrypt(data.ciphertext, data.iv);
+    } catch (e) {
+      console.error(e);
+      toast('密码错误，或密文损坏', 'err');
+      return;
+    }
+    var obj;
+    try { obj = JSON.parse(plain); }
+    catch (e) { toast('解密后 JSON 无法解析', 'err'); return; }
+    var loaded = obj.state || obj;
+    var fresh = emptyState();
+    var next = Object.assign({}, fresh, loaded);
+    Object.keys(fresh).forEach(function (k) {
+      if (next[k] == null) next[k] = fresh[k];
+      else if (typeof fresh[k] === 'object' && !Array.isArray(fresh[k])) {
+        next[k] = Object.assign({}, fresh[k], next[k] || {});
+      }
+    });
+    state = next;
+    renderAll();
+    scheduleSave();
+    cloudLastSyncedAt = data.updatedAt || Date.now();
+    $('#status-text').textContent = '已从云端加载 ' + fmtTime(cloudLastSyncedAt);
+    $('#status-text').classList.add('saved');
+    toast('☁️ 已加载「' + name + '」', 'ok');
+    $('#modal-cloud').classList.remove('show');
+  } catch (e) {
+    console.error(e);
+    if (e.kind === 'network') toast('云端不可达', 'err');
+    else if (e.kind === 'rate') toast('请求过频', 'err');
+    else toast('拉取失败：' + (e.message || ''), 'err');
+  }
+}
+
+async function cloudDeleteByName(name) {
+  if (!confirm('确定从云端删除「' + name + '」？不可恢复。')) return;
+  try {
+    await cloudApi('/draft?owner=' + encodeURIComponent(cloudSession.owner) + '&name=' + encodeURIComponent(name), { method: 'DELETE' });
+    toast('已删除「' + name + '」', 'ok');
+    var mask = $('#modal-cloud');
+    if (mask.classList.contains('show')) {
+      cloudList();
+    }
+  } catch (e) {
+    console.error(e);
+    if (e.kind === 'network') toast('云端不可达', 'err');
+    else if (e.kind === 'rate') toast('请求过频', 'err');
+    else toast('删除失败：' + (e.message || ''), 'err');
+  }
+}
+
+function bindCloud() {
+  var btn = $('#btn-cloud');
+  var menu = $('#cloud-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var show = !menu.classList.contains('show');
+    menu.classList.toggle('show', show);
+    btn.setAttribute('aria-expanded', show ? 'true' : 'false');
+  });
+  document.addEventListener('click', function (e) {
+    if (!menu.contains(e.target) && e.target !== btn) {
+      menu.classList.remove('show');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  menu.addEventListener('click', function (e) {
+    var it = e.target.closest('[data-cloud-act]');
+    if (!it || it.disabled) return;
+    var act = it.dataset.cloudAct;
+    menu.classList.remove('show');
+    btn.setAttribute('aria-expanded', 'false');
+    if (act === 'enable') cloudEnable();
+    else if (act === 'save') cloudSave();
+    else if (act === 'load') cloudLoadPick();
+    else if (act === 'list') cloudList();
+    else if (act === 'switch') cloudSwitch();
+    else if (act === 'disable') cloudDisable();
+  });
+  // Delegate list clicks (load / delete inside modal)
+  $('#modal-cloud').addEventListener('click', function (e) {
+    var row = e.target.closest('[data-cloud-row]');
+    if (!row) return;
+    var name = row.dataset.cloudRow;
+    if (e.target.closest('[data-cloud-load]')) cloudLoadByName(name);
+    else if (e.target.closest('[data-cloud-del]')) cloudDeleteByName(name);
+  });
+  cloudRefreshMenuState();
+  // Auto-prompt if user previously enabled cloud
+  if (cloudIsEnabledFlag() && cloudCryptoOk()) {
+    setTimeout(function () { cloudEnable(true); }, 400);
+  }
+}
+
+
 function boot() {
   buildNav();
   bindTopbar();
@@ -1484,6 +1996,7 @@ function boot() {
   bindIron();
   bindImages();
   bindModal();
+  bindCloud();
   $('#btn-save').addEventListener('click', function () { saveNow(); toast('已保存', 'ok'); });
   $('#btn-clear').addEventListener('click', clearAll);
   $('#btn-export-md').addEventListener('click', exportMd);
@@ -1517,6 +2030,13 @@ window.__prd = {
   clearAll: clearAll,
   emptyState: emptyState,
   STORAGE_KEY: STORAGE_KEY,
+  cloudEnable: cloudEnable,
+  cloudDisable: cloudDisable,
+  cloudSave: cloudSave,
+  cloudList: cloudList,
+  cloudLoadPick: cloudLoadPick,
+  cloudLoadByName: cloudLoadByName,
+  get cloudSession() { return cloudSession; },
   SECTIONS: SECTIONS,
   renderAll: renderAll
 };

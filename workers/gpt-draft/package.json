@@ -1,0 +1,14 @@
+{
+  "name": "gpt-draft",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker · zero-knowledge cloud drafts for MVS-010 game-prd-tool",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.103.0"
+  }
+}
