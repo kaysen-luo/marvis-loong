@@ -1,0 +1,665 @@
+/* MVS-007 Phaser 3 白模 · grep: Crawler Rusher Spitter joystick pulse energyPulse
+ * 10 卡: 加速射击 穿透弹 爆裂弹 暴击强化 环绕光刃 定时地雷 无人机僚机 强化装甲 急促脚步 吸血涂层
+ */
+(function () {
+'use strict';
+const W = 1080, H = 1920;
+const COLORS = {
+  player: 0xffffff, bullet: 0x88ddff,
+  crawler: 0xff4444, rusher: 0xff9933, spitter: 0xaa66ff,
+  hpFull: 0x33ff66, hpMid: 0xffcc33, hpLow: 0xff3333,
+  energy: 0x66ff99,
+};
+
+function freshState() {
+  return {
+    hpMax: 100, hp: 100, speed: 200,
+    fireRate: 300, bulletDmg: 10, bulletSpeed: 400,
+    pierce: 0, explosive: false, critChance: 0, critMult: 3,
+    pulseCd: 8000, pulseReady: 0,
+    level: 1, xp: 0, xpToNext: 20, kills: 0, startTime: 0,
+    hasOrbit: false, hasMines: false, hasDrone: false,
+    lifesteal: 0, cards: [],
+    paused: false, ended: false,
+    rusherUnlocked: false, spitterUnlocked: false,
+  };
+}
+let state = freshState();
+
+const CARDS = [
+  { id: 'fastFire',  name: '加速射击',   desc: '射速 +50%',                              apply: (s)=>{ s.fireRate = Math.max(80, Math.round(s.fireRate * 0.66)); } },
+  { id: 'pierce',    name: '穿透弹',     desc: '子弹穿透第 1 个敌人后继续飞',            apply: (s)=>{ s.pierce = Math.max(1, s.pierce + 1); }, once: true },
+  { id: 'explosive', name: '爆裂弹',     desc: '子弹击中触发小爆炸(半径 60,伤 8)',       apply: (s)=>{ s.explosive = true; }, once: true },
+  { id: 'crit',      name: '暴击强化',   desc: '20% 概率暴击,伤害 3x',                   apply: (s)=>{ s.critChance = Math.min(0.6, s.critChance + 0.2); } },
+  { id: 'orbit',     name: '环绕光刃',   desc: '3 把光刃绕玩家旋转,接触 15 伤/秒',       apply: (s)=>{ s.hasOrbit = true; }, once: true },
+  { id: 'mines',     name: '定时地雷',   desc: '每 3 秒在脚下放雷,3 秒后爆(半径 80,30 伤)', apply: (s)=>{ s.hasMines = true; }, once: true },
+  { id: 'drone',     name: '无人机僚机', desc: '召唤 1 台自动射击的小无人机',            apply: (s)=>{ s.hasDrone = true; }, once: true },
+  { id: 'armor',     name: '强化装甲',   desc: '血量上限 +50(同时补满当前血)',           apply: (s)=>{ s.hpMax += 50; s.hp = s.hpMax; } },
+  { id: 'boots',     name: '急促脚步',   desc: '移速 +20%',                              apply: (s)=>{ s.speed *= 1.2; } },
+  { id: 'lifesteal', name: '吸血涂层',   desc: '击杀敌人回 2 血',                        apply: (s)=>{ s.lifesteal += 2; } },
+];
+
+function pick3(s) {
+  const pool = CARDS.filter(c => !(c.once && s.cards.includes(c.id)));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(3, pool.length));
+}
+
+class MainScene extends Phaser.Scene {
+  constructor() { super('main'); }
+
+  create() {
+    state = freshState();
+    state.startTime = this.time.now;
+    state.pulseReady = this.time.now;
+
+    const g = this.add.graphics();
+    g.lineStyle(1, 0x0f1a1a, 1);
+    for (let x = 0; x < W; x += 80) { g.moveTo(x, 0); g.lineTo(x, H); }
+    for (let y = 0; y < H; y += 80) { g.moveTo(0, y); g.lineTo(W, y); }
+    g.strokePath();
+
+    this.player = this.add.circle(W / 2, H / 2, 15, COLORS.player);
+    this.physics.add.existing(this.player);
+    this.player.body.setCircle(15);
+    this.player.body.setCollideWorldBounds(true);
+    this.player.iFrameUntil = 0;
+
+    this.hpBarBg = this.add.rectangle(0, 0, 60, 6, 0x333333).setOrigin(0.5).setDepth(50);
+    this.hpBar   = this.add.rectangle(0, 0, 60, 6, COLORS.hpFull).setOrigin(0, 0.5).setDepth(51);
+
+    this.bullets      = this.physics.add.group();
+    this.enemies      = this.physics.add.group();
+    this.eProjs       = this.physics.add.group();
+    this.mines        = this.physics.add.group();
+    this.orbitBlades  = [];
+    this.drones       = this.physics.add.group();
+    this.droneBullets = this.physics.add.group();
+
+    this.physics.add.overlap(this.bullets,      this.enemies, this.bulletHit,        null, this);
+    this.physics.add.overlap(this.droneBullets, this.enemies, this.bulletHit,        null, this);
+    this.physics.add.overlap(this.player,       this.enemies, this.playerTouchEnemy, null, this);
+    this.physics.add.overlap(this.player,       this.eProjs,  this.playerHitByProj,  null, this);
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.keys = this.input.keyboard.addKeys('W,A,S,D');
+    this.setupTouch();
+
+    this.time.addEvent({ delay: 100,  loop: true, callback: this.tryFire,      callbackScope: this });
+    this.time.addEvent({ delay: 1200, loop: true, callback: this.spawnCrawler, callbackScope: this });
+    this.time.addEvent({ delay: 5000, loop: true, callback: this.spawnRusher,  callbackScope: this });
+    this.time.addEvent({ delay: 7000, loop: true, callback: this.spawnSpitter, callbackScope: this });
+    this.time.addEvent({ delay: 1500, loop: true, callback: this.spitterFire,  callbackScope: this });
+    this.time.addEvent({ delay: 3000, loop: true, callback: this.dropMine,     callbackScope: this });
+    this.time.addEvent({ delay: 500,  loop: true, callback: this.droneFire,    callbackScope: this });
+
+    for (let i = 0; i < 5; i++) this.spawnCrawler();
+
+    this.buildUI();
+    this.cameras.main.setBackgroundColor('#000000');
+    this.orbitAngle = 0;
+  }
+
+  setupTouch() {
+    // virtual joystick(浮动式手指按下才出现)
+    this.stick = { active: false, cx: 0, cy: 0, dx: 0, dy: 0, pointerId: -1 };
+    this.stickBase = this.add.circle(0, 0, 90, 0xffffff, 0.08).setDepth(150).setVisible(false);
+    this.stickKnob = this.add.circle(0, 0, 45, 0xffffff, 0.35).setDepth(151).setVisible(false);
+
+    const btnR = 105;
+    const bx = W - 170, by = H - 300;
+    this.pulseBtnR = btnR; this.pulseBtnX = bx; this.pulseBtnY = by;
+    this.pulseBtn = this.add.circle(bx, by, btnR, 0x66ff99, 0.28)
+      .setDepth(150).setStrokeStyle(5, 0x66ff99, 0.9);
+    this.pulseLabel = this.add.text(bx, by - 8, '脉冲', {
+      fontFamily: 'sans-serif', fontSize: '48px', color: '#eaffea', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(151);
+    this.pulseCdLabel = this.add.text(bx, by + 42, '', {
+      fontFamily: 'sans-serif', fontSize: '32px', color: '#ffffff'
+    }).setOrigin(0.5).setDepth(151);
+
+    this.input.on('pointerdown', (p) => {
+      if (state.paused || state.ended) return;
+      const dxb = p.x - bx, dyb = p.y - by;
+      if (dxb * dxb + dyb * dyb <= btnR * btnR) { this.tryPulse(); return; }
+      if (p.x < W / 2) {
+        this.stick.active = true;
+        this.stick.pointerId = p.id;
+        this.stick.cx = p.x; this.stick.cy = p.y;
+        this.stick.dx = 0; this.stick.dy = 0;
+        this.stickBase.setPosition(p.x, p.y).setVisible(true);
+        this.stickKnob.setPosition(p.x, p.y).setVisible(true);
+      }
+    });
+    this.input.on('pointermove', (p) => {
+      if (!this.stick.active || p.id !== this.stick.pointerId) return;
+      let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
+      const len = Math.hypot(dx, dy);
+      const max = 90;
+      if (len > max) { dx = dx * max / len; dy = dy * max / len; }
+      this.stick.dx = dx / max; this.stick.dy = dy / max;
+      this.stickKnob.setPosition(this.stick.cx + dx, this.stick.cy + dy);
+    });
+    const endStick = (p) => {
+      if (p.id !== this.stick.pointerId) return;
+      this.stick.active = false;
+      this.stick.dx = 0; this.stick.dy = 0;
+      this.stick.pointerId = -1;
+      this.stickBase.setVisible(false);
+      this.stickKnob.setVisible(false);
+    };
+    this.input.on('pointerup', endStick);
+    this.input.on('pointerupoutside', endStick);
+  }
+
+  buildUI() {
+    const topPad = 120;
+    this.timeLabel = this.add.text(W / 2, topPad, '5:00', {
+      fontFamily: 'sans-serif', fontSize: '72px', color: '#ffffff', fontStyle: 'bold'
+    }).setOrigin(0.5, 0).setDepth(200);
+    this.killLabel = this.add.text(40, topPad + 20, '击杀 0', {
+      fontFamily: 'sans-serif', fontSize: '44px', color: '#ffcc66'
+    }).setOrigin(0, 0).setDepth(200);
+    this.lvLabel = this.add.text(W - 40, topPad + 20, 'Lv 1', {
+      fontFamily: 'sans-serif', fontSize: '44px', color: '#88ffcc'
+    }).setOrigin(1, 0).setDepth(200);
+    this.xpBarBg = this.add.rectangle(W / 2, topPad + 100, W - 80, 12, 0x333333).setOrigin(0.5).setDepth(200);
+    this.xpBar   = this.add.rectangle(40, topPad + 100, 0, 12, 0x88ffcc).setOrigin(0, 0.5).setDepth(201);
+    this.hintLabel = this.add.text(W / 2, H - 60,
+      '左半屏 触摸 = 摇杆 · 右下 = 脉冲 · 键盘 WASD/方向键',
+      { fontFamily: 'sans-serif', fontSize: '26px', color: '#666666' }
+    ).setOrigin(0.5).setDepth(200);
+  }
+
+  update(time, delta) {
+    if (state.paused || state.ended) return;
+
+    const elapsed = time - state.startTime;
+    if (!state.rusherUnlocked  && elapsed >= 90000)  state.rusherUnlocked  = true;
+    if (!state.spitterUnlocked && elapsed >= 150000) state.spitterUnlocked = true;
+
+    let vx = 0, vy = 0;
+    if (this.cursors.left.isDown  || this.keys.A.isDown) vx -= 1;
+    if (this.cursors.right.isDown || this.keys.D.isDown) vx += 1;
+    if (this.cursors.up.isDown    || this.keys.W.isDown) vy -= 1;
+    if (this.cursors.down.isDown  || this.keys.S.isDown) vy += 1;
+    if (this.stick.active) { vx = this.stick.dx; vy = this.stick.dy; }
+    const mag = Math.hypot(vx, vy);
+    if (mag > 1) { vx /= mag; vy /= mag; }
+    this.player.body.setVelocity(vx * state.speed, vy * state.speed);
+
+    this.hpBarBg.setPosition(this.player.x, this.player.y - 32);
+    this.hpBar.setPosition(this.player.x - 30, this.player.y - 32);
+    const hpPct = Math.max(0, state.hp / state.hpMax);
+    this.hpBar.width = 60 * hpPct;
+    this.hpBar.fillColor = hpPct > 0.6 ? COLORS.hpFull : hpPct > 0.3 ? COLORS.hpMid : COLORS.hpLow;
+
+    this.enemies.getChildren().forEach(e => {
+      if (!e.active) return;
+      const dx = this.player.x - e.x, dy = this.player.y - e.y;
+      const d = Math.hypot(dx, dy) || 1;
+      e.body.setVelocity(dx / d * e.spd, dy / d * e.spd);
+    });
+
+    this.eProjs.getChildren().forEach(p => {
+      if (p.x < -80 || p.x > W + 80 || p.y < -80 || p.y > H + 80) p.destroy();
+    });
+    this.bullets.getChildren().forEach(b => {
+      if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) b.destroy();
+    });
+    this.droneBullets.getChildren().forEach(b => {
+      if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) b.destroy();
+    });
+
+    if (state.hasOrbit) this.updateOrbits(delta);
+    if (state.hasDrone) this.updateDrones(delta);
+
+    this.updateUI(time);
+  }
+
+  updateUI(time) {
+    const totalMs = 5 * 60 * 1000;
+    const left = Math.max(0, totalMs - (time - state.startTime));
+    const mm = Math.floor(left / 60000);
+    const ss = Math.floor((left % 60000) / 1000);
+    this.timeLabel.setText(`${mm}:${ss.toString().padStart(2, '0')}`);
+    this.killLabel.setText(`击杀 ${state.kills}`);
+    this.lvLabel.setText(`Lv ${state.level}`);
+    this.xpBar.width = (W - 80) * Math.min(1, state.xp / state.xpToNext);
+
+    const cdLeft = state.pulseReady - time;
+    if (cdLeft > 0) {
+      this.pulseBtn.setFillStyle(0x666666, 0.2);
+      this.pulseBtn.setStrokeStyle(5, 0x666666, 0.6);
+      this.pulseLabel.setColor('#888888');
+      this.pulseCdLabel.setText(Math.ceil(cdLeft / 1000) + 's');
+    } else {
+      this.pulseBtn.setFillStyle(0x66ff99, 0.28);
+      this.pulseBtn.setStrokeStyle(5, 0x66ff99, 0.95);
+      this.pulseLabel.setColor('#eaffea');
+      this.pulseCdLabel.setText('');
+    }
+
+    if (left <= 0 && !state.ended) this.endGame('time');
+  }
+
+  tryFire() {
+    if (state.paused || state.ended) return;
+    if (!this._lastFire) this._lastFire = 0;
+    const t = this.time.now;
+    if (t - this._lastFire < state.fireRate) return;
+    const target = this.nearestEnemy(this.player.x, this.player.y);
+    if (!target) return;
+    this._lastFire = t;
+    this.fireBulletFrom(this.player.x, this.player.y, target, state.bulletDmg, state.pierce, state.explosive, this.bullets, state.bulletSpeed);
+  }
+
+  fireBulletFrom(x, y, target, dmg, pierce, explosive, group, spd) {
+    const b = this.add.circle(x, y, 6, COLORS.bullet);
+    this.physics.add.existing(b);
+    group.add(b);
+    const dx = target.x - x, dy = target.y - y;
+    const d = Math.hypot(dx, dy) || 1;
+    b.body.setVelocity(dx / d * spd, dy / d * spd);
+    b.dmg = dmg;
+    b.pierce = pierce;
+    b.explosive = explosive;
+    b.hitSet = new Set();
+  }
+
+  nearestEnemy(x, y) {
+    let best = null, bestD = Infinity;
+    this.enemies.getChildren().forEach(e => {
+      if (!e.active) return;
+      const dx = e.x - x, dy = e.y - y;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = e; }
+    });
+    return best;
+  }
+
+  randomSpawnPos() {
+    const side = Phaser.Math.Between(0, 3);
+    const pad = 80;
+    if (side === 0) return { x: Phaser.Math.Between(0, W), y: -pad };
+    if (side === 1) return { x: W + pad, y: Phaser.Math.Between(0, H) };
+    if (side === 2) return { x: Phaser.Math.Between(0, W), y: H + pad };
+    return { x: -pad, y: Phaser.Math.Between(0, H) };
+  }
+
+  spawnCrawler() {
+    if (state.paused || state.ended) return;
+    const elapsed = this.time.now - state.startTime;
+    const wave = Math.min(3, 1 + Math.floor(elapsed / 60000));
+    for (let i = 0; i < wave; i++) {
+      const p = this.randomSpawnPos();
+      const e = this.add.circle(p.x, p.y, 12, COLORS.crawler);
+      this.physics.add.existing(e);
+      this.enemies.add(e);
+      e.type = 'Crawler'; e.hp = 10; e.spd = 80; e.dmg = 5; e.xp = 5;
+      e.body.setCircle(12);
+    }
+  }
+
+  spawnRusher() {
+    if (state.paused || state.ended || !state.rusherUnlocked) return;
+    const num = Phaser.Math.Between(1, 2);
+    for (let i = 0; i < num; i++) {
+      const p = this.randomSpawnPos();
+      const tri = this.add.triangle(p.x, p.y, 0, -18, 16, 14, -16, 14, COLORS.rusher);
+      this.physics.add.existing(tri);
+      tri.body.setSize(32, 32);
+      this.enemies.add(tri);
+      tri.type = 'Rusher'; tri.hp = 30; tri.spd = 220; tri.dmg = 15; tri.xp = 15;
+    }
+  }
+
+  spawnSpitter() {
+    if (state.paused || state.ended || !state.spitterUnlocked) return;
+    const p = this.randomSpawnPos();
+    const sq = this.add.rectangle(p.x, p.y, 22, 22, COLORS.spitter);
+    this.physics.add.existing(sq);
+    sq.body.setSize(22, 22);
+    this.enemies.add(sq);
+    sq.type = 'Spitter'; sq.hp = 50; sq.spd = 60; sq.dmg = 20; sq.xp = 30;
+  }
+
+  spitterFire() {
+    if (state.paused || state.ended) return;
+    this.enemies.getChildren().forEach(e => {
+      if (e.type !== 'Spitter' || !e.active) return;
+      const dx = this.player.x - e.x, dy = this.player.y - e.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 900 || d < 1) return;
+      const proj = this.add.circle(e.x, e.y, 8, COLORS.spitter);
+      this.physics.add.existing(proj);
+      this.eProjs.add(proj);
+      proj.body.setCircle(8);
+      proj.body.setVelocity(dx / d * 260, dy / d * 260);
+      proj.dmg = 20;
+    });
+  }
+
+  bulletHit(bullet, enemy) {
+    if (!bullet.active || !enemy.active) return;
+    if (bullet.hitSet && bullet.hitSet.has(enemy)) return;
+    let dmg = bullet.dmg;
+    let isCrit = false;
+    if (state.critChance > 0 && Math.random() < state.critChance) { dmg *= state.critMult; isCrit = true; }
+    this.damageEnemy(enemy, dmg, isCrit);
+    if (bullet.explosive) this.explosion(bullet.x, bullet.y, 60, 8);
+    if (bullet.pierce && bullet.pierce > 0) {
+      bullet.pierce -= 1;
+      if (bullet.hitSet) bullet.hitSet.add(enemy);
+    } else {
+      bullet.destroy();
+    }
+  }
+
+  playerTouchEnemy(player, enemy) {
+    if (!enemy.active || state.ended) return;
+    const t = this.time.now;
+    if (t < player.iFrameUntil) return;
+    player.iFrameUntil = t + 500;
+    this.hurtPlayer(enemy.dmg || 5);
+    if (enemy.type === 'Rusher') this.damageEnemy(enemy, 999, false);
+  }
+
+  playerHitByProj(player, proj) {
+    if (!proj.active || state.ended) return;
+    this.hurtPlayer(proj.dmg || 10);
+    proj.destroy();
+  }
+
+  hurtPlayer(dmg) {
+    state.hp -= dmg;
+    this.cameras.main.shake(80, 0.006);
+    this.player.setFillStyle(0xff8888);
+    this.time.delayedCall(80, () => { if (this.player.active) this.player.setFillStyle(COLORS.player); });
+    if (state.hp <= 0 && !state.ended) this.endGame('dead');
+  }
+
+  damageEnemy(enemy, dmg, isCrit) {
+    if (!enemy.active) return;
+    enemy.hp -= dmg;
+    // 击中反馈
+    const oc = enemy.fillColor;
+    if (enemy.setFillStyle) {
+      enemy.setFillStyle(0xffffff);
+      this.time.delayedCall(60, () => { if (enemy.active && enemy.setFillStyle) enemy.setFillStyle(oc); });
+    }
+    this.spawnDmgNum(enemy.x, enemy.y - 20, Math.round(dmg), isCrit);
+    if (enemy.hp <= 0) this.killEnemy(enemy);
+  }
+
+  killEnemy(enemy) {
+    // 击杀特效
+    this.spawnBoom(enemy.x, enemy.y, 0xffff88);
+    state.kills += 1;
+    state.xp += enemy.xp || 5;
+    if (state.lifesteal > 0) {
+      state.hp = Math.min(state.hpMax, state.hp + state.lifesteal);
+    }
+    enemy.destroy();
+    // 升级判定
+    while (state.xp >= state.xpToNext) {
+      state.xp -= state.xpToNext;
+      state.level += 1;
+      state.xpToNext = 20 * state.level;
+      this.openLevelUp();
+    }
+  }
+
+  spawnDmgNum(x, y, val, isCrit) {
+    const color = isCrit ? '#ffee55' : '#ffffff';
+    const size = isCrit ? '38px' : '28px';
+    const t = this.add.text(x, y, String(val), {
+      fontFamily: 'sans-serif', fontSize: size, color, fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(80);
+    this.tweens.add({
+      targets: t, y: y - 40, alpha: 0, duration: 500,
+      onComplete: () => t.destroy(),
+    });
+  }
+
+  spawnBoom(x, y, color) {
+    for (let i = 0; i < 5; i++) {
+      const p = this.add.circle(x, y, 3, color);
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 60 + Math.random() * 60;
+      this.tweens.add({
+        targets: p,
+        x: x + Math.cos(ang) * spd,
+        y: y + Math.sin(ang) * spd,
+        alpha: 0, duration: 300,
+        onComplete: () => p.destroy(),
+      });
+    }
+  }
+
+  explosion(x, y, radius, dmg) {
+    // 视觉圈
+    const c = this.add.circle(x, y, radius, 0xffcc66, 0.35).setDepth(30);
+    this.tweens.add({
+      targets: c, alpha: 0, scale: 1.6, duration: 260,
+      onComplete: () => c.destroy(),
+    });
+    // 伤害:范围内敌人扣血
+    this.enemies.getChildren().forEach(e => {
+      if (!e.active) return;
+      const dx = e.x - x, dy = e.y - y;
+      if (dx * dx + dy * dy <= radius * radius) this.damageEnemy(e, dmg, false);
+    });
+  }
+
+  // ---- 主动技能:能量脉冲 energyPulse ----
+  tryPulse() {
+    const t = this.time.now;
+    if (t < state.pulseReady) return;
+    state.pulseReady = t + state.pulseCd;
+    const cx = this.player.x, cy = this.player.y;
+    // 白光扩散
+    const ring = this.add.circle(cx, cy, 30, 0xffffff, 0.55).setDepth(60);
+    this.tweens.add({
+      targets: ring, radius: 260, alpha: 0, scale: 8, duration: 320,
+      onComplete: () => ring.destroy(),
+    });
+    this.cameras.main.shake(160, 0.012);
+    this.cameras.main.flash(120, 255, 255, 255);
+    // 范围伤害
+    this.enemies.getChildren().forEach(e => {
+      if (!e.active) return;
+      const dx = e.x - cx, dy = e.y - cy;
+      if (dx * dx + dy * dy <= 200 * 200) this.damageEnemy(e, 50, false);
+    });
+  }
+
+  // ---- 环绕光刃 ----
+  updateOrbits(delta) {
+    if (this.orbitBlades.length === 0) {
+      for (let i = 0; i < 3; i++) {
+        const blade = this.add.rectangle(0, 0, 18, 32, 0x88ffff, 0.9).setDepth(40).setStrokeStyle(2, 0xffffff, 1);
+        this.orbitBlades.push({ obj: blade, offset: (i / 3) * Math.PI * 2, lastHit: new Map() });
+      }
+    }
+    this.orbitAngle += delta * 0.004;
+    const radius = 100;
+    const now = this.time.now;
+    this.orbitBlades.forEach(b => {
+      const a = this.orbitAngle + b.offset;
+      b.obj.setPosition(this.player.x + Math.cos(a) * radius, this.player.y + Math.sin(a) * radius);
+      b.obj.setRotation(a + Math.PI / 2);
+      // 命中检测
+      this.enemies.getChildren().forEach(e => {
+        if (!e.active) return;
+        const dx = e.x - b.obj.x, dy = e.y - b.obj.y;
+        if (dx * dx + dy * dy <= 26 * 26) {
+          const last = b.lastHit.get(e) || 0;
+          if (now - last >= 1000) {   // 1 秒最多命中同一敌人一次(15 伤/秒)
+            b.lastHit.set(e, now);
+            this.damageEnemy(e, 15, false);
+          }
+        }
+      });
+    });
+  }
+
+  // ---- 定时地雷 ----
+  dropMine() {
+    if (state.paused || state.ended || !state.hasMines) return;
+    const mx = this.player.x, my = this.player.y;
+    const m = this.add.circle(mx, my, 12, 0xffaa33, 0.85).setStrokeStyle(2, 0xff6600, 1).setDepth(20);
+    this.physics.add.existing(m);
+    this.mines.add(m);
+    // 闪烁提示
+    this.tweens.add({
+      targets: m, alpha: 0.3, duration: 300, yoyo: true, repeat: 4,
+    });
+    this.time.delayedCall(3000, () => {
+      if (!m.active) return;
+      this.explosion(m.x, m.y, 80, 30);
+      m.destroy();
+    });
+  }
+
+  // ---- 无人机 ----
+  updateDrones(delta) {
+    if (this.drones.getChildren().length === 0) {
+      const d = this.add.circle(this.player.x + 60, this.player.y, 8, 0x66ddff).setStrokeStyle(2, 0xffffff, 1).setDepth(35);
+      this.physics.add.existing(d);
+      this.drones.add(d);
+      d.orbitAng = 0;
+    }
+    this.drones.getChildren().forEach(d => {
+      d.orbitAng += delta * 0.002;
+      const rr = 70;
+      const tx = this.player.x + Math.cos(d.orbitAng) * rr;
+      const ty = this.player.y + Math.sin(d.orbitAng) * rr;
+      // 平滑跟随
+      d.x += (tx - d.x) * 0.1;
+      d.y += (ty - d.y) * 0.1;
+    });
+  }
+
+  droneFire() {
+    if (state.paused || state.ended || !state.hasDrone) return;
+    this.drones.getChildren().forEach(d => {
+      const target = this.nearestEnemy(d.x, d.y);
+      if (!target) return;
+      this.fireBulletFrom(d.x, d.y, target, 8, 0, false, this.droneBullets, 380);
+    });
+  }
+
+  // ---- 升级面板 ----
+  openLevelUp() {
+    if (state.paused || state.ended) return;
+    state.paused = true;
+    this.physics.world.pause();
+    const cards = pick3(state);
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7).setDepth(500);
+    const title = this.add.text(W / 2, H / 2 - 500, 'Lv ' + state.level + ' · 选一张升级', {
+      fontFamily: 'sans-serif', fontSize: '54px', color: '#ffffff', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(501);
+    const cardObjs = [];
+    const cardW = 900, cardH = 240, gap = 30;
+    const totalH = cards.length * cardH + (cards.length - 1) * gap;
+    const startY = H / 2 - totalH / 2 + cardH / 2;
+    cards.forEach((c, i) => {
+      const cy = startY + i * (cardH + gap);
+      const bg = this.add.rectangle(W / 2, cy, cardW, cardH, 0x111a22, 0.95).setStrokeStyle(4, 0x66ff99, 0.9).setDepth(501).setInteractive({ useHandCursor: true });
+      const name = this.add.text(W / 2, cy - 60, c.name, {
+        fontFamily: 'sans-serif', fontSize: '52px', color: '#eaffea', fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(502);
+      const desc = this.add.text(W / 2, cy + 30, c.desc, {
+        fontFamily: 'sans-serif', fontSize: '30px', color: '#cccccc',
+        wordWrap: { width: cardW - 60 }, align: 'center',
+      }).setOrigin(0.5).setDepth(502);
+      bg.on('pointerdown', () => this.pickCard(c, [overlay, title, ...cardObjs]));
+      cardObjs.push(bg, name, desc);
+    });
+  }
+
+  pickCard(card, ui) {
+    card.apply(state);
+    state.cards.push(card.id);
+    ui.forEach(o => o.destroy());
+    state.paused = false;
+    this.physics.world.resume();
+  }
+
+  // ---- 结算 ----
+  endGame(reason) {
+    if (state.ended) return;
+    state.ended = true;
+    state.paused = true;
+    this.physics.world.pause();
+
+    const elapsed = Math.min(300, Math.floor((this.time.now - state.startTime) / 1000));
+    const mm = Math.floor(elapsed / 60);
+    const ss = elapsed % 60;
+    const timeStr = `${mm}:${ss.toString().padStart(2, '0')}`;
+    const survived = reason === 'time';
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85).setDepth(600);
+    const title = this.add.text(W / 2, H / 2 - 500, survived ? '存活到终点!' : '倒下了…', {
+      fontFamily: 'sans-serif', fontSize: '78px', color: survived ? '#88ffcc' : '#ff8888', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(601);
+
+    const stats = [
+      `击杀: ${state.kills}`,
+      `存活: ${survived ? '是' : '否'}`,
+      `时长: ${timeStr}`,
+      `等级: Lv ${state.level}`,
+      `卡池: ${state.cards.length > 0 ? state.cards.map(id => (CARDS.find(c => c.id === id) || {}).name).filter(Boolean).join(' / ') : '(无)'}`,
+    ];
+    stats.forEach((line, i) => {
+      this.add.text(W / 2, H / 2 - 250 + i * 80, line, {
+        fontFamily: 'sans-serif', fontSize: '42px', color: '#ffffff',
+        wordWrap: { width: W - 120 }, align: 'center',
+      }).setOrigin(0.5).setDepth(601);
+    });
+
+    const mkBtn = (label, y, color, cb) => {
+      const btn = this.add.rectangle(W / 2, y, 500, 140, color, 0.8).setStrokeStyle(4, 0xffffff, 0.9).setDepth(601).setInteractive({ useHandCursor: true });
+      const t = this.add.text(W / 2, y, label, {
+        fontFamily: 'sans-serif', fontSize: '48px', color: '#ffffff', fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(602);
+      btn.on('pointerdown', cb);
+      return [btn, t];
+    };
+    mkBtn('再来一局', H / 2 + 350, 0x33aa66, () => this.scene.restart());
+    mkBtn('返回', H / 2 + 520, 0x555555, () => {
+      // 若从其他页跳来,history 可回
+      if (window.history.length > 1) window.history.back();
+      else location.reload();
+    });
+  }
+}
+
+// ---- Phaser 启动 ----
+const config = {
+  type: Phaser.AUTO,
+  parent: 'game-container',
+  backgroundColor: '#000000',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: W,
+    height: H,
+  },
+  physics: { default: 'arcade', arcade: { debug: false, gravity: { x: 0, y: 0 } } },
+  scene: [MainScene],
+  render: { pixelArt: false, antialias: true },
+  input: { activePointers: 3 },
+};
+
+window.addEventListener('load', () => {
+  new Phaser.Game(config);
+  const loading = document.getElementById('loading');
+  if (loading) loading.remove();
+});
+
+})();

@@ -5,3 +5,7 @@
   X-Robots-Tag: noindex, nofollow, noarchive
 /game-prd-tool
   X-Robots-Tag: noindex, nofollow, noarchive
+
+# MVS-007 立项文档:hidden delivery,拿链接的人才能看
+/mvs-007/*
+  X-Robots-Tag: noindex, nofollow, noarchive
