@@ -1,9 +1,16 @@
-/* MVS-007 Phaser 3 白模 · grep: Crawler Rusher Spitter joystick pulse energyPulse
+/* MVS-007 Phaser 3 白模 v0.1.1 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity
+ * v0.1.1 手感优化(2026-07-03):
+ *   P0 · 摇杆每帧 update 采样 pointer 位置(不用 pointermove 事件)、玩家 pushable=false、
+ *        子弹速度 400→600、iFrame 500→300ms
+ *   P1 · 玩家 8 帧位移拖尾、击杀白光闪、受击 200ms 红 tint、暴击金色大字
+ *   P2 · 单关 5min→10min、Rusher 90→180s、Spitter 150→300s、450s Crawler 密度翻倍、
+ *        540s Rusher 密度翻倍、XP 曲线放缓 nextLv = 20 + (lv-1)*10
  * 10 卡: 加速射击 穿透弹 爆裂弹 暴击强化 环绕光刃 定时地雷 无人机僚机 强化装甲 急促脚步 吸血涂层
  */
 (function () {
 'use strict';
 const W = 1080, H = 1920;
+const TOTAL_SEC = 600;                // v0.1.1: 5min → 10min
 const COLORS = {
   player: 0xffffff, bullet: 0x88ddff,
   crawler: 0xff4444, rusher: 0xff9933, spitter: 0xaa66ff,
@@ -11,17 +18,22 @@ const COLORS = {
   energy: 0x66ff99,
 };
 
+// v0.1.1 P2: 到达 level+1 需要的经验增量 = 20 + (level-1)*10
+// Lv2=20 Lv3=30 Lv4=40 Lv5=50 Lv6=60 Lv7=70 Lv8=80 Lv9=90 Lv10=100 (累计 20/50/90/140/200/270/350/440/540)
+function xpFor(level) { return 20 + (level - 1) * 10; }
+
 function freshState() {
   return {
     hpMax: 100, hp: 100, speed: 200,
-    fireRate: 300, bulletDmg: 10, bulletSpeed: 400,
+    fireRate: 300, bulletDmg: 10, bulletSpeed: 600,     // v0.1.1 P0: 400 → 600
     pierce: 0, explosive: false, critChance: 0, critMult: 3,
     pulseCd: 8000, pulseReady: 0,
-    level: 1, xp: 0, xpToNext: 20, kills: 0, startTime: 0,
+    level: 1, xp: 0, xpToNext: xpFor(1), kills: 0, startTime: 0,
     hasOrbit: false, hasMines: false, hasDrone: false,
     lifesteal: 0, cards: [],
     paused: false, ended: false,
     rusherUnlocked: false, spitterUnlocked: false,
+    crawlerDense: false, rusherDense: false,             // v0.1.1 P2: 后期密度翻倍
   };
 }
 let state = freshState();
@@ -62,10 +74,16 @@ class MainScene extends Phaser.Scene {
     for (let y = 0; y < H; y += 80) { g.moveTo(0, y); g.lineTo(W, y); }
     g.strokePath();
 
+    // v0.1.1 P1: 拖尾图层(用 graphics 比生 8 个 circle 便宜)
+    this.trailGfx = this.add.graphics().setDepth(5);
+    this.trail = [];
+
     this.player = this.add.circle(W / 2, H / 2, 15, COLORS.player);
     this.physics.add.existing(this.player);
     this.player.body.setCircle(15);
     this.player.body.setCollideWorldBounds(true);
+    // v0.1.1 P0: 玩家不被敌人推动(消除"黏连"感)
+    this.player.body.pushable = false;
     this.player.iFrameUntil = 0;
 
     this.hpBarBg = this.add.rectangle(0, 0, 60, 6, 0x333333).setOrigin(0.5).setDepth(50);
@@ -104,8 +122,9 @@ class MainScene extends Phaser.Scene {
   }
 
   setupTouch() {
-    // virtual joystick(浮动式手指按下才出现)
-    this.stick = { active: false, cx: 0, cy: 0, dx: 0, dy: 0, pointerId: -1 };
+    // v0.1.1 P0: 摇杆只在 pointerdown 里定中心，方向在 update 里每帧从 pointer 位置采样
+    // (不依赖 pointermove 事件，pointermove 有节流会“跳”)
+    this.stick = { active: false, cx: 0, cy: 0, dx: 0, dy: 0, pointer: null };
     this.stickBase = this.add.circle(0, 0, 90, 0xffffff, 0.08).setDepth(150).setVisible(false);
     this.stickKnob = this.add.circle(0, 0, 45, 0xffffff, 0.35).setDepth(151).setVisible(false);
 
@@ -127,37 +146,45 @@ class MainScene extends Phaser.Scene {
       if (dxb * dxb + dyb * dyb <= btnR * btnR) { this.tryPulse(); return; }
       if (p.x < W / 2) {
         this.stick.active = true;
-        this.stick.pointerId = p.id;
+        this.stick.pointer = p;
         this.stick.cx = p.x; this.stick.cy = p.y;
         this.stick.dx = 0; this.stick.dy = 0;
         this.stickBase.setPosition(p.x, p.y).setVisible(true);
         this.stickKnob.setPosition(p.x, p.y).setVisible(true);
       }
     });
-    this.input.on('pointermove', (p) => {
-      if (!this.stick.active || p.id !== this.stick.pointerId) return;
-      let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
-      const len = Math.hypot(dx, dy);
-      const max = 90;
-      if (len > max) { dx = dx * max / len; dy = dy * max / len; }
-      this.stick.dx = dx / max; this.stick.dy = dy / max;
-      this.stickKnob.setPosition(this.stick.cx + dx, this.stick.cy + dy);
-    });
     const endStick = (p) => {
-      if (p.id !== this.stick.pointerId) return;
+      if (this.stick.pointer && p.id !== this.stick.pointer.id) return;
       this.stick.active = false;
       this.stick.dx = 0; this.stick.dy = 0;
-      this.stick.pointerId = -1;
+      this.stick.pointer = null;
       this.stickBase.setVisible(false);
       this.stickKnob.setVisible(false);
     };
     this.input.on('pointerup', endStick);
     this.input.on('pointerupoutside', endStick);
+    this.input.on('pointercancel', endStick);
+  }
+
+  // v0.1.1 P0: 每帧从 pointer 当前位置采样，不等 pointermove 回调(避免输入“跳”)
+  sampleStick() {
+    if (!this.stick.active || !this.stick.pointer) return;
+    const p = this.stick.pointer;
+    // 如果 pointer 已抬起(引用还在但 isDown=false) 同样当停
+    if (!p.isDown) { this.stick.dx = 0; this.stick.dy = 0; return; }
+    let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
+    const len = Math.hypot(dx, dy);
+    const max = 90;
+    if (len > max) { dx = dx * max / len; dy = dy * max / len; }
+    this.stick.dx = dx / max;
+    this.stick.dy = dy / max;
+    this.stickKnob.setPosition(this.stick.cx + dx, this.stick.cy + dy);
   }
 
   buildUI() {
     const topPad = 120;
-    this.timeLabel = this.add.text(W / 2, topPad, '5:00', {
+    // v0.1.1 P2: 10:00 起
+    this.timeLabel = this.add.text(W / 2, topPad, '10:00', {
       fontFamily: 'sans-serif', fontSize: '72px', color: '#ffffff', fontStyle: 'bold'
     }).setOrigin(0.5, 0).setDepth(200);
     this.killLabel = this.add.text(40, topPad + 20, '击杀 0', {
@@ -168,18 +195,39 @@ class MainScene extends Phaser.Scene {
     }).setOrigin(1, 0).setDepth(200);
     this.xpBarBg = this.add.rectangle(W / 2, topPad + 100, W - 80, 12, 0x333333).setOrigin(0.5).setDepth(200);
     this.xpBar   = this.add.rectangle(40, topPad + 100, 0, 12, 0x88ffcc).setOrigin(0, 0.5).setDepth(201);
+    // v0.1.1: wave 提示字(马上隔时胎钩事件 fade)
+    this.waveLabel = this.add.text(W / 2, H / 2 - 200, '', {
+      fontFamily: 'sans-serif', fontSize: '64px', color: '#ffcc66', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 6,
+    }).setOrigin(0.5).setDepth(300).setAlpha(0);
     this.hintLabel = this.add.text(W / 2, H - 60,
       '左半屏 触摸 = 摇杆 · 右下 = 脉冲 · 键盘 WASD/方向键',
       { fontFamily: 'sans-serif', fontSize: '26px', color: '#666666' }
     ).setOrigin(0.5).setDepth(200);
   }
 
+  showWave(text) {
+    this.waveLabel.setText(text).setAlpha(0).setScale(0.7);
+    this.tweens.add({
+      targets: this.waveLabel, alpha: 1, scale: 1, duration: 300, ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({ targets: this.waveLabel, alpha: 0, duration: 500, delay: 1200 });
+      },
+    });
+  }
+
   update(time, delta) {
     if (state.paused || state.ended) return;
 
+    // v0.1.1 P0: 每帧从 pointer 位置采样摇杆(替代 pointermove 事件)
+    this.sampleStick();
+
     const elapsed = time - state.startTime;
-    if (!state.rusherUnlocked  && elapsed >= 90000)  state.rusherUnlocked  = true;
-    if (!state.spitterUnlocked && elapsed >= 150000) state.spitterUnlocked = true;
+    // v0.1.1 P2: timeline 拉长，新增 450s/540s 密度翻倍 wave
+    if (!state.rusherUnlocked   && elapsed >= 180000) { state.rusherUnlocked  = true; this.showWave('Rusher 加入'); }
+    if (!state.spitterUnlocked  && elapsed >= 300000) { state.spitterUnlocked = true; this.showWave('Spitter 加入'); }
+    if (!state.crawlerDense     && elapsed >= 450000) { state.crawlerDense    = true; this.showWave('Crawler 密度翻倍！'); }
+    if (!state.rusherDense      && elapsed >= 540000) { state.rusherDense     = true; this.showWave('Rusher 密度翻倍！'); }
 
     let vx = 0, vy = 0;
     if (this.cursors.left.isDown  || this.keys.A.isDown) vx -= 1;
@@ -190,6 +238,17 @@ class MainScene extends Phaser.Scene {
     const mag = Math.hypot(vx, vy);
     if (mag > 1) { vx /= mag; vy /= mag; }
     this.player.body.setVelocity(vx * state.speed, vy * state.speed);
+
+    // v0.1.1 P1: 拖尾(记录 8 帧位移，画淏出中的半透明圆)
+    this.trail.push({ x: this.player.x, y: this.player.y });
+    if (this.trail.length > 8) this.trail.shift();
+    this.trailGfx.clear();
+    for (let i = 0; i < this.trail.length; i++) {
+      const alpha = (i + 1) / this.trail.length * 0.32;
+      const r = 5 + i * 1.1;
+      this.trailGfx.fillStyle(0xffffff, alpha);
+      this.trailGfx.fillCircle(this.trail[i].x, this.trail[i].y, r);
+    }
 
     this.hpBarBg.setPosition(this.player.x, this.player.y - 32);
     this.hpBar.setPosition(this.player.x - 30, this.player.y - 32);
@@ -221,7 +280,7 @@ class MainScene extends Phaser.Scene {
   }
 
   updateUI(time) {
-    const totalMs = 5 * 60 * 1000;
+    const totalMs = TOTAL_SEC * 1000;   // v0.1.1 P2: 10min
     const left = Math.max(0, totalMs - (time - state.startTime));
     const mm = Math.floor(left / 60000);
     const ss = Math.floor((left % 60000) / 1000);
@@ -293,7 +352,9 @@ class MainScene extends Phaser.Scene {
   spawnCrawler() {
     if (state.paused || state.ended) return;
     const elapsed = this.time.now - state.startTime;
-    const wave = Math.min(3, 1 + Math.floor(elapsed / 60000));
+    // v0.1.1 P2: 适应 10min，波次拉长为 120s 一阶，后期密度翻倍
+    let wave = Math.min(4, 1 + Math.floor(elapsed / 120000));
+    if (state.crawlerDense) wave *= 2;
     for (let i = 0; i < wave; i++) {
       const p = this.randomSpawnPos();
       const e = this.add.circle(p.x, p.y, 12, COLORS.crawler);
@@ -306,7 +367,9 @@ class MainScene extends Phaser.Scene {
 
   spawnRusher() {
     if (state.paused || state.ended || !state.rusherUnlocked) return;
-    const num = Phaser.Math.Between(1, 2);
+    // v0.1.1 P2: 密度翻倍
+    const base = Phaser.Math.Between(1, 2);
+    const num = state.rusherDense ? base * 2 : base;
     for (let i = 0; i < num; i++) {
       const p = this.randomSpawnPos();
       const tri = this.add.triangle(p.x, p.y, 0, -18, 16, 14, -16, 14, COLORS.rusher);
@@ -363,7 +426,7 @@ class MainScene extends Phaser.Scene {
     if (!enemy.active || state.ended) return;
     const t = this.time.now;
     if (t < player.iFrameUntil) return;
-    player.iFrameUntil = t + 500;
+    player.iFrameUntil = t + 300;    // v0.1.1 P0: 500 → 300ms 更灵敏
     this.hurtPlayer(enemy.dmg || 5);
     if (enemy.type === 'Rusher') this.damageEnemy(enemy, 999, false);
   }
@@ -376,9 +439,10 @@ class MainScene extends Phaser.Scene {
 
   hurtPlayer(dmg) {
     state.hp -= dmg;
-    this.cameras.main.shake(80, 0.006);
-    this.player.setFillStyle(0xff8888);
-    this.time.delayedCall(80, () => { if (this.player.active) this.player.setFillStyle(COLORS.player); });
+    // v0.1.1 P1: 屏震宝变强，玩家 200ms 红色 tint(原 80ms 过短看不到)
+    this.cameras.main.shake(100, 0.01);
+    this.player.setFillStyle(0xff3333);
+    this.time.delayedCall(200, () => { if (this.player.active) this.player.setFillStyle(COLORS.player); });
     if (state.hp <= 0 && !state.ended) this.endGame('dead');
   }
 
@@ -396,7 +460,12 @@ class MainScene extends Phaser.Scene {
   }
 
   killEnemy(enemy) {
-    // 击杀特效
+    // v0.1.1 P1: 白光闪 + 多发粒子 = “敌人确实死了”的反馈
+    const flash = this.add.circle(enemy.x, enemy.y, 24, 0xffffff, 0.9).setDepth(70);
+    this.tweens.add({
+      targets: flash, alpha: 0, scale: 2.4, duration: 120,
+      onComplete: () => flash.destroy(),
+    });
     this.spawnBoom(enemy.x, enemy.y, 0xffff88);
     state.kills += 1;
     state.xp += enemy.xp || 5;
@@ -404,37 +473,40 @@ class MainScene extends Phaser.Scene {
       state.hp = Math.min(state.hpMax, state.hp + state.lifesteal);
     }
     enemy.destroy();
-    // 升级判定
+    // v0.1.1 P2: 升级曲线放缓(nextLv = 20 + (lv-1)*10)
     while (state.xp >= state.xpToNext) {
       state.xp -= state.xpToNext;
       state.level += 1;
-      state.xpToNext = 20 * state.level;
+      state.xpToNext = xpFor(state.level);
       this.openLevelUp();
     }
   }
 
   spawnDmgNum(x, y, val, isCrit) {
+    // v0.1.1 P1: 暴击字更大更亮 + 描边，一眼能看到
     const color = isCrit ? '#ffee55' : '#ffffff';
-    const size = isCrit ? '38px' : '28px';
+    const size = isCrit ? '48px' : '28px';
     const t = this.add.text(x, y, String(val), {
-      fontFamily: 'sans-serif', fontSize: size, color, fontStyle: 'bold'
+      fontFamily: 'sans-serif', fontSize: size, color, fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: isCrit ? 4 : 2,
     }).setOrigin(0.5).setDepth(80);
     this.tweens.add({
-      targets: t, y: y - 40, alpha: 0, duration: 500,
+      targets: t, y: y - (isCrit ? 60 : 40), alpha: 0, duration: isCrit ? 650 : 500,
       onComplete: () => t.destroy(),
     });
   }
 
   spawnBoom(x, y, color) {
-    for (let i = 0; i < 5; i++) {
+    // v0.1.1 P1: 5 → 15 粒，散开更开，看起来“确实炸了”
+    for (let i = 0; i < 15; i++) {
       const p = this.add.circle(x, y, 3, color);
       const ang = Math.random() * Math.PI * 2;
-      const spd = 60 + Math.random() * 60;
+      const spd = 80 + Math.random() * 100;
       this.tweens.add({
         targets: p,
         x: x + Math.cos(ang) * spd,
         y: y + Math.sin(ang) * spd,
-        alpha: 0, duration: 300,
+        alpha: 0, duration: 350,
         onComplete: () => p.destroy(),
       });
     }
@@ -597,7 +669,7 @@ class MainScene extends Phaser.Scene {
     state.paused = true;
     this.physics.world.pause();
 
-    const elapsed = Math.min(300, Math.floor((this.time.now - state.startTime) / 1000));
+    const elapsed = Math.min(TOTAL_SEC, Math.floor((this.time.now - state.startTime) / 1000));
     const mm = Math.floor(elapsed / 60);
     const ss = elapsed % 60;
     const timeStr = `${mm}:${ss.toString().padStart(2, '0')}`;
