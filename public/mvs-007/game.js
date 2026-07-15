@@ -24,7 +24,7 @@ function xpFor(level) { return 20 + (level - 1) * 10; }
 
 function freshState() {
   return {
-    hpMax: 100, hp: 100, speed: 200,
+    hpMax: 100, hp: 100, speed: 240,
     fireRate: 300, bulletDmg: 10, bulletSpeed: 600,     // v0.1.1 P0: 400 → 600
     pierce: 0, explosive: false, critChance: 0, critMult: 3,
     pulseCd: 8000, pulseReady: 0,
@@ -122,11 +122,14 @@ class MainScene extends Phaser.Scene {
   }
 
   setupTouch() {
-    // v0.1.1 P0: 摇杆只在 pointerdown 里定中心，方向在 update 里每帧从 pointer 位置采样
-    // (不依赖 pointermove 事件，pointermove 有节流会“跳”)
-    this.stick = { active: false, cx: 0, cy: 0, dx: 0, dy: 0, pointer: null };
-    this.stickBase = this.add.circle(0, 0, 90, 0xffffff, 0.08).setDepth(150).setVisible(false);
-    this.stickKnob = this.add.circle(0, 0, 45, 0xffffff, 0.35).setDepth(151).setVisible(false);
+    // v0.1.2: 即时响应混合摇杆——基座默认固定在左下角，落点即偏移(首帧就有输入)。
+    // 拉太远时基座跟着手指走(动态基座)，避免拉不到屏幕边。
+    const BASE_X = 200, BASE_Y = H - 200;
+    this.stickBaseHome = { x: BASE_X, y: BASE_Y };
+    this.stickMaxR = 90;
+    this.stick = { active: false, cx: BASE_X, cy: BASE_Y, dx: 0, dy: 0, pointer: null };
+    this.stickBase = this.add.circle(BASE_X, BASE_Y, 90, 0xffffff, 0.08).setDepth(150).setVisible(false);
+    this.stickKnob = this.add.circle(BASE_X, BASE_Y, 45, 0xffffff, 0.35).setDepth(151).setVisible(false);
 
     const btnR = 105;
     const bx = W - 170, by = H - 300;
@@ -145,12 +148,28 @@ class MainScene extends Phaser.Scene {
       const dxb = p.x - bx, dyb = p.y - by;
       if (dxb * dxb + dyb * dyb <= btnR * btnR) { this.tryPulse(); return; }
       if (p.x < W / 2) {
+        // v0.1.2: 基座保持在固定 home 位置，落点相对基座的偏移直接作为首帧输入
         this.stick.active = true;
         this.stick.pointer = p;
-        this.stick.cx = p.x; this.stick.cy = p.y;
-        this.stick.dx = 0; this.stick.dy = 0;
-        this.stickBase.setPosition(p.x, p.y).setVisible(true);
-        this.stickKnob.setPosition(p.x, p.y).setVisible(true);
+        this.stick.cx = this.stickBaseHome.x;
+        this.stick.cy = this.stickBaseHome.y;
+        let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
+        const max = this.stickMaxR;
+        const len = Math.hypot(dx, dy);
+        // 如果落点离基座过远(>1.5x)，基座跟手指走(动态基座)
+        if (len > max * 1.5) {
+          const shift = len - max;
+          this.stick.cx += dx / len * shift;
+          this.stick.cy += dy / len * shift;
+          dx = p.x - this.stick.cx; dy = p.y - this.stick.cy;
+        }
+        let ndx = dx, ndy = dy;
+        const nlen = Math.hypot(ndx, ndy);
+        if (nlen > max) { ndx = ndx * max / nlen; ndy = ndy * max / nlen; }
+        this.stick.dx = ndx / max;
+        this.stick.dy = ndy / max;
+        this.stickBase.setPosition(this.stick.cx, this.stick.cy).setVisible(true);
+        this.stickKnob.setPosition(this.stick.cx + ndx, this.stick.cy + ndy).setVisible(true);
       }
     });
     const endStick = (p) => {
@@ -166,19 +185,30 @@ class MainScene extends Phaser.Scene {
     this.input.on('pointercancel', endStick);
   }
 
-  // v0.1.1 P0: 每帧从 pointer 当前位置采样，不等 pointermove 回调(避免输入“跳”)
+  // v0.1.2: 每帧从 pointer 位置采样；加 8px 死区；拉过 1.5x 时基座跟手指走(动态基座)
   sampleStick() {
     if (!this.stick.active || !this.stick.pointer) return;
     const p = this.stick.pointer;
-    // 如果 pointer 已抬起(引用还在但 isDown=false) 同样当停
     if (!p.isDown) { this.stick.dx = 0; this.stick.dy = 0; return; }
+    const max = this.stickMaxR;
     let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
-    const len = Math.hypot(dx, dy);
-    const max = 90;
-    if (len > max) { dx = dx * max / len; dy = dy * max / len; }
-    this.stick.dx = dx / max;
-    this.stick.dy = dy / max;
-    this.stickKnob.setPosition(this.stick.cx + dx, this.stick.cy + dy);
+    let len = Math.hypot(dx, dy);
+    // 动态基座：拉出 1.5x 时基座跟着手指移动一段，保持
+    if (len > max * 1.5) {
+      const shift = len - max;
+      this.stick.cx += dx / len * shift;
+      this.stick.cy += dy / len * shift;
+      this.stickBase.setPosition(this.stick.cx, this.stick.cy);
+      dx = p.x - this.stick.cx; dy = p.y - this.stick.cy;
+      len = Math.hypot(dx, dy);
+    }
+    // 死区：<8px 当 0，避免微抖
+    if (len < 8) { this.stick.dx = 0; this.stick.dy = 0; this.stickKnob.setPosition(this.stick.cx, this.stick.cy); return; }
+    let kdx = dx, kdy = dy;
+    if (len > max) { kdx = dx * max / len; kdy = dy * max / len; }
+    this.stick.dx = kdx / max;
+    this.stick.dy = kdy / max;
+    this.stickKnob.setPosition(this.stick.cx + kdx, this.stick.cy + kdy);
   }
 
   buildUI() {
