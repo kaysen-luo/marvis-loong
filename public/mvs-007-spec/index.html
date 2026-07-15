@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>《裂隙幸存者》Rift Ranger · 玩法规格 v0.1</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: #0a0e1a;
+  color: #c5cce0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+  font-size: 14.5px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: #00d4ff; text-decoration: none; }
+a:hover { color: #66e9ff; }
+
+/* === LAYOUT === */
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #0d1220;
+  border-right: 1px solid #1f2940;
+  padding: 32px 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar h2 {
+  color: #00d4ff;
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+.sidebar .brand {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.sidebar .brand-sub {
+  color: #6b7494;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 28px;
+}
+.sidebar ol { list-style: none; padding: 0; counter-reset: chapter -1; }
+.sidebar li {
+  margin-bottom: 4px;
+  counter-increment: chapter;
+  font-size: 13px;
+}
+.sidebar li a {
+  color: #c5cce0;
+  display: block;
+  padding: 7px 12px;
+  border-radius: 6px;
+  transition: all .15s;
+  border-left: 2px solid transparent;
+}
+.sidebar li a:hover {
+  background: #131a2e;
+  border-left-color: #00d4ff;
+  color: #fff;
+}
+.sidebar li a::before {
+  content: counter(chapter, decimal-leading-zero);
+  color: #6b7494;
+  font-family: "SF Mono", monospace;
+  font-size: 11px;
+  margin-right: 10px;
+}
+.sidebar .new-tag {
+  display: inline-block;
+  background: #ff6b35;
+  color: #0a0e1a;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 6px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.sidebar-footer {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #1f2940;
+  color: #6b7494;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+main {
+  padding: 48px 56px 80px;
+  max-width: 960px;
+}
+
+/* === DOC HEADER === */
+.doc-header { margin-bottom: 56px; }
+.badge {
+  display: inline-block;
+  background: #00d4ff;
+  color: #0a0e1a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 4px;
+  letter-spacing: 1.5px;
+  margin-bottom: 20px;
+}
+.badge.warn { background: #ff6b35; color: #0a0e1a; }
+.doc-header h1 {
+  font-size: 34px;
+  line-height: 1.35;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.doc-header .subtitle {
+  color: #b0b8d0;
+  font-size: 15px;
+  margin-bottom: 28px;
+}
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+.meta-card {
+  background: #131a2e;
+  border: 1px solid #1f2940;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.meta-card .label {
+  color: #6b7494;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.meta-card .value {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* === CHAPTER === */
+section.chapter {
+  margin-bottom: 72px;
+  padding-top: 20px;
+}
+section.chapter h2 {
+  font-size: 26px;
+  color: #fff;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  line-height: 1.4;
+}
+.chapter-num {
+  display: block;
+  color: #00d4ff;
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+section.chapter h3 {
+  font-size: 18px;
+  color: #fff;
+  margin: 32px 0 14px;
+  padding-left: 12px;
+  border-left: 3px solid #00d4ff;
+  font-weight: 600;
+}
+section.chapter h4 {
+  font-size: 15px;
+  color: #e0e8ff;
+  margin: 20px 0 10px;
+  font-weight: 600;
+}
+p { margin: 12px 0; color: #c5cce0; }
+p.lead {
+  color: #d0d8ee;
+  font-size: 15.5px;
+  margin: 16px 0 24px;
+  padding: 14px 18px;
+  background: rgba(0, 212, 255, 0.06);
+  border-left: 3px solid #00d4ff;
+  border-radius: 4px;
+}
+strong { color: #fff; }
+em { color: #66e9ff; font-style: normal; }
+ul, ol { padding-left: 24px; margin: 12px 0; color: #c5cce0; }
+li { margin-bottom: 8px; }
+code {
+  background: #1a2138;
+  color: #66e9ff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: "SF Mono", Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+s { color: #6b7494; }
+
+/* === TABLES === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0 24px;
+  background: #131a2e;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 13.5px;
+}
+thead, table > tr:first-child { background: #1a2138; }
+th {
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+  color: #00d4ff;
+  font-size: 12.5px;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #1f2940;
+}
+td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #1a2138;
+  color: #c5cce0;
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #161d33; }
+td.num { color: #66e9ff; font-family: "SF Mono", Monaco, monospace; white-space: nowrap; }
+td.hot { color: #ff9a4d; font-weight: 600; }
+
+/* === CALLOUT === */
+.callout {
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-left: 4px solid;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left-color: #6b7494;
+  color: #c5cce0;
+}
+.callout.info    { background: rgba(0, 212, 255, 0.08);  border-left-color: #00d4ff;  color: #b3e6ff; }
+.callout.warn    { background: rgba(255, 107, 53, 0.08); border-left-color: #ff6b35; color: #ffd0b3; }
+.callout.new     { background: rgba(147, 255, 128, 0.06); border-left-color: #93ff80; color: #d0ffc9; }
+.callout .cta {
+  color: #fff; font-weight: 700; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 1.5px; display: block; margin-bottom: 6px;
+}
+
+/* === DIAGRAM === */
+.diagram {
+  margin: 24px 0;
+  padding: 20px;
+  background: #0d1220;
+  border: 1px solid #1f2940;
+  border-radius: 8px;
+  text-align: center;
+}
+.diagram svg { max-width: 100%; height: auto; }
+.diagram .cap {
+  color: #6b7494;
+  font-size: 12px;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+}
+
+/* === CHIP === */
+.chip {
+  display: inline-block;
+  background: #1a2138;
+  color: #66e9ff;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  margin-right: 6px;
+  font-weight: 600;
+}
+.chip.warn { background: rgba(255, 107, 53, 0.16); color: #ff9a4d; }
+.chip.hot  { background: rgba(147, 255, 128, 0.12); color: #93ff80; }
+
+/* === FOOTER === */
+.doc-footer {
+  margin-top: 80px;
+  padding-top: 24px;
+  border-top: 1px solid #1f2940;
+  color: #6b7494;
+  font-size: 12px;
+  text-align: right;
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ============== SIDEBAR ============== -->
+<aside class="sidebar">
+  <div class="brand">裂隙幸存者</div>
+  <div class="brand-sub">RIFT RANGER · SPEC v0.1</div>
+  <h2>目录 · CONTENTS</h2>
+  <ol>
+    <li><a href="#ch-00">版本说明与关键变更</a></li>
+    <li><a href="#ch-01">一句话规格 & 验证问题</a></li>
+    <li><a href="#ch-02">游戏世界观定调</a></li>
+    <li><a href="#ch-03">核心玩法循环</a></li>
+    <li><a href="#ch-04">Trooper · 步兵档案<span class="new-tag">NEW</span></a></li>
+    <li><a href="#ch-05">敌人矩阵</a></li>
+    <li><a href="#ch-06">波次时间线</a></li>
+    <li><a href="#ch-07">升级卡 · Build 系统</a></li>
+    <li><a href="#ch-08">Boss 战 · 异形巢母</a></li>
+    <li><a href="#ch-09">手感与视觉规格</a></li>
+    <li><a href="#ch-10">MVP 之外 · 角色出场路径</a></li>
+    <li><a href="#ch-11">变更日志</a></li>
+  </ol>
+  <div class="sidebar-footer">
+    项目代号 <strong style="color:#00d4ff">MVS-007</strong><br>
+    产品名 · 裂隙幸存者 Rift Ranger<br>
+    世界观锚点 · Xenobreach<br>
+    副标 · 凝视 The Gaze<br><br>
+    落盘 · 马启航Marvis<br>
+    2026-07-15
+  </div>
+</aside>
+
+<!-- ============== MAIN ============== -->
+<main>
+
+<div class="doc-header">
+  <span class="badge">GAMEPLAY SPEC · V0.1</span>
+  <h1>《裂隙幸存者》Rift Ranger<br>玩法规格 v0.1 · 凝视 The Gaze</h1>
+  <p class="subtitle">手机端 2D 半自动 Roguelite 割草 · MVP 单人 10 分钟一关一 Boss · 基于白模 v0.1.2 实测数值 · 世界观锚定 Xenobreach 一期「凝视」</p>
+  <div class="meta-grid">
+    <div class="meta-card"><div class="label">项目代号</div><div class="value">MVS-007</div></div>
+    <div class="meta-card"><div class="label">线上白模</div><div class="value">v0.1.2 (Trooper 单人)</div></div>
+    <div class="meta-card"><div class="label">MVP 时长</div><div class="value">10 分钟 / 关</div></div>
+    <div class="meta-card"><div class="label">品类锚点</div><div class="value">LoL Swarm / Vampire Survivors</div></div>
+    <div class="meta-card"><div class="label">平台</div><div class="value">手机端 (竖屏 1080×1920)</div></div>
+    <div class="meta-card"><div class="label">Demo</div><div class="value">marvis-loong.pages.dev/mvs-007/</div></div>
+  </div>
+  <p class="lead">这份文档是 <strong>Rift Ranger MVP V0.1 的玩法宪法</strong>。所有数值以 <code>~/marvis-loong-site/public/mvs-007/game.js</code>(v0.1.2, 767 行)真实运行值为准；世界观锚定 <code>xenobreach-world-bible-v0.1.md</code>；本版重点变更列在下方章节 00。</p>
+</div>
+
+<!-- ============ 00 ============ -->
+<section class="chapter" id="ch-00">
+  <span class="chapter-num">CHAPTER · 00</span>
+  <h2>版本说明与关键变更</h2>
+
+  <p>这份规格是 <strong>MVP V0.1 玩法宪法的落地版</strong>——把 MVP 规格卡（意图）、世界观圣经（叙事骨架）、白模 game.js（真实数值）三条线合并成单一事实源。</p>
+
+  <h3>三条线的关系</h3>
+  <table>
+    <thead><tr><th>文档</th><th>角色</th><th>状态</th></tr></thead>
+    <tbody>
+    <tr><td><code>mvp-spec-v0.1.md</code></td><td>设计意图（应然）</td><td>冻结 · 2026-07-03</td></tr>
+    <tr><td><code>xenobreach-world-bible-v0.1.md</code></td><td>叙事骨架 · 角色宪法</td><td>冻结 · 2026-07-06</td></tr>
+    <tr><td><code>game.js</code> (v0.1.2)</td><td>真实数值 · 落地事实</td><td>线上 · 2026-07-15</td></tr>
+    <tr><td><strong>本文档</strong></td><td><strong>三者合并 · 玩法宪法</strong></td><td><strong>v0.1 · 2026-07-15</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h3>本版关键变更（相对之前散落文档）</h3>
+
+  <div class="callout new">
+    <span class="cta">★ NEW · 2026-07-15 拍板</span>
+    <strong>Trooper 等离子步枪加射程限制 <code>500 px</code></strong>（约屏幕高 1/3，参见 Ch·04）。白模现状是<em>无限射程自动锁最近敌人</em>——玩家可以龟缩不走位。加射程后强迫「移动 + 输出」双 Verb 咬合，符合半自动割草的爽感设计。
+  </div>
+
+  <div class="callout info">
+    <span class="cta">命名统一</span>
+    <ul style="margin: 0;">
+      <li>产品名：<s>Xenobreach / 异星裂隙</s> → <strong>裂隙幸存者 / Rift Ranger</strong>（K师 2026-07-07 拍板）</li>
+      <li>MVP 英雄名：<s>侦察兵 Scout</s>（MVP 规格卡旧文本）→ <strong>步兵 Trooper</strong>（世界观圣经拍定，本文档统一用 Trooper）</li>
+      <li>代号 <strong>MVS-007</strong> 保留</li>
+      <li>副标一期名保留 · <strong>凝视 The Gaze</strong></li>
+    </ul>
+  </div>
+
+  <div class="callout info">
+    <span class="cta">白模落地状态</span>
+    v0.1.2 已修「黏笨延迟」根因——摇杆改「即时响应混合式」（固定基座 + 落点即偏移 + 8px 死区 + 动态基座），speed <code>200 → 240</code>，子弹速度 <code>400 → 600</code>，i-frame <code>500 → 300ms</code>，关卡时长 <code>5min → 10min</code>。<em>Boss 尚未实装</em>（v0.2 前不做），本文档 Ch·08 属于规格前置定稿。
+  </div>
+</section>
+
+<!-- ============ 01 ============ -->
+<section class="chapter" id="ch-01">
+  <span class="chapter-num">CHAPTER · 01</span>
+  <h2>一句话规格 & 唯一验证问题</h2>
+
+  <p class="lead"><strong>一个玩家，操控步兵 Trooper，在 10 分钟内打完 5 波异形 + 1 个 Boss，期间通过 6 次三选一让 Build 一直在长——验证「爽感是否成立」。</strong></p>
+
+  <h3>MVP 唯一要验证的问题</h3>
+  <div class="callout warn">
+    <span class="cta">?? THE QUESTION</span>
+    <strong>「一个人打 10 分钟外星怪，Build 一直在长，最后打 Boss——到底爽不爽？」</strong><br><br>
+    爽 → 加人、加卡、加关、加化学反应、加装备、加探索，滚向 V1.0。<br>
+    不爽 → 回炉重造核心循环，不做后面任何东西。<br><br>
+    <em>这是唯一的成败标尺。MVP 期间所有决策以「是否服务于验证这个问题」为准。</em>
+  </div>
+
+  <h3>为什么砍掉 X（V1.0 完整版有但 MVP 无）</h3>
+  <table>
+    <thead><tr><th>V1.0 有</th><th>MVP 砍</th><th>砍掉的理由</th></tr></thead>
+    <tbody>
+      <tr><td>4 个英雄</td><td>1 个 Trooper</td><td>1 英雄足以验证核心爽感；多英雄价值只在化学反应存在时显现</td></tr>
+      <tr><td>5 个关卡</td><td>1 关 10 分钟</td><td>1 关够验证节奏 / 弧线；多关是「内容扩展」不改核心循环</td></tr>
+      <tr><td>40+ 张升级卡</td><td>10 张</td><td>10 张 = 6 次三选一 = 每次 3 个像样选项，已足够验证 Build 感</td></tr>
+      <tr><td>化学反应</td><td>无</td><td>1 英雄 + 10 卡的 Build 空间还谈不上「协同网」</td></tr>
+      <tr><td>装备系统 / 地图探索 / 组队</td><td>无</td><td>都是二级系统，MVP 装不下</td></tr>
+    </tbody>
+  </table>
+  <p style="color:#6b7494;font-size:12.5px;">砍掉的一切共同理由：MVP 只回答一个问题。任何不服务于这个验证的东西，都是干扰项——无论它在 V1.0 里多重要。</p>
+</section>
+
+<!-- ============ 02 ============ -->
+<section class="chapter" id="ch-02">
+  <span class="chapter-num">CHAPTER · 02</span>
+  <h2>游戏世界观定调</h2>
+
+  <p class="lead">你在凝视这颗未知星球，同时也被这颗星球所有生物凝视。<br><em>You watch the unknown. The unknown watches back.</em></p>
+
+  <h3>时代背景（K师 2026-07-06 定调）</h3>
+  <p>公元 <strong>2026 世纪</strong>，宇宙航行高度普及，人类文明遍布多个星系。近期宇宙中出现<strong>不稳定的游离虫洞</strong>（Rogue Wormholes）——随机出现、无预警、撞上即被瞬移到未知坐标。</p>
+
+  <h3>坠落事件（游戏起点）</h3>
+  <table>
+    <thead><tr><th>事故结果</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>导航失效</td><td>星图无法定位，通讯无法回联母星</td></tr>
+      <tr><td>舰队损毁</td><td>主舰坠落，补给 90% 损失</td></tr>
+      <tr><td>人员损失</td><td>大部分船员战亡，仅 <strong>8 名有战斗力的幸存者</strong></td></tr>
+      <tr><td>生存环境</td><td>陌生星球（代号 <strong>X-77</strong>），大气 / 重力 / 生物完全未知</td></tr>
+    </tbody>
+  </table>
+
+  <h3>一期舞台 · 代号 X-77</h3>
+  <p>双日恒星系统，昼夜温差 60°C+，大气偏氮氧混合。多元地貌——玩家坠落点为荒原过渡带，附近有丛林 / 溶洞 / 高原 / 废墟。表面遍布奇异晶体矿脉，推测与虫洞有关（伏笔）。</p>
+
+  <h3>四期副标节奏</h3>
+  <table>
+    <thead><tr><th>阶段</th><th>副标</th><th>叙事阶段</th><th>核心矛盾</th></tr></thead>
+    <tbody>
+      <tr><td>一期<br><span class="chip hot">MVP</span></td><td><strong>凝视</strong> The Gaze</td><td>舰队坠落 · 陌生生态初接触</td><td>个体生存 vs 未知</td></tr>
+      <tr><td>二期</td><td>灾变 Cataclysm</td><td>陨星坠落 · 星球生物异变</td><td>抵抗生态崩坏</td></tr>
+      <tr><td>三期</td><td>孢子协议 Spore Protocol</td><td>虫群成型 · 军事化组织</td><td>虫潮军事战争</td></tr>
+      <tr><td>四期</td><td>群星回响 Echoes of the Stars</td><td>星际文明介入</td><td>多方势力 · 星际战争</td></tr>
+    </tbody>
+  </table>
+  <p style="color:#6b7494;font-size:12.5px;">关键约束：副标推进必须<strong>上一期数据达标</strong>才能推进。MVP 只做「凝视」。</p>
+</section>
+
+<!-- ============ 03 ============ -->
+<section class="chapter" id="ch-03">
+  <span class="chapter-num">CHAPTER · 03</span>
+  <h2>核心玩法循环（Core Loop）</h2>
+
+  <p class="lead">半自动割草：<strong>玩家控移动 + 主动技能，主武器自动开火</strong>。10 分钟一局，节奏靠 wave 解锁 + 升级驱动三选一。</p>
+
+  <h3>4 个 Verbs（核心动词）</h3>
+  <table>
+    <thead><tr><th>#</th><th>Verb</th><th>输入方式</th><th>手动 / 自动</th><th>教学时机</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>移动</strong></td><td>左半屏触摸摇杆 / WASD</td><td>手动</td><td>开局 3 秒学会</td></tr>
+      <tr><td>2</td><td><strong>主武器</strong>（等离子步枪）</td><td>无需操作 · <em>射程内自动</em></td><td>自动</td><td>落地即懂</td></tr>
+      <tr><td>3</td><td><strong>能量脉冲</strong></td><td>右下按钮 · r=105 px 命中区</td><td>手动</td><td>05:00 Spitter 出场后学「群清 + 打断」</td></tr>
+      <tr><td>4</td><td><s>战术翻滚</s> <span class="chip warn">v0.2 实装</span></td><td>右侧按钮</td><td>手动</td><td>03:00 Rusher 出场后学「无敌帧躲冲刺」</td></tr>
+    </tbody>
+  </table>
+  <p style="color:#6b7494;font-size:12.5px;">设计意图：4 个动词是新手 10 分钟内能全部掌握的极限。少一个 = 无聊，多一个 = 认知过载。<br><strong>v0.1 白模注意</strong>：战术翻滚 spec 有但 code 未实装（当前唯一无敌是碰怪后的 300ms i-frame，被动触发）。v0.2 补齐。</p>
+
+  <h3>10 分钟单局节奏弧线</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pressGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.15"/>
+          <stop offset="50%" stop-color="#00d4ff" stop-opacity="0.55"/>
+          <stop offset="80%" stop-color="#ff6b35" stop-opacity="0.75"/>
+          <stop offset="100%" stop-color="#ff2e2e" stop-opacity="0.9"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="900" height="340" fill="#0d1220"/>
+      <path d="M 60 260 Q 180 240 260 210 Q 360 180 460 150 Q 560 120 640 100 Q 720 90 800 70 L 800 280 L 60 280 Z" fill="url(#pressGrad)" opacity="0.7"/>
+      <path d="M 60 260 Q 180 240 260 210 Q 360 180 460 150 Q 560 120 640 100 Q 720 90 800 70" stroke="#66e9ff" stroke-width="2" fill="none"/>
+      <line x1="60" y1="280" x2="820" y2="280" stroke="#3a4666" stroke-width="1.5"/>
+      <g font-family="SF Mono, monospace" font-size="10" fill="#6b7494">
+        <text x="60"  y="300" text-anchor="middle">00:00</text>
+        <text x="184" y="300" text-anchor="middle">01:30</text>
+        <text x="308" y="300" text-anchor="middle">03:00</text>
+        <text x="432" y="300" text-anchor="middle">05:00</text>
+        <text x="556" y="300" text-anchor="middle">07:30</text>
+        <text x="680" y="300" text-anchor="middle">09:00</text>
+        <text x="820" y="300" text-anchor="middle">10:00</text>
+      </g>
+      <g fill="#66e9ff">
+        <circle cx="184" cy="272" r="4"/><circle cx="308" cy="272" r="4"/><circle cx="432" cy="272" r="4"/>
+        <circle cx="556" cy="272" r="4"/><circle cx="680" cy="272" r="4"/><circle cx="820" cy="272" r="4"/>
+      </g>
+      <g font-family="sans-serif" font-size="11" fill="#fff">
+        <line x1="60"  y1="264" x2="60"  y2="60" stroke="#00d4ff" stroke-dasharray="3 4" opacity="0.4"/>
+        <text x="66" y="55" fill="#00d4ff">落地 · Crawler x5</text>
+        <line x1="308" y1="212" x2="308" y2="80" stroke="#ff9a4d" stroke-dasharray="3 4" opacity="0.6"/>
+        <text x="314" y="76" fill="#ff9a4d">Rusher 加入（03:00）</text>
+        <line x1="432" y1="180" x2="432" y2="105" stroke="#ff9a4d" stroke-dasharray="3 4" opacity="0.6"/>
+        <text x="438" y="100" fill="#ff9a4d">Spitter 加入（05:00）</text>
+        <line x1="556" y1="150" x2="556" y2="130" stroke="#ff6b35" stroke-dasharray="3 4" opacity="0.7"/>
+        <text x="562" y="126" fill="#ff6b35">Crawler 密度 x2（07:30）</text>
+        <line x1="680" y1="95" x2="680" y2="155" stroke="#ff6b35" stroke-dasharray="3 4" opacity="0.7"/>
+        <text x="686" y="175" fill="#ff6b35">Rusher 密度 x2（09:00）</text>
+        <line x1="742" y1="82" x2="742" y2="42" stroke="#ff2e2e" stroke-dasharray="3 4" opacity="0.85"/>
+        <text x="666" y="38" fill="#ff2e2e" font-weight="700">Boss · 巢母（v0.2 实装）</text>
+      </g>
+      <text x="30" y="180" transform="rotate(-90 30 180)" font-family="sans-serif" font-size="11" fill="#6b7494">压力曲线</text>
+      <text x="440" y="325" font-family="sans-serif" font-size="11" fill="#6b7494" text-anchor="middle">时间轴 · 10 分钟</text>
+    </svg>
+    <div class="cap">图 1 · 单局压力弧线 + 6 次升级抽卡锚点（青点）· 关键 wave 事件</div>
+  </div>
+
+  <h3>抽卡节奏（升级驱动，非固定 90 秒）</h3>
+  <p>白模实现：<strong>每次角色升级 → 暂停世界 → 三选一 → 应用 → 恢复</strong>（<code>openLevelUp()</code>）。<br>升级门槛 <code>xpToNext = 20 + (level-1) × 10</code>——Lv2 需 20 xp，Lv3 需 30 xp……Lv10 需 100 xp（累计 540 xp）。<br>预期一局 6-8 次抽卡，与 MVP 规格卡「6 次三选一」意图对齐。</p>
+</section>
+
+<!-- ============ 04 ============ -->
+<section class="chapter" id="ch-04">
+  <span class="chapter-num">CHAPTER · 04</span>
+  <h2>英雄档案 · Trooper 步兵（MVP 唯一）</h2>
+
+  <p class="lead">舰队安全部队士官长，标准海军陆战队员。<em>「标准硬核 FPS 老兵手感」</em>——中距离火力主输出，走位 + 输出的双 Verb 咬合是他的手感命脉。</p>
+
+  <h3>属性卡（白模 v0.1.2 真实数值）</h3>
+  <table>
+    <thead><tr><th>属性</th><th>数值</th><th>来源 / 说明</th></tr></thead>
+    <tbody>
+      <tr><td>生命值 HP</td><td class="num">100 / 100</td><td><code>freshState().hpMax = 100</code></td></tr>
+      <tr><td>移速 speed</td><td class="num">240 px/s</td><td>v0.1.2 从 200 → 240（K师反馈「移速太慢」）</td></tr>
+      <tr><td>i-frame（碰怪后无敌）</td><td class="num">300 ms</td><td>v0.1.2 从 500 → 300（更灵敏）</td></tr>
+      <tr><td>Sprite（占位）</td><td>白色圆 · r=15</td><td>Pixel Art 素材待补</td></tr>
+      <tr><td>输入</td><td>左半屏摇杆 + WASD / 方向键</td><td>三指并发支持</td></tr>
+    </tbody>
+  </table>
+
+  <h3>主武器 · 等离子步枪</h3>
+  <table>
+    <thead><tr><th>项</th><th>数值</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>射速</td><td class="num">300 ms / 发（≈ 3.33 发/s）</td><td><code>state.fireRate = 300</code>，可被「加速射击」×0.66 叠加，下限 80 ms</td></tr>
+      <tr><td>基础伤害</td><td class="num">10</td><td><code>state.bulletDmg = 10</code></td></tr>
+      <tr><td>子弹速度</td><td class="num">600 px/s</td><td>v0.1.2 从 400 → 600（子弹「跟得上」输出感）</td></tr>
+      <tr><td>目标选择</td><td>射程内最近敌人</td><td><code>tryFire → nearestEnemy</code>，无手动瞄准</td></tr>
+      <tr><td>弹道特征</td><td>短蓄力 → 前方锥形快速齐射 → 多目标溅射</td><td>参考 LoL 泽丽 Q「电荷冲击」</td></tr>
+      <tr><td>穿透</td><td>基础 0 · 「穿透弹」+1（once）</td><td><code>state.pierce</code></td></tr>
+      <tr><td>爆裂</td><td>基础无 · 「爆裂弹」触发 r=60 / 8 伤 AoE</td><td><code>state.explosive</code></td></tr>
+      <tr><td>暴击</td><td>基础 0% · 「暴击强化」+20%（上限 60%）· 倍率 x3</td><td><code>critMult = 3</code></td></tr>
+      <tr class="hot"><td class="hot">★ 射程限制</td><td class="num hot">500 px</td><td class="hot"><strong>v0.1 拍板新增</strong>（详见下方）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout new">
+    <span class="cta">★ 射程限制 · 500 px（K师 2026-07-15 拍板）</span>
+    <p style="margin: 6px 0;"><strong>建议值 · <code>500 px</code></strong>（约屏幕高 1/3 · 1920 竖屏下 = 500/1920 ≈ 26% 屏高）</p>
+    <p style="margin: 6px 0;"><strong>规则</strong>：<em>超射程外的敌人不吃 <code>nearestEnemy()</code></em>——步枪不再自动开火，玩家必须走近才输出。</p>
+    <p style="margin: 6px 0;"><strong>为什么要加</strong>：</p>
+    <ul style="margin: 6px 0;">
+      <li>白模现状是无限射程自动锁最近敌人——玩家可以龟缩不走位，主武器一直响，「移动」这个 Verb 被架空。</li>
+      <li>加射程后强迫「移动 + 输出」双 Verb 咬合：远处刷出来的怪 <em>你不走过去它就打不到</em>。走位不再只是躲，也是「造成输出」。</li>
+      <li>Spitter 的 900 px 攻击射程反而 <em>比你远</em>——玩家必须主动接近才能干掉炮手，制造 <strong>「顶着酸弹前压 vs 龟缩挨骚扰」</strong> 的抉择。</li>
+      <li>半自动割草的爽感来自「走位」和「输出」同时发生，不是「站桩自动泼」。</li>
+    </ul>
+    <p style="margin: 6px 0;"><strong>数值理由</strong>：屏幕高 1920，玩家在中心时上下各 960 px。500 px ≈ 覆盖玩家周围 1000×1000 的战斗圈，够看清目标、够输出，但看不到屏幕最边缘。留出「战术真空」——那些还没进入射程但正在压过来的怪，是压力来源。</p>
+    <p style="margin: 6px 0;"><strong>实装点</strong>：<code>nearestEnemy()</code> 内加一行 <code>if (bestD &gt; 500*500) return null</code>；同步 UI 显示半透明 500 px 圆圈（淡青蓝，只在 <em>射程内无敌人</em> 时高亮提示「你需要移动」）。</p>
+  </div>
+
+  <div class="diagram">
+    <svg viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="700" height="460" fill="#0d1220"/>
+      <g stroke="#1a2138" stroke-width="1">
+        <line x1="0" y1="80"  x2="700" y2="80"/><line x1="0" y1="160" x2="700" y2="160"/>
+        <line x1="0" y1="240" x2="700" y2="240"/><line x1="0" y1="320" x2="700" y2="320"/>
+        <line x1="0" y1="400" x2="700" y2="400"/>
+        <line x1="100" y1="0" x2="100" y2="460"/><line x1="200" y1="0" x2="200" y2="460"/>
+        <line x1="300" y1="0" x2="300" y2="460"/><line x1="400" y1="0" x2="400" y2="460"/>
+        <line x1="500" y1="0" x2="500" y2="460"/><line x1="600" y1="0" x2="600" y2="460"/>
+      </g>
+      <circle cx="350" cy="230" r="180" fill="rgba(0,212,255,0.06)" stroke="#00d4ff" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="350" y="55" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#00d4ff" font-weight="700">主武器射程 500 px</text>
+      <circle cx="350" cy="230" r="72" fill="rgba(102,255,153,0.08)" stroke="#66ff99" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="350" y="315" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#66ff99">脉冲 200 px</text>
+      <path d="M 350 230 L 500 130 L 550 180 Z" fill="rgba(102,233,255,0.18)" stroke="#66e9ff" stroke-width="1"/>
+      <path d="M 350 230 L 500 130" stroke="#88ddff" stroke-width="2"/>
+      <path d="M 350 230 L 520 155" stroke="#88ddff" stroke-width="1.5" opacity="0.6"/>
+      <path d="M 350 230 L 540 175" stroke="#88ddff" stroke-width="1.2" opacity="0.4"/>
+      <circle cx="350" cy="230" r="12" fill="#ffffff"/>
+      <text x="350" y="258" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#fff">Trooper</text>
+      <circle cx="490" cy="130" r="8" fill="#ff4444"/>
+      <text x="490" y="115" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#ff9a9a">Crawler · 命中</text>
+      <polygon points="280,140 292,158 268,158" fill="#ff9933"/>
+      <text x="280" y="132" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#ffbf80">Rusher</text>
+      <rect x="620" y="120" width="18" height="18" fill="#aa66ff"/>
+      <text x="629" y="112" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#c9a4ff">Spitter · 射程外</text>
+      <line x1="629" y1="129" x2="530" y2="230" stroke="#aa66ff" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
+      <text x="565" y="185" font-family="sans-serif" font-size="9" fill="#c9a4ff">酸弹（900 px 射程）</text>
+      <text x="629" y="155" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#ff6b35" font-weight="700">走近才能打</text>
+      <g font-family="sans-serif" font-size="10" fill="#c5cce0">
+        <rect x="30" y="410" width="14" height="14" fill="rgba(0,212,255,0.06)" stroke="#00d4ff"/>
+        <text x="50" y="422">主武器射程 500 px</text>
+        <rect x="200" y="410" width="14" height="14" fill="rgba(102,255,153,0.08)" stroke="#66ff99"/>
+        <text x="220" y="422">能量脉冲 200 px</text>
+        <rect x="370" y="410" width="14" height="14" fill="rgba(102,233,255,0.18)" stroke="#66e9ff"/>
+        <text x="390" y="422">锥形齐射方向</text>
+      </g>
+    </svg>
+    <div class="cap">图 2 · Trooper 俯视 2D 射程圈 + 主武器锥形弹道 + 能量脉冲范围（Spitter 在射程外，玩家必须前压）</div>
+  </div>
+
+  <h3>主动技能 · 能量脉冲（Energy Pulse）</h3>
+  <table>
+    <thead><tr><th>属性</th><th>数值</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>CD</td><td class="num">8 000 ms（8 秒）</td><td><code>state.pulseCd = 8000</code></td></tr>
+      <tr><td>触发范围</td><td class="num">半径 200 px 圆形</td><td>玩家为圆心</td></tr>
+      <tr><td>伤害</td><td class="num">50（一次性）</td><td>无衰减，全范围同伤</td></tr>
+      <tr><td>反馈</td><td>白光扩散 30 → 260 px（320ms）+ 相机抖 160 ms + flash 120 ms</td><td>「屏幕爆掉」的爽感</td></tr>
+      <tr><td>触发方式</td><td>右下按钮 · r=105 px · <code>x = W-170, y = H-300</code></td><td>右手拇指默认位置</td></tr>
+    </tbody>
+  </table>
+
+  <h3>位移技能 · 战术翻滚 <span class="chip warn">v0.2 实装</span></h3>
+  <p>规格值：<strong>CD 10 s · 短距无敌帧位移</strong>（方向 = 摇杆方向 · 无敌时长 = 移动时长 ≈ 300 ms）。<br><strong>白模现状：未实装</strong>。当前唯一无敌是碰怪后的 300 ms i-frame，被动触发。</p>
+
+  <h3>被动</h3>
+  <p>无。Trooper 的所有战力来自主武器 + 主动 + 升级卡叠加。这是他<em>作为系列基准英雄</em>的定位——不花哨，靠玩法本身撑起爽感。</p>
+</section>
+
+<!-- ============ 05 ============ -->
+<section class="chapter" id="ch-05">
+  <span class="chapter-num">CHAPTER · 05</span>
+  <h2>敌人矩阵</h2>
+
+  <p class="lead">3 种小怪 + 1 Boss。小怪对应<strong>三种压力</strong>（数量海 / 冲刺威胁 / 远程压制），对应玩家的<strong>三种应对</strong>（主武器 / 位移 / 脉冲）。Boss 综合考核。</p>
+
+  <h3>敌人属性总表（白模 v0.1.2 真实数值）</h3>
+  <table>
+    <thead><tr><th>敌人</th><th>HP</th><th>速度</th><th>撞伤</th><th>给 XP</th><th>特殊</th><th>Sprite（占位）</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Crawler</strong><br>异形爬虫</td>
+        <td class="num">10</td><td class="num">80 px/s</td><td class="num">5</td><td class="num">5</td>
+        <td>撞玩家不死 · 持续追击</td><td>红色圆 · r=12</td>
+      </tr>
+      <tr>
+        <td><strong>Rusher</strong><br>异形突袭者</td>
+        <td class="num">30</td><td class="num">220 px/s</td><td class="num">15</td><td class="num">15</td>
+        <td>撞玩家后<strong>自爆</strong>（<code>damageEnemy(e, 999)</code>）</td><td>橙色三角 · 边长 16</td>
+      </tr>
+      <tr>
+        <td><strong>Spitter</strong><br>异形炮手</td>
+        <td class="num">50</td><td class="num">60 px/s</td><td class="num">20</td><td class="num">30</td>
+        <td>每 1.5 s 对 &lt;900 px 玩家吐酸弹 · 弹速 260 px/s · 弹伤 20</td><td>紫色方块 · 22×22</td>
+      </tr>
+      <tr>
+        <td><strong>Hive Mother</strong><br>异形巢母 · Boss<br><span class="chip warn">v0.2 实装</span></td>
+        <td class="num">2 000</td><td class="num">慢 · 但有冲撞</td><td class="num">30-60 阶段浮动</td><td class="num">200</td>
+        <td>3 阶段（冲撞 / 召唤 / 酸雨 AoE）· 目标击破 90-120 s</td><td>大体积（玩家 4-6 倍）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>各敌人设计角色</h3>
+  <h4>Crawler · 数量海教学怪</h4>
+  <p>开局预放 <strong>5 只</strong>。每 <code>1200 ms</code> 刷一波，<strong>波数随时间递增</strong>——<code>wave = min(4, 1 + floor(elapsed/120000))</code>：0-2min 一波 1 只，2-4min 一波 2 只，4-6min 一波 3 只，6+min 一波 4 只。<strong>07:30 起</strong>触发 <code>crawlerDense</code>，波数 ×2（可能一波 8 只）。<br>它的角色：教玩家「主武器 = 一切」。爬虫慢、伤害低，只是让玩家<em>感受到</em>击杀反馈。</p>
+
+  <h4>Rusher · 冲刺威胁 · 教走位</h4>
+  <p><strong>03:00 解锁</strong>（<code>elapsed &gt;= 180000</code>）。每 <code>5 000 ms</code> 刷 1-2 只。<strong>09:00 起</strong>触发 <code>rusherDense</code>，数量 ×2。<br>它的角色：教玩家<em>躲</em>。速度 220 px/s（比玩家的 240 稍慢但接近）+ 撞后自爆 = 玩家如果不移动就会挨 15 伤。这是<strong>翻滚技能（v0.2）的教学怪</strong>——当前玩家只能靠 i-frame 硬吃或纯走位躲。</p>
+
+  <h4>Spitter · 远程压制 · 教群清</h4>
+  <p><strong>05:00 解锁</strong>（<code>elapsed &gt;= 300000</code>）。每 <code>7 000 ms</code> 刷 1 只。每 <code>1500 ms</code> 全场 Spitter 集体对 &lt;900 px 玩家吐一发酸弹。<br>它的角色：教玩家<em>用脉冲</em>。它慢（60 px/s），HP 高（50，5 倍于爬虫），但<strong>射程 900 px 比玩家的 500 px 主武器远</strong>——玩家龟缩就打不完酸弹。必须前压近战或用脉冲一次群清一片。</p>
+
+  <h4>Hive Mother · Boss <span class="chip warn">v0.2 实装 · 规格前置定稿</span></h4>
+  <p>详见 <a href="#ch-08">Ch·08 · Boss 战</a>。</p>
+
+  <h3>敌人体型对比（俯视剪影）</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="700" height="220" fill="#0d1220"/>
+      <line x1="30" y1="170" x2="670" y2="170" stroke="#3a4666" stroke-width="1"/>
+      <g transform="translate(80, 170)">
+        <circle cx="0" cy="-15" r="15" fill="#ffffff"/>
+        <text x="0" y="20" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#c5cce0">Trooper</text>
+        <text x="0" y="34" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#6b7494">r=15 · HP 100</text>
+      </g>
+      <g transform="translate(210, 170)">
+        <circle cx="0" cy="-12" r="12" fill="#ff4444"/>
+        <text x="0" y="20" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#ff9a9a">Crawler</text>
+        <text x="0" y="34" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#6b7494">r=12 · HP 10</text>
+      </g>
+      <g transform="translate(320, 170)">
+        <polygon points="0,-30 16,-4 -16,-4" fill="#ff9933"/>
+        <text x="0" y="20" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#ffbf80">Rusher</text>
+        <text x="0" y="34" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#6b7494">tri 32 · HP 30</text>
+      </g>
+      <g transform="translate(430, 170)">
+        <rect x="-11" y="-22" width="22" height="22" fill="#aa66ff"/>
+        <text x="0" y="20" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#c9a4ff">Spitter</text>
+        <text x="0" y="34" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#6b7494">22×22 · HP 50</text>
+      </g>
+      <g transform="translate(580, 170)">
+        <ellipse cx="0" cy="-45" rx="55" ry="45" fill="#7a1e5c"/>
+        <ellipse cx="0" cy="-40" rx="40" ry="32" fill="#a83b7f"/>
+        <circle cx="-15" cy="-50" r="6" fill="#39ff14"/>
+        <circle cx="15" cy="-50" r="6" fill="#39ff14"/>
+        <text x="0" y="20" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#ff9de0" font-weight="700">Hive Mother</text>
+        <text x="0" y="34" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#6b7494">r≈55 · HP 2000</text>
+      </g>
+    </svg>
+    <div class="cap">图 3 · 敌人体型对比（俯视剪影 · Trooper 参照 / Crawler / Rusher / Spitter / Hive Mother）</div>
+  </div>
+
+  <h3>敌人从哪里刷</h3>
+  <p>4 边随机（<code>randomSpawnPos()</code> · pad 80 px 屏外）。玩家不知道下一波怪从哪个方向来——这是压力的一部分。</p>
+</section>
+
+<!-- ============ 06 ============ -->
+<section class="chapter" id="ch-06">
+  <span class="chapter-num">CHAPTER · 06</span>
+  <h2>波次时间线（Wave Timeline）</h2>
+
+  <p class="lead">白模用<strong>秒数解锁 + 密度翻倍</strong>驱动 wave（<em>非传统 wave 事件</em>）。玩家可预测的节奏 + 时间累积压力 = 半自动割草的黄金结构。</p>
+
+  <h3>解锁 / 密度事件（白模 update() 真实数值）</h3>
+  <table>
+    <thead><tr><th>时间</th><th>事件</th><th>源码</th><th>玩家感受</th></tr></thead>
+    <tbody>
+      <tr><td class="num">00:00</td><td>开局预放 Crawler ×5 + Crawler 常规刷</td><td><code>for (i&lt;5) spawnCrawler()</code></td><td>「原来是这样打」</td></tr>
+      <tr><td class="num">03:00</td><td><strong>Rusher 加入</strong></td><td><code>elapsed &gt;= 180000</code></td><td>「被冲一次 → 学会走位」</td></tr>
+      <tr><td class="num">05:00</td><td><strong>Spitter 加入</strong></td><td><code>elapsed &gt;= 300000</code></td><td>「地面全是酸弹 → 学会前压 + 脉冲」</td></tr>
+      <tr><td class="num">07:30</td><td><strong>Crawler 密度 ×2</strong></td><td><code>elapsed &gt;= 450000</code></td><td>「屏幕开始塞满」</td></tr>
+      <tr><td class="num">08:00 <span class="chip warn">v0.2</span></td><td>Boss · Hive Mother 出场</td><td>待实装</td><td>「综合考核」</td></tr>
+      <tr><td class="num">09:00</td><td><strong>Rusher 密度 ×2</strong></td><td><code>elapsed &gt;= 540000</code></td><td>「冲刺者变多，压力峰值」</td></tr>
+      <tr><td class="num">10:00</td><td>倒计时归零 · 存活胜利</td><td><code>totalMs = 600000</code></td><td>「再来一局」的钩子</td></tr>
+    </tbody>
+  </table>
+
+  <h3>刷新频率总表</h3>
+  <table>
+    <thead><tr><th>敌人</th><th>刷新间隔</th><th>每次数量</th><th>密度翻倍后</th></tr></thead>
+    <tbody>
+      <tr><td>Crawler</td><td class="num">1200 ms</td><td class="num">1-4 只（波数 = min(4, 1+⌊t/120000⌋)）</td><td class="num">2-8 只（×2）</td></tr>
+      <tr><td>Rusher</td><td class="num">5000 ms</td><td class="num">1-2 只</td><td class="num">2-4 只（×2）</td></tr>
+      <tr><td>Spitter</td><td class="num">7000 ms</td><td class="num">1 只固定</td><td>-</td></tr>
+      <tr><td>Spitter 吐弹</td><td class="num">1500 ms</td><td>全场 Spitter 各 1 发</td><td>-</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Wave 时间线可视化</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="900" height="260" fill="#0d1220"/>
+      <line x1="60" y1="200" x2="820" y2="200" stroke="#3a4666" stroke-width="1.5"/>
+      <g font-family="SF Mono, monospace" font-size="10" fill="#6b7494">
+        <g stroke="#3a4666">
+          <line x1="60" y1="196" x2="60" y2="204"/><line x1="212" y1="196" x2="212" y2="204"/>
+          <line x1="288" y1="196" x2="288" y2="204"/><line x1="440" y1="196" x2="440" y2="204"/>
+          <line x1="592" y1="196" x2="592" y2="204"/><line x1="668" y1="196" x2="668" y2="204"/>
+          <line x1="744" y1="196" x2="744" y2="204"/><line x1="820" y1="196" x2="820" y2="204"/>
+        </g>
+        <text x="60"  y="220" text-anchor="middle">0</text>
+        <text x="212" y="220" text-anchor="middle">2</text>
+        <text x="288" y="220" text-anchor="middle">3</text>
+        <text x="440" y="220" text-anchor="middle">5</text>
+        <text x="592" y="220" text-anchor="middle">7:30</text>
+        <text x="668" y="220" text-anchor="middle">8</text>
+        <text x="744" y="220" text-anchor="middle">9</text>
+        <text x="820" y="220" text-anchor="middle">10</text>
+        <text x="440" y="245" text-anchor="middle" fill="#6b7494">分钟</text>
+      </g>
+      <rect x="60" y="60" width="532" height="18" fill="#ff4444" opacity="0.4"/>
+      <rect x="592" y="60" width="228" height="18" fill="#ff4444" opacity="0.85"/>
+      <text x="55" y="72" text-anchor="end" font-family="sans-serif" font-size="11" fill="#ff9a9a">Crawler</text>
+      <text x="600" y="55" font-family="sans-serif" font-size="9" fill="#ff6b35" font-weight="700">密度 x2</text>
+      <rect x="288" y="90" width="456" height="18" fill="#ff9933" opacity="0.4"/>
+      <rect x="744" y="90" width="76" height="18" fill="#ff9933" opacity="0.85"/>
+      <text x="283" y="102" text-anchor="end" font-family="sans-serif" font-size="11" fill="#ffbf80">Rusher</text>
+      <text x="752" y="85" font-family="sans-serif" font-size="9" fill="#ff6b35" font-weight="700">密度 x2</text>
+      <rect x="440" y="120" width="380" height="18" fill="#aa66ff" opacity="0.55"/>
+      <text x="435" y="132" text-anchor="end" font-family="sans-serif" font-size="11" fill="#c9a4ff">Spitter</text>
+      <rect x="668" y="150" width="152" height="18" fill="#ff2e2e" opacity="0.35" stroke="#ff2e2e" stroke-dasharray="3 3"/>
+      <text x="663" y="162" text-anchor="end" font-family="sans-serif" font-size="11" fill="#ff8a8a">Boss</text>
+      <text x="744" y="145" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#ff6b35" font-weight="700">v0.2 实装</text>
+      <text x="440" y="30" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff" font-weight="700">Wave 时间线（10 分钟）</text>
+    </svg>
+    <div class="cap">图 4 · Wave 时间线（Crawler 全程 · Rusher 03:00 起 · Spitter 05:00 起 · 密度翻倍 07:30 / 09:00 · Boss 窗口 08:00-10:00）</div>
+  </div>
+
+  <div class="callout info">
+    <span class="cta">设计意图</span>
+    每个新怪出场都跟着<strong>抽卡窗口</strong>——玩家先感受一次新压力，然后马上有升级卡救场。压力 → 强化 → 压力 → 强化，是 Roguelite 割草的黄金反馈环。
+  </div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section class="chapter" id="ch-07">
+  <span class="chapter-num">CHAPTER · 07</span>
+  <h2>升级卡 · Roguelite Build 系统</h2>
+
+  <p class="lead">10 张卡池 · 分 3 类（A 主武器 / B 副技能 / C 光环）· <strong>每次升级三选一</strong>。一局预期 6-8 次抽卡。<em>MVP 不做 Build 之间的化学反应</em>——10 张卡就是给玩家「每次都有 3 个像样选项」的裸感。</p>
+
+  <h3>10 张卡池总表（白模 v0.1.2 真实数值）</h3>
+  <table>
+    <thead><tr><th>#</th><th>卡名</th><th>描述</th><th>实现数值</th><th>叠加</th><th>类型</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>加速射击</strong> <code>fastFire</code></td><td>射速 +50%</td><td class="num">fireRate *= 0.66（下限 80 ms）</td><td>✅ 可叠加</td><td>A 主武器</td></tr>
+      <tr><td>2</td><td><strong>穿透弹</strong> <code>pierce</code></td><td>子弹穿透第 1 个敌人后继续飞</td><td class="num">pierce = max(1, pierce+1)</td><td>❌ once</td><td>A 主武器</td></tr>
+      <tr><td>3</td><td><strong>爆裂弹</strong> <code>explosive</code></td><td>子弹击中触发小爆炸</td><td class="num">半径 60 · 8 伤</td><td>❌ once</td><td>A 主武器</td></tr>
+      <tr><td>4</td><td><strong>暴击强化</strong> <code>crit</code></td><td>20% 概率暴击 · 3× 伤害</td><td class="num">critChance += 0.2（上限 60%）</td><td>✅ 可叠加</td><td>A 主武器</td></tr>
+      <tr><td>5</td><td><strong>环绕光刃</strong> <code>orbit</code></td><td>3 把光刃绕玩家旋转</td><td class="num">3 把 · r=100 · 15 伤/秒每敌</td><td>❌ once</td><td>B 副技能</td></tr>
+      <tr><td>6</td><td><strong>定时地雷</strong> <code>mines</code></td><td>每 3 秒在脚下放雷</td><td class="num">每 3s 放 · 3s 引爆 · 半径 80 · 30 伤</td><td>❌ once</td><td>B 副技能</td></tr>
+      <tr><td>7</td><td><strong>无人机僚机</strong> <code>drone</code></td><td>召唤 1 台自动射击的小无人机</td><td class="num">每 500 ms 射 · 弹伤 8 · 弹速 380</td><td>❌ once</td><td>B 副技能</td></tr>
+      <tr><td>8</td><td><strong>强化装甲</strong> <code>armor</code></td><td>血量上限 +50（补满当前血）</td><td class="num">hpMax += 50; hp = hpMax</td><td>✅ 可叠加</td><td>C 光环</td></tr>
+      <tr><td>9</td><td><strong>急促脚步</strong> <code>boots</code></td><td>移速 +20%</td><td class="num">speed *= 1.2</td><td>✅ 可叠加</td><td>C 光环</td></tr>
+      <tr><td>10</td><td><strong>吸血涂层</strong> <code>lifesteal</code></td><td>击杀敌人回 2 血</td><td class="num">lifesteal += 2</td><td>✅ 可叠加</td><td>C 光环</td></tr>
+    </tbody>
+  </table>
+
+  <h3>抽卡权重 / 刷新规则</h3>
+  <p>白模 <code>pick3(state)</code> 实现：</p>
+  <ol>
+    <li>从卡池过滤掉<strong>已选过的 once 卡</strong>（<code>pool.filter(c =&gt; !(c.once &amp;&amp; s.cards.includes(c.id)))</code>）</li>
+    <li>Fisher-Yates 洗牌</li>
+    <li>取前 3 张</li>
+    <li>若池子剩 &lt;3 张，少给几张</li>
+  </ol>
+  <p><em>MVP 权重均等</em>——每张卡出现概率相同。V1.0 可加稀有度分层（白 / 蓝 / 紫 / 橙）。</p>
+
+  <h3>卡池设计原则</h3>
+  <div class="callout info">
+    <span class="cta">「6 次三选一，每次都在选」</span>
+    <ul style="margin: 0;">
+      <li><strong>卡强度接近，没有明显最优解</strong>——玩家真的在选，而不是「必拿 X 卡」</li>
+      <li>类型分布 4 / 3 / 3（主武器 / 副技能 / 光环）——每次抽卡大概率覆盖 2-3 个类型</li>
+      <li>4 张<strong>可叠加</strong> + 5 张 <strong>once</strong>——保证后期还有可抽的，同时防「一辈子叠射速」</li>
+      <li>吸血 / 装甲 / 移速三张<strong>生存卡</strong>—— Boss 前的救命关键（当前无 Boss，仍是 08:00 后压力峰值救命卡）</li>
+    </ul>
+  </div>
+
+  <h3>XP 曲线（升级门槛）</h3>
+  <table>
+    <thead><tr><th>到达等级</th><th>本级需 XP</th><th>累计 XP</th><th>≈ 需击杀（纯 Crawler 计 · 5 XP/只）</th></tr></thead>
+    <tbody>
+      <tr><td>Lv 2</td><td class="num">20</td><td class="num">20</td><td class="num">4</td></tr>
+      <tr><td>Lv 3</td><td class="num">30</td><td class="num">50</td><td class="num">10</td></tr>
+      <tr><td>Lv 5</td><td class="num">50</td><td class="num">140</td><td class="num">28</td></tr>
+      <tr><td>Lv 7</td><td class="num">70</td><td class="num">270</td><td class="num">54</td></tr>
+      <tr><td>Lv 10</td><td class="num">100</td><td class="num">540</td><td class="num">108</td></tr>
+    </tbody>
+  </table>
+  <p style="color:#6b7494;font-size:12.5px;">公式 <code>xpToNext(lv) = 20 + (lv-1) × 10</code>（v0.1.1 P2 放缓曲线）。Rusher = 15 XP / Spitter = 30 XP 会大幅提速。实测预计 10 分钟单局 Lv 6-9 附近。</p>
+</section>
+
+<!-- ============ 08 ============ -->
+<section class="chapter" id="ch-08">
+  <span class="chapter-num">CHAPTER · 08</span>
+  <h2>Boss 战 · 异形巢母 Hive Mother <span class="chip warn">v0.2 实装 · 规格前置定稿</span></h2>
+
+  <p class="lead">出场时机 08:00 · 目标击破 90-120 s · <strong>3 阶段综合考核</strong>——考察走位、脉冲群清、生存 Build 是否够硬。</p>
+
+  <div class="callout warn">
+    <span class="cta">白模状态</span>
+    <strong>v0.1 白模无 Boss 实装</strong>。当前 08:00-10:00 是「Crawler 密度 x2 + Rusher 密度 x2」的<em>虫海压力峰值</em>作为压轴——预算内可行、验证核心爽感够用。Boss 阶段行为在此定稿，v0.2 优先实装。
+  </div>
+
+  <h3>基础属性</h3>
+  <table>
+    <thead><tr><th>字段</th><th>数值</th></tr></thead>
+    <tbody>
+      <tr><td>HP</td><td class="num">2 000（≈ 200 只 Crawler / 66 只 Rusher）</td></tr>
+      <tr><td>体型</td><td class="num">半径 55 px（玩家 4-6 倍）</td></tr>
+      <tr><td>移速</td><td class="num">40 px/s（非冲撞阶段）</td></tr>
+      <tr><td>撞伤</td><td class="num">30（基础）· 冲撞阶段升到 60</td></tr>
+      <tr><td>击破奖励 XP</td><td class="num">200（一次直升 2 级）</td></tr>
+      <tr><td>目标击破时长</td><td class="num">90-120 s</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3 阶段状态机</h3>
+
+  <h4>阶段 1 · 冲撞（HP 100%-66% · 前 30-40 秒）</h4>
+  <ul>
+    <li><strong>行为</strong>：直线冲撞玩家（3 秒蓄力预警 → 4 秒 400 px/s 冲刺 → 3 秒硬直）</li>
+    <li><strong>撞伤 60</strong>（60% 玩家血量，一次挨则濒死）</li>
+    <li><strong>教学</strong>：走位 / 翻滚（v0.2）躲冲撞路径</li>
+  </ul>
+
+  <h4>阶段 2 · 召唤（HP 66%-33% · 中段 30-40 秒）</h4>
+  <ul>
+    <li><strong>行为</strong>：每 8 秒吼一次，从体内孵化 <strong>Crawler ×6</strong>（半径 60 px 圆内散开）</li>
+    <li><strong>Boss 自身减速到 20 px/s，重点是清杂</strong></li>
+    <li><strong>教学</strong>：能量脉冲的战略价值——一发脉冲能一次干掉半个孵化圈</li>
+  </ul>
+
+  <h4>阶段 3 · 酸雨 AoE（HP 33%-0% · 后 30-40 秒）</h4>
+  <ul>
+    <li><strong>行为</strong>：每 4 秒随机地面点位落下 <strong>3 个酸雨圆</strong>（半径 120 px · 2 秒预警 → 引爆 · 40 伤 · 持续酸池 3 秒）</li>
+    <li><strong>Boss 停止移动，站桩</strong>——玩家必须一边输出一边不停走位</li>
+    <li><strong>教学</strong>：Build 是否够硬直接决定这段能不能扛过——生存卡的价值验证</li>
+  </ul>
+
+  <h3>阶段状态机（SVG）</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="800" height="320" fill="#0d1220"/>
+      <!-- state 1 -->
+      <g>
+        <rect x="60" y="100" width="180" height="120" rx="12" fill="#1a2138" stroke="#ff6b35" stroke-width="2"/>
+        <text x="150" y="128" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#ff9a4d" font-weight="700">阶段 1 · 冲撞</text>
+        <text x="150" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#c5cce0">HP 100 → 66%</text>
+        <text x="150" y="176" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#66e9ff">3s 蓄力 → 4s 冲刺</text>
+        <text x="150" y="195" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#66e9ff">→ 3s 硬直</text>
+        <text x="150" y="212" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#ff9a4d">撞伤 60</text>
+      </g>
+      <!-- state 2 -->
+      <g>
+        <rect x="300" y="100" width="180" height="120" rx="12" fill="#1a2138" stroke="#66ff99" stroke-width="2"/>
+        <text x="390" y="128" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#93ff80" font-weight="700">阶段 2 · 召唤</text>
+        <text x="390" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#c5cce0">HP 66 → 33%</text>
+        <text x="390" y="176" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#66e9ff">每 8s 孵 Crawler ×6</text>
+        <text x="390" y="195" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#66e9ff">自身减速 20 px/s</text>
+        <text x="390" y="212" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#93ff80">教学：脉冲群清</text>
+      </g>
+      <!-- state 3 -->
+      <g>
+        <rect x="540" y="100" width="200" height="120" rx="12" fill="#1a2138" stroke="#ff2e2e" stroke-width="2"/>
+        <text x="640" y="128" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#ff8a8a" font-weight="700">阶段 3 · 酸雨 AoE</text>
+        <text x="640" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#c5cce0">HP 33 → 0%</text>
+        <text x="640" y="176" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#66e9ff">每 4s 落 3 圆 · r=120</text>
+        <text x="640" y="195" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#66e9ff">40 伤 + 酸池 3s</text>
+        <text x="640" y="212" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#ff8a8a">Build 硬度考核</text>
+      </g>
+      <!-- arrows -->
+      <g stroke="#66e9ff" stroke-width="2" fill="none" marker-end="url(#arr)">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#66e9ff"/>
+          </marker>
+        </defs>
+        <path d="M 240 160 L 300 160"/>
+        <path d="M 480 160 L 540 160"/>
+      </g>
+      <text x="270" y="150" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#66e9ff">HP 66%</text>
+      <text x="510" y="150" text-anchor="middle" font-family="SF Mono, monospace" font-size="9" fill="#66e9ff">HP 33%</text>
+      <!-- title -->
+      <text x="400" y="45" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff" font-weight="700">Hive Mother · 3 阶段状态机（HP 阈值触发）</text>
+      <text x="400" y="65" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#6b7494">总 HP 2000 · 目标击破 90-120 s</text>
+      <!-- bottom bar HP -->
+      <rect x="60" y="260" width="680" height="20" rx="3" fill="#1a2138"/>
+      <rect x="60" y="260" width="227" height="20" rx="3" fill="#ff6b35" opacity="0.6"/>
+      <rect x="287" y="260" width="227" height="20" fill="#66ff99" opacity="0.4"/>
+      <rect x="514" y="260" width="226" height="20" fill="#ff2e2e" opacity="0.55"/>
+      <text x="60" y="298" font-family="SF Mono, monospace" font-size="10" fill="#6b7494">0%</text>
+      <text x="400" y="298" text-anchor="middle" font-family="SF Mono, monospace" font-size="10" fill="#6b7494">HP</text>
+      <text x="740" y="298" text-anchor="end" font-family="SF Mono, monospace" font-size="10" fill="#6b7494">100%</text>
+    </svg>
+    <div class="cap">图 5 · Hive Mother Boss 3 阶段状态机（HP 阈值触发 · 66% / 33% 强制转阶）</div>
+  </div>
+
+  <h3>Boss 战设计意图</h3>
+  <p>Boss 是 MVP 唯一的<strong>「反 Roguelite 自动泼」检查点</strong>——玩家不能只靠自动开火过关，必须<strong>手动决策 3 件事</strong>：</p>
+  <ol>
+    <li>阶段 1：什么时候走开躲冲撞</li>
+    <li>阶段 2：脉冲留到什么时候用（一次群清孵化圈？还是留到关键？）</li>
+    <li>阶段 3：怎么在酸雨间隙输出 Boss</li>
+  </ol>
+  <p>Boss 是<strong>「爽不爽」的最后拷问</strong>——90 秒的高压 = 玩家全场 Build 的验证。</p>
+</section>
+
+<!-- ============ 09 ============ -->
+<section class="chapter" id="ch-09">
+  <span class="chapter-num">CHAPTER · 09</span>
+  <h2>手感与视觉规格</h2>
+
+  <p class="lead">v0.1.2 手感层已修「黏笨延迟」根因——摇杆改<strong>即时响应混合式</strong>，speed 240，i-frame 300 ms，子弹速度 600。视觉调性锚定世界观圣经紫绿冷色板 + Pixel Art。</p>
+
+  <h3>摇杆规格 · v0.1.2 混合式（K师 07-15 之前反复迭代）</h3>
+  <table>
+    <thead><tr><th>项</th><th>数值 / 规则</th></tr></thead>
+    <tbody>
+      <tr><td>基座位置</td><td><code>x=200, y=H-200</code>（左下角固定 home）</td></tr>
+      <tr><td>基座半径</td><td class="num">90 px（视觉底盘）</td></tr>
+      <tr><td>Knob 最大偏移</td><td class="num">90 px（<code>stickMaxR</code>）</td></tr>
+      <tr><td>响应逻辑</td><td><strong>落点即偏移</strong>——按下的瞬间就产生输入（首帧就有速度）</td></tr>
+      <tr><td>死区</td><td class="num">8 px（&lt;8 视为 0，防抖）</td></tr>
+      <tr><td>动态基座</td><td>拉出 1.5× 半径时，基座跟着手指移动（不会「拉不到屏幕边」）</td></tr>
+      <tr><td>采样方式</td><td><strong>每帧 update 从 pointer 位置采样</strong>（不用 pointermove 事件 · 消除事件队列延迟）</td></tr>
+      <tr><td>玩家 pushable</td><td><code>false</code>（不被敌人推动 · 消除「黏连感」）</td></tr>
+    </tbody>
+  </table>
+  <p style="color:#6b7494;font-size:12.5px;">这是 v0.1 → v0.1.2 三轮迭代的沉淀。K师首次试玩「黏笨延迟高」→ v0.1.1 P0 P1 P2 优化 → K师二试「移速慢 + 首帧无响应」→ v0.1.2 混合式落地。</p>
+
+  <h3>核心手感数值一览（白模真实值）</h3>
+  <table>
+    <thead><tr><th>项</th><th>v0.1.2</th><th>之前</th><th>目的</th></tr></thead>
+    <tbody>
+      <tr><td>玩家 speed</td><td class="num">240 px/s</td><td class="num">200</td><td>移速太慢 → 提 20%</td></tr>
+      <tr><td>子弹速度</td><td class="num">600 px/s</td><td class="num">400</td><td>子弹「跟不上」视觉 → 提 50%</td></tr>
+      <tr><td>i-frame（碰怪后）</td><td class="num">300 ms</td><td class="num">500</td><td>无敌太长 → 减 40%，更灵敏</td></tr>
+      <tr><td>关卡时长</td><td class="num">10 min</td><td class="num">5 min</td><td>对齐 spec</td></tr>
+      <tr><td>射速下限</td><td class="num">80 ms</td><td>-</td><td>防「加速射击」叠成机关枪失衡</td></tr>
+    </tbody>
+  </table>
+
+  <h3>反馈层（v0.1.1 P1 P2）</h3>
+  <ul>
+    <li><strong>拖尾</strong>：玩家 8 帧位移拖尾（graphics 画 8 个渐隐圆，比生 8 个 sprite 便宜）</li>
+    <li><strong>击杀白光闪</strong>：敌人死亡触发 r=24 白圈 120ms 扩散 → 消失 + 15 粒散射粒子</li>
+    <li><strong>受击 tint</strong>：玩家 200 ms 红色 tint（原 80ms 看不见）</li>
+    <li><strong>暴击金色大字</strong>：暴击伤害数字 48 px 金色带描边（普通为 28 px 白色）</li>
+    <li><strong>相机抖</strong>：碰怪 100 ms 0.01 幅度 · 脉冲 160 ms 0.012 幅度 + flash 120 ms 白闪</li>
+    <li><strong>Wave 提示字</strong>：解锁新怪 / 密度翻倍时，屏幕中央黄色大字弹出 1.5 秒（<code>Back.Out</code> 缓动）</li>
+  </ul>
+
+  <h3>视觉调性锚定（世界观圣经）</h3>
+  <table>
+    <thead><tr><th>色号</th><th>用途</th><th>Trooper 玩法白模映射</th></tr></thead>
+    <tbody>
+      <tr><td><code style="background:#2A1A4A;color:#fff">#2A1A4A</code> 深紫</td><td>主色 · 夜空 / 环境 / 异形卵</td><td>背景（占位为纯黑）</td></tr>
+      <tr><td><code style="background:#39FF14;color:#000">#39FF14</code> 荧光绿</td><td>强调 · 异形血液 / 酸弹 / 卵眼</td><td>Spitter 酸弹（占位为紫）</td></tr>
+      <tr><td><code style="background:#4FC3F7;color:#000">#4FC3F7</code> 冷蓝</td><td>武器 / UI · 玩家能量武器 / 脉冲 / UI 描边</td><td>子弹 <code>0x88ddff</code> · 脉冲白光</td></tr>
+      <tr><td>深灰 / 银白</td><td>中性 · 英雄装甲 / 战场地表</td><td>玩家白色圆（占位）</td></tr>
+    </tbody>
+  </table>
+  <p style="color:#6b7494;font-size:12.5px;"><strong>本文档主色板</strong>用<em>青蓝 <code>#00d4ff</code></em>——与游戏内冷蓝 <code>#4FC3F7</code> 同色系但更艳，橙色 <code>#ff6b35</code> 留给警告 / 敌人 / Boss。这是文档设计选择，不改游戏内视觉。</p>
+
+  <h3>敌人风格锚点</h3>
+  <p><strong>视觉参考</strong>：Alien（异形）· Starship Troopers（星河战队）· Metroid · Warhammer 40K Tyranids<br>
+  <strong>形态语言</strong>：触手 / 甲壳 / 酸液 / 硬壳外骨骼 / 硅基质感 / 生物机械混合<br>
+  <strong>美术形式</strong>：Pixel Art（32×32 或 48×48 起步）· 紫绿冷色板在 Pixel Art 中呈现极佳（近似 80s 街机 Sci-fi 反乌托邦风）</p>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="chapter" id="ch-10">
+  <span class="chapter-num">CHAPTER · 10</span>
+  <h2>MVP 之外 · 角色出场路径（V0.2 → V1.0）</h2>
+
+  <p class="lead">Trooper 是<strong>系列基准英雄</strong>。V0.2 起每次新角色<strong>必带独立核心 Verb</strong>——不是「换皮 + 改数值」，而是让玩家学一套新玩法。</p>
+
+  <h3>8 位幸存者出场表</h3>
+  <table>
+    <thead><tr><th>阶段</th><th>可玩数</th><th>新增角色</th><th>核心 Verb</th><th>玩家新体感</th></tr></thead>
+    <tbody>
+      <tr><td><strong>MVP V0.1</strong> <span class="chip hot">现</span></td><td>1</td><td>Trooper · 步兵 · ADC</td><td>射程内自动开火 + 走位</td><td>硬核 FPS 老兵</td></tr>
+      <tr><td>V0.2</td><td>2</td><td>Slasher · 光刃战士 · 战士</td><td>光刃冲锋 + 击杀溅射被动</td><td>「割开一条血路」的路径杀感</td></tr>
+      <tr><td>V0.5</td><td>3-4</td><td>Titan · 泰坦驾驶员 · 战士<br>Ranger · 能量弓手 · ADC</td><td>装甲值系统 + 冲撞<br>蓄力光箭 + 距离越远伤害越高</td><td>重装暴力 vs 精准狙击</td></tr>
+      <tr><td>V0.7</td><td>5-6</td><td>Psion · 灵能者 · 法师<br>Engineer · 工程师 · 特殊</td><td>3 元素切换 combo<br>炮塔 + 无人机召唤</td><td>元素反应化学 vs 阵地战</td></tr>
+      <tr><td>V1.0</td><td>8</td><td>Commander · 指挥官 · 特殊<br>Medic · 医官 · 特殊</td><td>AI 副手 XR-9 战术调度<br>生物枪敌友识别</td><td>无攻击战术脑 · 治疗辅助</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <span class="cta">设计铁律</span>
+    <strong>每次上线新角色必带独立的核心 Verb</strong>，而不是「换个皮肤 + 改数值」。Trooper 是标准 ADC，Slasher 是近战冲刺，Titan 是装甲重击……<em>Verb 差异 = 玩家 pick 理由 = 内容纵深</em>。
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="chapter" id="ch-11">
+  <span class="chapter-num">CHAPTER · 11</span>
+  <h2>变更日志</h2>
+
+  <h3>v0.1 · 2026-07-15（本版）</h3>
+  <ul>
+    <li>★ <strong>Trooper 等离子步枪加射程限制 500 px</strong>（K师 07-15 拍板）——白模现状无限射程 → 加限制强迫「移动 + 输出」双 Verb 咬合</li>
+    <li>产品名统一 · <strong>裂隙幸存者 / Rift Ranger</strong>（K师 07-07 拍板 · 代号 MVS-007 保留）</li>
+    <li>MVP 英雄名统一 · <strong>步兵 Trooper</strong>（原 MVP 规格卡「侦察兵 Scout」以世界观圣经为准）</li>
+    <li>摇杆手感 v0.1.2 落地 · <strong>即时响应混合式</strong>（固定基座 + 落点即偏移 + 8 px 死区 + 动态基座）</li>
+    <li>移速 <code>200 → 240</code> · 子弹速度 <code>400 → 600</code> · i-frame <code>500 → 300 ms</code> · 关卡时长 <code>5 → 10 min</code></li>
+    <li>Wave 时间线拉长 · Rusher 03:00 起 · Spitter 05:00 起 · 密度翻倍事件 07:30 / 09:00</li>
+    <li>XP 曲线放缓 · <code>xpToNext = 20 + (lv-1) × 10</code>（原 <code>20 × lv</code>）</li>
+    <li>Boss · Hive Mother 3 阶段规格前置定稿（v0.2 实装）</li>
+    <li>本文档为 Marvis 主 session 落盘 · 单一事实源 · 意图 + 数值 + 叙事三线合并</li>
+  </ul>
+
+  <h3>已知延后项（v0.2 补齐）</h3>
+  <ul>
+    <li>Trooper 战术翻滚（CD 10 s · 短距无敌帧位移）· 白模现状未实装，仅有碰怪后 300 ms 被动 i-frame</li>
+    <li>Boss · Hive Mother 三阶段行为落地代码（本文档 Ch·08 已锁数值 + 状态机）</li>
+    <li>射程限制 500 px 落地实装（<code>nearestEnemy()</code> 加距离过滤 + UI 显示射程圈）</li>
+    <li>Pixel Art 素材替换所有占位几何形状</li>
+    <li>Slasher（近战冲刺）为 V0.2 新增角色 · 独立核心 Verb「击杀溅射」</li>
+  </ul>
+
+  <h3>参考文档</h3>
+  <ul>
+    <li><code>~/shared-agents/project-proposal/mvs-007-xenobreach/docs/xenobreach-world-bible-v0.1.md</code> · 世界观圣经（437 行）</li>
+    <li><code>~/shared-agents/project-proposal/mvs-007-xenobreach/docs/mvp-spec-v0.1.md</code> · MVP V0.1 规格卡</li>
+    <li><code>~/shared-agents/project-proposal/mvs-007-xenobreach/docs/game-mechanics-v0.1.md</code> · 白模机制文档</li>
+    <li><code>~/marvis-loong-site/public/mvs-007/game.js</code> · v0.1.2 白模代码（767 行 · 单一数值真源）</li>
+    <li><code>~/shared-agents/project-proposal/alien-fizzle/v3-redesign/spec.html</code> · 视觉调性对齐样板（Nova 落盘）</li>
+  </ul>
+</section>
+
+<div class="doc-footer">
+  《裂隙幸存者 Rift Ranger》· 玩法规格 v0.1 · 凝视 The Gaze<br>
+  代号 MVS-007 · 落盘 2026-07-15 · 基于白模 v0.1.2 真实数值 · 世界观锚定 Xenobreach<br>
+  —— 马启航Marvis
+</div>
+
+</main>
+</div>
+</body>
+</html>
