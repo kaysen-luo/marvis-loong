@@ -1,4 +1,7 @@
-/* MVS-007 Phaser 3 白模 v0.1.5 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+/* MVS-007 Phaser 3 白模 v0.1.6 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+ *
+ * v0.1.6 (2026-07-16):
+ *   · 初始攻速 +15%（fireRate 300 → 260 ms）
  *
  * v0.1.5 (2026-07-16):
  *   · 锁敌范围恢复 500px（敌人必须进射程才开火）+ 保留 v0.1.4 子弹飞行 500px 上限
@@ -39,7 +42,7 @@ function xpFor(level) { return 20 + (level - 1) * 10; }
 function freshState() {
   return {
     hpMax: 100, hp: 100, speed: 240,
-    fireRate: 300, bulletDmg: 10, bulletSpeed: 600,     // v0.1.1 P0: 400 → 600
+    fireRate: 260, bulletDmg: 10, bulletSpeed: 600,     // v0.1.6: 300→260 初始攻速 +15%（K师 07-16 09:07 拍板）
     pierce: 0, explosive: false, critChance: 0, critMult: 3,
     pulseCd: 8000, pulseReady: 0,
     level: 1, xp: 0, xpToNext: xpFor(1), kills: 0, startTime: 0,
