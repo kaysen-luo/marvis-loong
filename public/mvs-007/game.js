@@ -1,4 +1,9 @@
-/* MVS-007 Phaser 3 白模 v0.1.1 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity
+/* MVS-007 Phaser 3 白模 v0.1.3 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+ * v0.1.3 射程限制(2026-07-16):
+ *   · BOBO_ATTACK_RANGE = 500 px 引入（常量化），`nearestEnemy()` 加距离过滤
+ *   · 以玩家为圆心绘半透明青蓝虚线射程圈（rgba(100,200,255,0.15)）
+ *   · 产品名：Xenobreach → Rift Ranger（K师 2026-07-07 拍板，07-15 英文定 Ranger）
+ * v0.1.2 手感优化(2026-07-15): 摇杆即时响应混合式（固定基座 + 落点即偏移 + 动态基座 + 8px 死区），speed 200→240
  * v0.1.1 手感优化(2026-07-03):
  *   P0 · 摇杆每帧 update 采样 pointer 位置(不用 pointermove 事件)、玩家 pushable=false、
  *        子弹速度 400→600、iFrame 500→300ms
@@ -11,6 +16,7 @@
 'use strict';
 const W = 1080, H = 1920;
 const TOTAL_SEC = 600;                // v0.1.1: 5min → 10min
+const BOBO_ATTACK_RANGE = 500;        // v0.1.3: BOBO/Trooper 自动摄敲射程（px）
 const COLORS = {
   player: 0xffffff, bullet: 0x88ddff,
   crawler: 0xff4444, rusher: 0xff9933, spitter: 0xaa66ff,
@@ -77,6 +83,9 @@ class MainScene extends Phaser.Scene {
     // v0.1.1 P1: 拖尾图层(用 graphics 比生 8 个 circle 便宜)
     this.trailGfx = this.add.graphics().setDepth(5);
     this.trail = [];
+
+    // v0.1.3: BOBO 射程圈 UI（玩家为圆心、青蓝半透明虚线、500 px）
+    this.rangeRingGfx = this.add.graphics().setDepth(4);
 
     this.player = this.add.circle(W / 2, H / 2, 15, COLORS.player);
     this.physics.add.existing(this.player);
@@ -280,6 +289,20 @@ class MainScene extends Phaser.Scene {
       this.trailGfx.fillCircle(this.trail[i].x, this.trail[i].y, r);
     }
 
+    // v0.1.3: BOBO 射程圈（玩家为圆心 · 青蓝半透明虚线 · 500 px）
+    this.rangeRingGfx.clear();
+    this.rangeRingGfx.lineStyle(2, 0x64c8ff, 0.15);
+    const rrCx = this.player.x, rrCy = this.player.y, rrR = BOBO_ATTACK_RANGE;
+    const dashCount = 48;              // 48 段 ≈ 每 7.5°一段
+    const dashArc = (Math.PI * 2) / dashCount;
+    for (let i = 0; i < dashCount; i += 2) {
+      const a0 = i * dashArc;
+      const a1 = a0 + dashArc;
+      this.rangeRingGfx.beginPath();
+      this.rangeRingGfx.arc(rrCx, rrCy, rrR, a0, a1, false);
+      this.rangeRingGfx.strokePath();
+    }
+
     this.hpBarBg.setPosition(this.player.x, this.player.y - 32);
     this.hpBar.setPosition(this.player.x - 30, this.player.y - 32);
     const hpPct = Math.max(0, state.hp / state.hpMax);
@@ -359,12 +382,14 @@ class MainScene extends Phaser.Scene {
     b.hitSet = new Set();
   }
 
-  nearestEnemy(x, y) {
+  nearestEnemy(x, y, maxRange = BOBO_ATTACK_RANGE) {
     let best = null, bestD = Infinity;
+    const maxD2 = maxRange * maxRange;
     this.enemies.getChildren().forEach(e => {
       if (!e.active) return;
       const dx = e.x - x, dy = e.y - y;
       const d = dx * dx + dy * dy;
+      if (d > maxD2) return;                 // v0.1.3: 超出射程不开火
       if (d < bestD) { bestD = d; best = e; }
     });
     return best;
