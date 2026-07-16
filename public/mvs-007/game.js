@@ -1,4 +1,9 @@
-/* MVS-007 Phaser 3 白模 v0.1.3 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+/* MVS-007 Phaser 3 白模 v0.1.4 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+ *
+ * v0.1.4 (2026-07-16):
+ *   · 修复摇杆中心偏右上 + 黏笨感：改为动态摇杆（触摸落点即基座中心）
+ *   · 修复射程语义：500 px = 子弹飞行距离上限（不是锁敌距离），锁敌恢复无限范围
+ *   · 子弹添加 spawnX/spawnY 字段，飞行距离 >= 500 就销毁
  * v0.1.3 射程限制(2026-07-16):
  *   · BOBO_ATTACK_RANGE = 500 px 引入（常量化），`nearestEnemy()` 加距离过滤
  *   · 以玩家为圆心绘半透明青蓝虚线射程圈（rgba(100,200,255,0.15)）
@@ -153,6 +158,9 @@ class MainScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(151);
 
     this.input.on('pointerdown', (p) => {
+      // v0.1.4: 动态摇杆——触摸落点即摇杆基座中心（修 v0.1.3 固定式摇杆的中心偏右上/黏笨感 bug）
+      this.stickBaseHome.x = p.x;
+      this.stickBaseHome.y = p.y;
       if (state.paused || state.ended) return;
       const dxb = p.x - bx, dyb = p.y - by;
       if (dxb * dxb + dyb * dyb <= btnR * btnR) { this.tryPulse(); return; }
@@ -319,11 +327,21 @@ class MainScene extends Phaser.Scene {
     this.eProjs.getChildren().forEach(p => {
       if (p.x < -80 || p.x > W + 80 || p.y < -80 || p.y > H + 80) p.destroy();
     });
+    // v0.1.4: 子弹射程上限 500 px（起点距离 >= BOBO_ATTACK_RANGE 就销毁）
+    const rangeSq = BOBO_ATTACK_RANGE * BOBO_ATTACK_RANGE;
     this.bullets.getChildren().forEach(b => {
-      if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) b.destroy();
+      if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) { b.destroy(); return; }
+      if (b.spawnX !== undefined) {
+        const dx = b.x - b.spawnX, dy = b.y - b.spawnY;
+        if (dx * dx + dy * dy >= rangeSq) b.destroy();
+      }
     });
     this.droneBullets.getChildren().forEach(b => {
-      if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) b.destroy();
+      if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) { b.destroy(); return; }
+      if (b.spawnX !== undefined) {
+        const dx = b.x - b.spawnX, dy = b.y - b.spawnY;
+        if (dx * dx + dy * dy >= rangeSq) b.destroy();
+      }
     });
 
     if (state.hasOrbit) this.updateOrbits(delta);
@@ -380,16 +398,20 @@ class MainScene extends Phaser.Scene {
     b.pierce = pierce;
     b.explosive = explosive;
     b.hitSet = new Set();
+    // v0.1.4: 子弹射程上限——记录发射起点，飞行距离 >= BOBO_ATTACK_RANGE 就销毁
+    b.spawnX = x;
+    b.spawnY = y;
   }
 
-  nearestEnemy(x, y, maxRange = BOBO_ATTACK_RANGE) {
+  nearestEnemy(x, y, maxRange = Infinity) {
+    // v0.1.4: 恢复无限锁敌范围——射程限制改由子弹生命周期负责（子弹飞 500 px 就消失）
     let best = null, bestD = Infinity;
-    const maxD2 = maxRange * maxRange;
+    const maxD2 = maxRange === Infinity ? Infinity : maxRange * maxRange;
     this.enemies.getChildren().forEach(e => {
       if (!e.active) return;
       const dx = e.x - x, dy = e.y - y;
       const d = dx * dx + dy * dy;
-      if (d > maxD2) return;                 // v0.1.3: 超出射程不开火
+      if (d > maxD2) return;
       if (d < bestD) { bestD = d; best = e; }
     });
     return best;
