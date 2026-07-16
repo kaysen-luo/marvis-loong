@@ -1,8 +1,13 @@
-/* MVS-007 Phaser 3 白模 v0.1.7 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity XR9_ATTACK_RANGE
+/* MVS-007 Phaser 3 白模 v0.1.8 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity AUTO_FIRE_RANGE
+ *
+ * v0.1.8 (2026-07-16):
+ *   · 机制归属收口：XR-9 是 Commander 专属（V1.0 才上），MVP V0.1 主角 = Trooper
+ *   · v0.1 demo 里的自动开火机制 = Trooper 的机制（不再代表 XR-9）
+ *   · 注释里“XR-9 射程圈” → “自动开火射程圈”（中性命名）
  *
  * v0.1.7 (2026-07-16):
  *   · AI 副手名字收口：BOBO → XR-9（与世界观圣经/spec 一致）
- *   · 常量 BOBO_ATTACK_RANGE → XR9_ATTACK_RANGE，注释一并扫平
+ *   · 常量 BOBO_ATTACK_RANGE → AUTO_FIRE_RANGE，注释一并扫平
  *
  * v0.1.6 (2026-07-16):
  *   · 初始攻速 +15%（fireRate 300 → 260 ms）
@@ -15,7 +20,7 @@
  *   · 修复摇杆中心偏右上 + 黏笨感：改为动态摇杆（触摸落点即基座中心）
  *   · 子弹添加 spawnX/spawnY 字段，飞行距离 >= 500 就销毁
  * v0.1.3 射程限制(2026-07-16):
- *   · XR9_ATTACK_RANGE = 500 px 引入（常量化），`nearestEnemy()` 加距离过滤
+ *   · AUTO_FIRE_RANGE = 500 px 引入（常量化），`nearestEnemy()` 加距离过滤
  *   · 以玩家为圆心绘半透明青蓝虚线射程圈（rgba(100,200,255,0.15)）
  *   · 产品名：Xenobreach → Rift Ranger（K师 2026-07-07 拍板，07-15 英文定 Ranger）
  * v0.1.2 手感优化(2026-07-15): 摇杆即时响应混合式（固定基座 + 落点即偏移 + 动态基座 + 8px 死区），speed 200→240
@@ -31,7 +36,7 @@
 'use strict';
 const W = 1080, H = 1920;
 const TOTAL_SEC = 600;                // v0.1.1: 5min → 10min
-const XR9_ATTACK_RANGE = 500;        // v0.1.3: XR-9/Trooper 自动摄敲射程（px）
+const AUTO_FIRE_RANGE = 500;        // v0.1.3: Trooper 自动摄敲射程（px）
 const COLORS = {
   player: 0xffffff, bullet: 0x88ddff,
   crawler: 0xff4444, rusher: 0xff9933, spitter: 0xaa66ff,
@@ -99,7 +104,7 @@ class MainScene extends Phaser.Scene {
     this.trailGfx = this.add.graphics().setDepth(5);
     this.trail = [];
 
-    // v0.1.3: XR-9 射程圈 UI（玩家为圆心、青蓝半透明虚线、500 px）
+    // v0.1.3: 自动开火射程圈 UI（玩家为圆心、青蓝半透明虚线、500 px）
     this.rangeRingGfx = this.add.graphics().setDepth(4);
 
     this.player = this.add.circle(W / 2, H / 2, 15, COLORS.player);
@@ -307,10 +312,10 @@ class MainScene extends Phaser.Scene {
       this.trailGfx.fillCircle(this.trail[i].x, this.trail[i].y, r);
     }
 
-    // v0.1.3: XR-9 射程圈（玩家为圆心 · 青蓝半透明虚线 · 500 px）
+    // v0.1.3: 自动开火射程圈（玩家为圆心 · 青蓝半透明虚线 · 500 px）
     this.rangeRingGfx.clear();
     this.rangeRingGfx.lineStyle(2, 0x64c8ff, 0.15);
-    const rrCx = this.player.x, rrCy = this.player.y, rrR = XR9_ATTACK_RANGE;
+    const rrCx = this.player.x, rrCy = this.player.y, rrR = AUTO_FIRE_RANGE;
     const dashCount = 48;              // 48 段 ≈ 每 7.5°一段
     const dashArc = (Math.PI * 2) / dashCount;
     for (let i = 0; i < dashCount; i += 2) {
@@ -337,8 +342,8 @@ class MainScene extends Phaser.Scene {
     this.eProjs.getChildren().forEach(p => {
       if (p.x < -80 || p.x > W + 80 || p.y < -80 || p.y > H + 80) p.destroy();
     });
-    // v0.1.4: 子弹射程上限 500 px（起点距离 >= XR9_ATTACK_RANGE 就销毁）
-    const rangeSq = XR9_ATTACK_RANGE * XR9_ATTACK_RANGE;
+    // v0.1.4: 子弹射程上限 500 px（起点距离 >= AUTO_FIRE_RANGE 就销毁）
+    const rangeSq = AUTO_FIRE_RANGE * AUTO_FIRE_RANGE;
     this.bullets.getChildren().forEach(b => {
       if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) { b.destroy(); return; }
       if (b.spawnX !== undefined) {
@@ -408,7 +413,7 @@ class MainScene extends Phaser.Scene {
     b.pierce = pierce;
     b.explosive = explosive;
     b.hitSet = new Set();
-    // v0.1.4: 子弹射程上限——记录发射起点，飞行距离 >= XR9_ATTACK_RANGE 就销毁
+    // v0.1.4: 子弹射程上限——记录发射起点，飞行距离 >= AUTO_FIRE_RANGE 就销毁
     b.spawnX = x;
     b.spawnY = y;
   }
