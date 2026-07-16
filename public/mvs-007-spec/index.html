@@ -1118,5 +1118,262 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 
 </main>
 </div>
+
+<!-- ===== spec-editor injection (A方案 v1) ===== -->
+<style id="spec-editor-style">
+  #spec-editor-toolbar {
+    position: fixed; top: 16px; right: 16px; z-index: 9999;
+    display: flex; gap: 8px;
+    background: rgba(20, 22, 30, 0.72);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 8px 10px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 13px;
+  }
+  #spec-editor-toolbar button {
+    background: rgba(255,255,255,0.08);
+    color: #eaeaf0;
+    border: 1px solid rgba(255,255,255,0.14);
+    padding: 6px 12px; border-radius: 6px;
+    cursor: pointer; font-size: 13px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  #spec-editor-toolbar button:hover {
+    background: rgba(255,255,255,0.16);
+    border-color: rgba(255,255,255,0.28);
+  }
+  #spec-editor-toolbar button.active {
+    background: rgba(88, 156, 255, 0.35);
+    border-color: rgba(88, 156, 255, 0.7);
+  }
+  body.spec-edit-mode [data-spec-editable]:hover {
+    outline: 1px dashed rgba(88, 156, 255, 0.55);
+    outline-offset: 2px;
+  }
+  body.spec-edit-mode [data-spec-editable]:focus {
+    outline: 2px solid rgba(88, 156, 255, 0.85);
+    outline-offset: 2px;
+    background: rgba(88, 156, 255, 0.06);
+  }
+  #spec-editor-draft-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+    background: rgba(30, 34, 48, 0.94);
+    color: #eaeaf0; padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+    display: flex; align-items: center; gap: 12px; justify-content: center;
+    font-family: -apple-system, "PingFang SC", sans-serif; font-size: 13px;
+  }
+  #spec-editor-draft-bar button {
+    background: rgba(88, 156, 255, 0.3);
+    color: #fff; border: 1px solid rgba(88, 156, 255, 0.6);
+    padding: 4px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;
+  }
+  #spec-editor-draft-bar button.discard {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.2);
+  }
+</style>
+<div id="spec-editor-toolbar" contenteditable="false">
+  <button id="spec-editor-toggle" type="button">✏️ 编辑模式</button>
+  <button id="spec-editor-download" type="button">💾 下载 HTML</button>
+  <button id="spec-editor-reset" type="button">🔄 还原</button>
+</div>
+<script id="spec-editor-script">
+(function() {
+  'use strict';
+  var STORAGE_KEY = 'mvs007-spec-draft';
+  var EDITABLE_TAGS = ['P','H1','H2','H3','H4','H5','H6','LI','TD','TH','SPAN','DIV','BLOCKQUOTE','CODE','EM','STRONG','A','DT','DD','CAPTION','FIGCAPTION','SUMMARY'];
+  var editMode = false;
+  var draftTimer = null;
+
+  function isInSvg(el) {
+    var p = el;
+    while (p) {
+      if (p.tagName && p.tagName.toLowerCase() === 'svg') return true;
+      p = p.parentNode;
+    }
+    return false;
+  }
+  function isInToolbar(el) {
+    var p = el;
+    while (p) {
+      if (p.id === 'spec-editor-toolbar' || p.id === 'spec-editor-draft-bar') return true;
+      p = p.parentNode;
+    }
+    return false;
+  }
+
+  function collectEditable() {
+    var main = document.body;
+    var all = main.querySelectorAll(EDITABLE_TAGS.join(','));
+    var result = [];
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (isInSvg(el) || isInToolbar(el)) continue;
+      // Skip elements that only contain other block-level editable children (avoid nested editable containers)
+      // Actually contentEditable=true works fine on nested; but to avoid over-selection, mark all leaf-ish text carriers.
+      // Simplest: mark all non-svg non-toolbar candidates. contentEditable propagates but that's ok.
+      result.push(el);
+    }
+    return result;
+  }
+
+  function enterEditMode() {
+    var els = collectEditable();
+    for (var i = 0; i < els.length; i++) {
+      els[i].setAttribute('contenteditable', 'true');
+      els[i].setAttribute('data-spec-editable', '1');
+    }
+    document.body.classList.add('spec-edit-mode');
+    var btn = document.getElementById('spec-editor-toggle');
+    btn.textContent = '✅ 完成编辑';
+    btn.classList.add('active');
+    editMode = true;
+  }
+  function exitEditMode() {
+    var els = document.querySelectorAll('[data-spec-editable]');
+    for (var i = 0; i < els.length; i++) {
+      els[i].removeAttribute('contenteditable');
+      els[i].removeAttribute('data-spec-editable');
+    }
+    document.body.classList.remove('spec-edit-mode');
+    var btn = document.getElementById('spec-editor-toggle');
+    btn.textContent = '✏️ 编辑模式';
+    btn.classList.remove('active');
+    editMode = false;
+  }
+
+  function saveDraft() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ts: Date.now(),
+        html: document.documentElement.outerHTML
+      }));
+    } catch (e) { /* quota / disabled */ }
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function timestamp() {
+    var d = new Date();
+    return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '-' +
+           pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+  }
+
+  function downloadHTML() {
+    // Snapshot doctype + cloned documentElement, strip editor artifacts
+    var clone = document.documentElement.cloneNode(true);
+    // Remove editor style, toolbar, script, draft bar
+    var removeIds = ['spec-editor-style','spec-editor-toolbar','spec-editor-script','spec-editor-draft-bar'];
+    removeIds.forEach(function(id) {
+      var el = clone.querySelector('#' + id);
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+    // Remove injection marker comments (best-effort: iterate childNodes of body)
+    // Strip contenteditable + data-spec-editable attributes
+    var withCe = clone.querySelectorAll('[contenteditable]');
+    for (var i = 0; i < withCe.length; i++) withCe[i].removeAttribute('contenteditable');
+    var withDs = clone.querySelectorAll('[data-spec-editable]');
+    for (var j = 0; j < withDs.length; j++) withDs[j].removeAttribute('data-spec-editable');
+    // Remove spec-edit-mode body class if present
+    var bodyEl = clone.querySelector('body');
+    if (bodyEl) bodyEl.classList.remove('spec-edit-mode');
+    // Remove injection marker comment nodes (walk direct children of body)
+    if (bodyEl) {
+      var kids = Array.prototype.slice.call(bodyEl.childNodes);
+      kids.forEach(function(n) {
+        if (n.nodeType === 8 && n.nodeValue && n.nodeValue.indexOf('spec-editor injection') !== -1) {
+          bodyEl.removeChild(n);
+        }
+      });
+    }
+    var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'gameplay-spec-v0.1-edited-' + timestamp() + '.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  function resetAll() {
+    if (!confirm('确认还原到原始版本？未下载的改动会丢失')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    location.reload();
+  }
+
+  function restoreDraft(html) {
+    // Replace entire documentElement content with saved html's body & head merged.
+    // Simplest safe approach: write to a detached doc, extract body innerHTML, replace current body.
+    try {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(html, 'text/html');
+      if (doc && doc.body) {
+        document.body.innerHTML = doc.body.innerHTML;
+        // Re-inject toolbar/style/script? They were part of saved html already (we save whole documentElement).
+        // If toolbar missing after restore (shouldn't be), re-init would be needed. Assume present.
+      }
+    } catch (e) {
+      alert('恢复草稿失败：' + e.message);
+    }
+  }
+
+  function showDraftBar(draft) {
+    var bar = document.createElement('div');
+    bar.id = 'spec-editor-draft-bar';
+    var when = new Date(draft.ts).toLocaleString('zh-CN');
+    bar.innerHTML = '<span>检测到未保存的编辑草稿（' + when + '）。</span>' +
+      '<button id="spec-editor-restore">恢复</button>' +
+      '<button class="discard" id="spec-editor-discard">丢弃</button>';
+    document.body.appendChild(bar);
+    document.getElementById('spec-editor-restore').addEventListener('click', function() {
+      restoreDraft(draft.html);
+      bar.remove();
+    });
+    document.getElementById('spec-editor-discard').addEventListener('click', function() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      bar.remove();
+    });
+  }
+
+  function init() {
+    document.getElementById('spec-editor-toggle').addEventListener('click', function() {
+      if (editMode) exitEditMode(); else enterEditMode();
+    });
+    document.getElementById('spec-editor-download').addEventListener('click', downloadHTML);
+    document.getElementById('spec-editor-reset').addEventListener('click', resetAll);
+
+    // Auto-save every 5s (only when edit mode has been used at least once)
+    draftTimer = setInterval(function() {
+      if (document.querySelector('[data-spec-editable]') || localStorage.getItem(STORAGE_KEY)) {
+        saveDraft();
+      }
+    }, 5000);
+
+    // Restore prompt
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var draft = JSON.parse(raw);
+        if (draft && draft.html) showDraftBar(draft);
+      }
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+<!-- ===== /spec-editor injection ===== -->
+
 </body>
 </html>
