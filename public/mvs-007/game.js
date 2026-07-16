@@ -1,8 +1,11 @@
-/* MVS-007 Phaser 3 白模 v0.1.4 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+/* MVS-007 Phaser 3 白模 v0.1.5 · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity BOBO_ATTACK_RANGE
+ *
+ * v0.1.5 (2026-07-16):
+ *   · 锁敌范围恢复 500px（敌人必须进射程才开火）+ 保留 v0.1.4 子弹飞行 500px 上限
+ *   · 双重保障：不朝屏外瞎打，也不会能量浪费
  *
  * v0.1.4 (2026-07-16):
  *   · 修复摇杆中心偏右上 + 黏笨感：改为动态摇杆（触摸落点即基座中心）
- *   · 修复射程语义：500 px = 子弹飞行距离上限（不是锁敌距离），锁敌恢复无限范围
  *   · 子弹添加 spawnX/spawnY 字段，飞行距离 >= 500 就销毁
  * v0.1.3 射程限制(2026-07-16):
  *   · BOBO_ATTACK_RANGE = 500 px 引入（常量化），`nearestEnemy()` 加距离过滤
