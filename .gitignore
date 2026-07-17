@@ -73,3 +73,5 @@ workers/**/.wrangler
 # 游戏 demo 备份文件
 public/mvs-007/*.bak-v*
 public/mvs-007/*.bak-*
+*.bak-*
+*.html.bak-*
