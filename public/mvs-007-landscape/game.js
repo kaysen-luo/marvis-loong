@@ -142,6 +142,11 @@ class MainScene extends Phaser.Scene {
     this.player.body.pushable = false;
     this.player.iFrameUntil = 0;
 
+    // === Trooper 泽丽化：充能计数 + 视觉光环 ===
+    this.trooperBurstCharge = 0;
+    this.TROOPER_BURST_THRESHOLD = 3;
+    this.trooperChargeRing = this.add.circle(this.player.x, this.player.y, 22, 0x00ffff, 0).setStrokeStyle(2, 0x66ffff, 0).setDepth(6);
+
     this.hpBarBg = this.add.rectangle(0, 0, 60, 6, 0x333333).setOrigin(0.5).setDepth(50);
     this.hpBar   = this.add.rectangle(0, 0, 60, 6, COLORS.hpFull).setOrigin(0, 0.5).setDepth(51);
 
@@ -458,6 +463,20 @@ class MainScene extends Phaser.Scene {
 
     this.hpBarBg.setPosition(this.player.x, this.player.y - 32);
     this.hpBar.setPosition(this.player.x - 30, this.player.y - 32);
+    // 充能光环跟随玩家，强度按 charge 阶递增（0/1/2/3 → alpha 0 / 0.35 / 0.6 / 0.9，满值时脉冲）
+    if (this.trooperChargeRing) {
+      this.trooperChargeRing.setPosition(this.player.x, this.player.y);
+      const c = this.trooperBurstCharge;
+      const baseAlpha = [0, 0.35, 0.6, 0.9][Math.min(c, 3)];
+      if (c >= this.TROOPER_BURST_THRESHOLD) {
+        const pulse = 0.7 + 0.3 * Math.sin(this.time.now / 90);
+        this.trooperChargeRing.setStrokeStyle(3, 0xffffff, baseAlpha * pulse);
+        this.trooperChargeRing.setScale(1 + 0.15 * pulse);
+      } else {
+        this.trooperChargeRing.setStrokeStyle(2, 0x66ffff, baseAlpha);
+        this.trooperChargeRing.setScale(1);
+      }
+    }
     const hpPct = Math.max(0, state.hp / state.hpMax);
     this.hpBar.width = 60 * hpPct;
     this.hpBar.fillColor = hpPct > 0.6 ? COLORS.hpFull : hpPct > 0.3 ? COLORS.hpMid : COLORS.hpLow;
@@ -533,7 +552,28 @@ class MainScene extends Phaser.Scene {
     const target = this.nearestEnemy(this.player.x, this.player.y);
     if (!target) return;
     this._lastFire = t;
-    this.fireBulletFrom(this.player.x, this.player.y, target, state.bulletDmg, state.pierce, state.explosive, this.bullets, state.bulletSpeed);
+
+    // === Trooper 泽丽化：3 蓄 5 散 ±15° × 0.6 ===
+    if (this.trooperBurstCharge >= this.TROOPER_BURST_THRESHOLD) {
+      // 爆发：5 颗散射，±15° 扇形，等角度分布
+      const px = this.player.x, py = this.player.y;
+      const centerAngle = Math.atan2(target.y - py, target.x - px);
+      const spreadAngles = [-15, -7.5, 0, 7.5, 15];
+      const burstDmg = state.bulletDmg * 0.6;
+      spreadAngles.forEach(deltaDeg => {
+        const rad = centerAngle + Phaser.Math.DegToRad(deltaDeg);
+        this.fireBulletAtAngle(px, py, rad, burstDmg, state.pierce, state.explosive, this.bullets, state.bulletSpeed, true);
+      });
+      this.trooperBurstCharge = 0;
+      // 爆发 VFX：白光闪 + 小屏震（不晕眩）
+      this.cameras.main.shake(100, 0.005);
+      const flash = this.add.circle(this.player.x, this.player.y, 40, 0xffffff, 0.85).setDepth(60);
+      this.tweens.add({ targets: flash, alpha: 0, scale: 1.8, duration: 180, onComplete: () => flash.destroy() });
+    } else {
+      // 普攻：1 颗对准目标
+      this.fireBulletFrom(this.player.x, this.player.y, target, state.bulletDmg, state.pierce, state.explosive, this.bullets, state.bulletSpeed);
+      this.trooperBurstCharge++;
+    }
   }
 
   fireBulletFrom(x, y, target, dmg, pierce, explosive, group, spd) {
@@ -549,6 +589,24 @@ class MainScene extends Phaser.Scene {
     b.hitSet = new Set();
     b.spawnX = x;
     b.spawnY = y;
+  }
+
+  // 按角度发射（爆发弹专用）：更亮的青白色 + 白色描边 + 半径 8
+  fireBulletAtAngle(x, y, rad, dmg, pierce, explosive, group, spd, isBurst) {
+    const color = isBurst ? 0xccffff : COLORS.bullet;
+    const radius = isBurst ? 8 : 6;
+    const b = this.add.circle(x, y, radius, color);
+    if (isBurst) b.setStrokeStyle(2, 0xffffff, 1);
+    this.physics.add.existing(b);
+    group.add(b);
+    b.body.setVelocity(Math.cos(rad) * spd, Math.sin(rad) * spd);
+    b.dmg = dmg;
+    b.pierce = pierce;
+    b.explosive = explosive;
+    b.hitSet = new Set();
+    b.spawnX = x;
+    b.spawnY = y;
+    b.isBurst = !!isBurst;
   }
 
   nearestEnemy(x, y, maxRange) {
