@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>《裂隙幸存者》Rift Ranger · 玩法规格 v0.2</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,13 +13,7 @@ html, body {
   font-size: 14.5px;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
-  max-width: 100vw;
-  overflow-x: hidden;
 }
-/* 长内容强制换行 (防溢出) */
-p, li, td { overflow-wrap: anywhere; word-break: break-word; }
-code { word-break: break-all; overflow-wrap: anywhere; }
-a { word-break: break-all; }
 a { color: #00d4ff; text-decoration: none; }
 a:hover { color: #66e9ff; }
 
@@ -333,21 +327,8 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   section.chapter h4 { font-size: 14px; }
   p, li { font-size: 14px; }
   p.lead { font-size: 14.5px; padding: 12px 14px; }
-  /* 表格横滑（宽表格安全策略 + 视觉提示：两侧阴影渐变，滑到边阴影消失） */
-  table {
-    font-size: 12.5px;
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-    background:
-      linear-gradient(to right, #131a2e 30%, rgba(19,26,46,0)) left center / 20px 100% no-repeat,
-      linear-gradient(to left, #131a2e 30%, rgba(19,26,46,0)) right center / 20px 100% no-repeat,
-      linear-gradient(to right, rgba(0,212,255,0.4), rgba(0,212,255,0)) left center / 8px 100% no-repeat,
-      linear-gradient(to left, rgba(0,212,255,0.4), rgba(0,212,255,0)) right center / 8px 100% no-repeat;
-    background-attachment: local, local, scroll, scroll;
-  }
+  /* 表格横滑（宽表格安全策略） */
+  table { font-size: 12.5px; display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
   th, td { padding: 8px 10px; }
   .callout { padding: 12px 14px; font-size: 13px; }
   .diagram { padding: 12px; margin: 16px 0; }
@@ -361,20 +342,10 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   .doc-footer { margin-top: 56px; padding-top: 20px; font-size: 12px; }
 }
 
-/* === IPHONE 17 系列 & 小屏 (430px, 覆盖 393/402/430pt) === */
-@media (max-width: 430px) {
+/* === SMALL MOBILE (480px) === */
+@media (max-width: 480px) {
   .sidebar ol { columns: 1; }
-  main {
-    padding-top: max(24px, env(safe-area-inset-top));
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-    padding-bottom: max(48px, env(safe-area-inset-bottom));
-  }
-  .sidebar {
-    padding-top: max(20px, env(safe-area-inset-top));
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-  }
+  main { padding: 24px 16px 48px; }
   .doc-header h1 { font-size: 22px; }
   .doc-header .subtitle { font-size: 13px; }
   section.chapter h2 { font-size: 19px; }
@@ -435,7 +406,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
     <div class="meta-card"><div class="label">线上白模</div><div class="value">v0.1.2 (Trooper 单人)</div></div>
     <div class="meta-card"><div class="label">MVP 时长</div><div class="value">10 分钟 / 关</div></div>
     <div class="meta-card"><div class="label">品类锚点</div><div class="value">LoL Swarm / Vampire Survivors</div></div>
-    <div class="meta-card"><div class="label">平台</div><div class="value">手机端 (横屏 1920×1080)</div></div>
+    <div class="meta-card"><div class="label">平台</div><div class="value">手机端 (竖屏 1080×1920)</div></div>
     <div class="meta-card"><div class="label">Demo</div><div class="value">marvis-loong.pages.dev/mvs-007/</div></div>
   </div>
   <p class="lead">这份文档是 <strong>Rift Ranger MVP V0.1 的玩法宪法</strong>。所有数值以 <code>~/marvis-loong-site/public/mvs-007/game.js</code>(v0.1.2, 767 行)真实运行值为准；世界观锚定 <code>rift-ranger-world-bible-v0.1.md</code>；本版重点变更列在下方章节 00。</p>
@@ -560,7 +531,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   <table>
     <thead><tr><th>#</th><th>Verb</th><th>输入方式</th><th>手动 / 自动</th><th>教学时机</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td><strong>移动</strong></td><td>左下触摸摇杆 / WASD (横屏布局)</td><td>手动</td><td>开局 3 秒学会</td></tr>
+      <tr><td>1</td><td><strong>移动</strong></td><td>左半屏触摸摇杆 / WASD</td><td>手动</td><td>开局 3 秒学会</td></tr>
       <tr><td>2</td><td><strong>主武器</strong>（等离子步枪）</td><td>无需操作 · <em>射程内自动</em></td><td>自动</td><td>落地即懂</td></tr>
       <tr><td>3</td><td><strong>能量脉冲</strong></td><td>右下按钮 · r=105 px 命中区</td><td>手动</td><td>05:00 Spitter 出场后学「群清 + 打断」</td></tr>
       <tr><td>4</td><td><s>战术翻滚</s> <span class="chip warn">v0.2 实装</span></td><td>右侧按钮</td><td>手动</td><td>03:00 Rusher 出场后学「无敌帧躲冲刺」</td></tr>
@@ -635,7 +606,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
       <tr><td>移速 speed</td><td class="num">240 px/s</td><td>v0.1.2 从 200 → 240（K师反馈「移速太慢」）</td></tr>
       <tr><td>i-frame（碰怪后无敌）</td><td class="num">300 ms</td><td>v0.1.2 从 500 → 300（更灵敏）</td></tr>
       <tr><td>Sprite（占位）</td><td>白色圆 · r=15</td><td>Pixel Art 素材待补</td></tr>
-      <tr><td>输入</td><td>左下摇杆 + WASD / 方向键 (横屏布局)</td><td>三指并发支持</td></tr>
+      <tr><td>输入</td><td>左半屏摇杆 + WASD / 方向键</td><td>三指并发支持</td></tr>
     </tbody>
   </table>
 
@@ -657,7 +628,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 
   <div class="callout new">
     <span class="cta">★ 射程限制 · 500 px（K师 2026-07-15 拍板）</span>
-    <p style="margin: 6px 0;"><strong>建议值 · <code>500 px</code></strong>（约屏幕高 1/3 · 1080 横屏下 = 500/1080 ≈ 46% 屏高；桌面 1920×1080 下 ≈ 26% 屏高）</p>
+    <p style="margin: 6px 0;"><strong>建议值 · <code>500 px</code></strong>（约屏幕高 1/3 · 1920 竖屏下 = 500/1920 ≈ 26% 屏高）</p>
     <p style="margin: 6px 0;"><strong>规则</strong>：<em>超射程外的敌人不吃 <code>nearestEnemy()</code></em>——步枪不再自动开火，玩家必须走近才输出。</p>
     <p style="margin: 6px 0;"><strong>为什么要加</strong>：</p>
     <ul style="margin: 6px 0;">

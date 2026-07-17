@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>《裂隙幸存者》Rift Ranger · 玩法规格 v0.2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>《裂隙幸存者》Rift Ranger · 玩法规格 v0.1</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -13,13 +13,7 @@ html, body {
   font-size: 14.5px;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
-  max-width: 100vw;
-  overflow-x: hidden;
 }
-/* 长内容强制换行 (防溢出) */
-p, li, td { overflow-wrap: anywhere; word-break: break-word; }
-code { word-break: break-all; overflow-wrap: anywhere; }
-a { word-break: break-all; }
 a { color: #00d4ff; text-decoration: none; }
 a:hover { color: #66e9ff; }
 
@@ -308,83 +302,6 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   font-size: 12px;
   text-align: right;
 }
-
-/* === MOBILE (768px) === */
-@media (max-width: 768px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar {
-    position: static;
-    height: auto;
-    padding: 20px 20px 16px;
-    border-right: none;
-    border-bottom: 1px solid #1f2940;
-  }
-  .sidebar ol { columns: 2; column-gap: 16px; }
-  .sidebar li { break-inside: avoid; font-size: 12px; }
-  .sidebar li a { padding: 5px 8px; }
-  .sidebar-footer { margin-top: 20px; padding-top: 14px; font-size: 10.5px; }
-  main { padding: 32px 20px 60px; max-width: 100%; }
-  .doc-header { margin-bottom: 36px; }
-  .doc-header h1 { font-size: 26px; line-height: 1.3; }
-  .doc-header .subtitle { font-size: 14px; }
-  section.chapter { margin-bottom: 48px; padding-top: 12px; }
-  section.chapter h2 { font-size: 22px; }
-  section.chapter h3 { font-size: 16px; margin: 24px 0 10px; padding-left: 10px; }
-  section.chapter h4 { font-size: 14px; }
-  p, li { font-size: 14px; }
-  p.lead { font-size: 14.5px; padding: 12px 14px; }
-  /* 表格横滑（宽表格安全策略 + 视觉提示：两侧阴影渐变，滑到边阴影消失） */
-  table {
-    font-size: 12.5px;
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-    background:
-      linear-gradient(to right, #131a2e 30%, rgba(19,26,46,0)) left center / 20px 100% no-repeat,
-      linear-gradient(to left, #131a2e 30%, rgba(19,26,46,0)) right center / 20px 100% no-repeat,
-      linear-gradient(to right, rgba(0,212,255,0.4), rgba(0,212,255,0)) left center / 8px 100% no-repeat,
-      linear-gradient(to left, rgba(0,212,255,0.4), rgba(0,212,255,0)) right center / 8px 100% no-repeat;
-    background-attachment: local, local, scroll, scroll;
-  }
-  th, td { padding: 8px 10px; }
-  .callout { padding: 12px 14px; font-size: 13px; }
-  .diagram { padding: 12px; margin: 16px 0; }
-  .diagram svg { width: 100%; height: auto; }
-  code { font-size: 12px; padding: 1px 5px; }
-  .chip { font-size: 10.5px; padding: 2px 8px; }
-  .meta-grid { gap: 10px; grid-template-columns: repeat(2, 1fr); }
-  .meta-card { padding: 12px 14px; }
-  .meta-card .value { font-size: 13px; }
-  ul, ol { padding-left: 20px; }
-  .doc-footer { margin-top: 56px; padding-top: 20px; font-size: 12px; }
-}
-
-/* === IPHONE 17 系列 & 小屏 (430px, 覆盖 393/402/430pt) === */
-@media (max-width: 430px) {
-  .sidebar ol { columns: 1; }
-  main {
-    padding-top: max(24px, env(safe-area-inset-top));
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-    padding-bottom: max(48px, env(safe-area-inset-bottom));
-  }
-  .sidebar {
-    padding-top: max(20px, env(safe-area-inset-top));
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-  }
-  .doc-header h1 { font-size: 22px; }
-  .doc-header .subtitle { font-size: 13px; }
-  section.chapter h2 { font-size: 19px; }
-  section.chapter h3 { font-size: 15px; }
-  section.chapter { margin-bottom: 40px; }
-  table { font-size: 11.5px; }
-  th, td { padding: 6px 8px; }
-  .meta-grid { grid-template-columns: 1fr; }
-  .doc-footer { margin-top: 40px; font-size: 11.5px; }
-}
 </style>
 </head>
 <body>
@@ -393,7 +310,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 <!-- ============== SIDEBAR ============== -->
 <aside class="sidebar">
   <div class="brand">裂隙幸存者</div>
-  <div class="brand-sub">RIFT RANGER · SPEC v0.2</div>
+  <div class="brand-sub">RIFT RANGER · SPEC v0.1</div>
   <h2>目录 · CONTENTS</h2>
   <ol>
     <li><a href="#ch-00">版本说明与关键变更</a></li>
@@ -403,14 +320,11 @@ td.hot { color: #ff9a4d; font-weight: 600; }
     <li><a href="#ch-04">Trooper · 步兵档案<span class="new-tag">NEW</span></a></li>
     <li><a href="#ch-05">敌人矩阵</a></li>
     <li><a href="#ch-06">波次时间线</a></li>
-    <li><a href="#ch-07">符文系统 · 常驻层<span class="new-tag">NEW</span></a></li>
-    <li><a href="#ch-07b">技能卡系统 · 局内层<span class="new-tag">NEW</span></a></li>
-    <li><a href="#ch-07c">技能卡数据表 · 30×5<span class="new-tag">NEW</span></a></li>
+    <li><a href="#ch-07">升级卡 · Build 系统</a></li>
     <li><a href="#ch-08">Boss 战 · 异形巢母</a></li>
     <li><a href="#ch-09">手感与视觉规格</a></li>
     <li><a href="#ch-10">MVP 之外 · 角色出场路径</a></li>
-    <li><a href="#ch-11">术语说明 · Roguelite<span class="new-tag">NEW</span></a></li>
-    <li><a href="#ch-12">变更日志</a></li>
+    <li><a href="#ch-11">变更日志</a></li>
   </ol>
   <div class="sidebar-footer">
     项目代号 <strong style="color:#00d4ff">MVS-007</strong><br>
@@ -418,8 +332,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
     世界观锚点 · Rift Ranger<br>
     副标 · 凝视 The Gaze<br><br>
     落盘 · 马启航Marvis<br>
-    v0.1 · 2026-07-15<br>
-    v0.2 · 2026-07-16
+    2026-07-15
   </div>
 </aside>
 
@@ -427,15 +340,15 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 <main>
 
 <div class="doc-header">
-  <span class="badge">GAMEPLAY SPEC · V0.2</span>
-  <h1>《裂隙幸存者》Rift Ranger<br>玩法规格 v0.2 · 凝视 The Gaze</h1>
-  <p class="subtitle">手机端 2D 半自动 <strong>Roguelite</strong> 割草 · MVP 单人 10 分钟一关一 Boss · 基于白模 v0.1.5 实测数值 · 世界观锚定 Rift Ranger 一期「凝视」<br><span style="color:#ff9a4d;font-weight:600">v0.2 重点：新增双层玩家属性系统（符文 L1 常驻 + 技能卡 L2 局内）+ 30 张技能卡完整数据（22 通用 + 8 Trooper 专属）</span></p>
+  <span class="badge">GAMEPLAY SPEC · V0.1</span>
+  <h1>《裂隙幸存者》Rift Ranger<br>玩法规格 v0.1 · 凝视 The Gaze</h1>
+  <p class="subtitle">手机端 2D 半自动 Roguelite 割草 · MVP 单人 10 分钟一关一 Boss · 基于白模 v0.1.2 实测数值 · 世界观锚定 Rift Ranger 一期「凝视」</p>
   <div class="meta-grid">
     <div class="meta-card"><div class="label">项目代号</div><div class="value">MVS-007</div></div>
     <div class="meta-card"><div class="label">线上白模</div><div class="value">v0.1.2 (Trooper 单人)</div></div>
     <div class="meta-card"><div class="label">MVP 时长</div><div class="value">10 分钟 / 关</div></div>
     <div class="meta-card"><div class="label">品类锚点</div><div class="value">LoL Swarm / Vampire Survivors</div></div>
-    <div class="meta-card"><div class="label">平台</div><div class="value">手机端 (横屏 1920×1080)</div></div>
+    <div class="meta-card"><div class="label">平台</div><div class="value">手机端 (竖屏 1080×1920)</div></div>
     <div class="meta-card"><div class="label">Demo</div><div class="value">marvis-loong.pages.dev/mvs-007/</div></div>
   </div>
   <p class="lead">这份文档是 <strong>Rift Ranger MVP V0.1 的玩法宪法</strong>。所有数值以 <code>~/marvis-loong-site/public/mvs-007/game.js</code>(v0.1.2, 767 行)真实运行值为准；世界观锚定 <code>rift-ranger-world-bible-v0.1.md</code>；本版重点变更列在下方章节 00。</p>
@@ -560,7 +473,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   <table>
     <thead><tr><th>#</th><th>Verb</th><th>输入方式</th><th>手动 / 自动</th><th>教学时机</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td><strong>移动</strong></td><td>左下触摸摇杆 / WASD (横屏布局)</td><td>手动</td><td>开局 3 秒学会</td></tr>
+      <tr><td>1</td><td><strong>移动</strong></td><td>左半屏触摸摇杆 / WASD</td><td>手动</td><td>开局 3 秒学会</td></tr>
       <tr><td>2</td><td><strong>主武器</strong>（等离子步枪）</td><td>无需操作 · <em>射程内自动</em></td><td>自动</td><td>落地即懂</td></tr>
       <tr><td>3</td><td><strong>能量脉冲</strong></td><td>右下按钮 · r=105 px 命中区</td><td>手动</td><td>05:00 Spitter 出场后学「群清 + 打断」</td></tr>
       <tr><td>4</td><td><s>战术翻滚</s> <span class="chip warn">v0.2 实装</span></td><td>右侧按钮</td><td>手动</td><td>03:00 Rusher 出场后学「无敌帧躲冲刺」</td></tr>
@@ -635,7 +548,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
       <tr><td>移速 speed</td><td class="num">240 px/s</td><td>v0.1.2 从 200 → 240（K师反馈「移速太慢」）</td></tr>
       <tr><td>i-frame（碰怪后无敌）</td><td class="num">300 ms</td><td>v0.1.2 从 500 → 300（更灵敏）</td></tr>
       <tr><td>Sprite（占位）</td><td>白色圆 · r=15</td><td>Pixel Art 素材待补</td></tr>
-      <tr><td>输入</td><td>左下摇杆 + WASD / 方向键 (横屏布局)</td><td>三指并发支持</td></tr>
+      <tr><td>输入</td><td>左半屏摇杆 + WASD / 方向键</td><td>三指并发支持</td></tr>
     </tbody>
   </table>
 
@@ -657,7 +570,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 
   <div class="callout new">
     <span class="cta">★ 射程限制 · 500 px（K师 2026-07-15 拍板）</span>
-    <p style="margin: 6px 0;"><strong>建议值 · <code>500 px</code></strong>（约屏幕高 1/3 · 1080 横屏下 = 500/1080 ≈ 46% 屏高；桌面 1920×1080 下 ≈ 26% 屏高）</p>
+    <p style="margin: 6px 0;"><strong>建议值 · <code>500 px</code></strong>（约屏幕高 1/3 · 1920 竖屏下 = 500/1920 ≈ 26% 屏高）</p>
     <p style="margin: 6px 0;"><strong>规则</strong>：<em>超射程外的敌人不吃 <code>nearestEnemy()</code></em>——步枪不再自动开火，玩家必须走近才输出。</p>
     <p style="margin: 6px 0;"><strong>为什么要加</strong>：</p>
     <ul style="margin: 6px 0;">
@@ -898,376 +811,62 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 </section>
 
 <!-- ============ 07 ============ -->
-<!-- ============ 07 · L1 常驻层 · 符文系统 ============ -->
 <section class="chapter" id="ch-07">
   <span class="chapter-num">CHAPTER · 07</span>
-  <h2>符文系统 · L1 常驻层（跨局持久）<span class="chip warn">v0.2 新增</span></h2>
+  <h2>升级卡 · Roguelite Build 系统</h2>
 
-  <p class="lead"><strong>K师 2026-07-16 拍板</strong>：玩家属性分两层 —— L1 <strong>符文</strong>（局外买断 · 跨 Run 持久）+ L2 <strong>技能卡</strong>（局内抽卡 · 当局清零）。本章展开 L1。</p>
+  <p class="lead">10 张卡池 · 分 3 类（A 主武器 / B 副技能 / C 光环）· <strong>每次升级三选一</strong>。一局预期 6-8 次抽卡。<em>MVP 不做 Build 之间的化学反应</em>——10 张卡就是给玩家「每次都有 3 个像样选项」的裸感。</p>
 
-  <div class="callout new">
-    <span class="cta">★ 设计目标</span>
-    <strong>D 大差距路线 · 肝有回报</strong>（K师拍板）——符文强度天花板高，后期玩家 vs 新手玩家体验差距大。肯登录、肯磨异生晶核、肯升级符文的玩家能明显感受到拉开。
-  </div>
-
-  <h3>7.1 结构：A3 中庸版 · 只一页（不做符文书页切换）</h3>
+  <h3>10 张卡池总表（白模 v0.1.2 真实数值）</h3>
   <table>
-    <thead><tr><th>槽位</th><th>颜色</th><th>属性域</th><th>可选具体属性</th></tr></thead>
+    <thead><tr><th>#</th><th>卡名</th><th>描述</th><th>实现数值</th><th>叠加</th><th>类型</th></tr></thead>
     <tbody>
-      <tr><td>红色符文槽</td><td style="color:#ff6b35;font-weight:700">■ RED</td><td>攻击属性</td><td>攻击力 · 攻速 · 暴击率 · 暴击伤害</td></tr>
-      <tr><td>黄色符文槽</td><td style="color:#ffcf40;font-weight:700">■ YELLOW</td><td>防御属性</td><td>护甲 · 生命值 · 生命回复</td></tr>
-      <tr><td>蓝色符文槽</td><td style="color:#4fc3f7;font-weight:700">■ BLUE</td><td>通用属性</td><td>移动速度 · 拾取范围 · 暴击附带效果等</td></tr>
-      <tr><td>精华符文槽</td><td style="color:#c586ff;font-weight:700">■ ESSENCE</td><td>大招级机制效果</td><td>如「暴击附带流血」/「击杀有 10% 概率触发脉冲」</td></tr>
+      <tr><td>1</td><td><strong>加速射击</strong> <code>fastFire</code></td><td>射速 +50%</td><td class="num">fireRate *= 0.66（下限 80 ms）</td><td>✅ 可叠加</td><td>A 主武器</td></tr>
+      <tr><td>2</td><td><strong>穿透弹</strong> <code>pierce</code></td><td>子弹穿透第 1 个敌人后继续飞</td><td class="num">pierce = max(1, pierce+1)</td><td>❌ once</td><td>A 主武器</td></tr>
+      <tr><td>3</td><td><strong>爆裂弹</strong> <code>explosive</code></td><td>子弹击中触发小爆炸</td><td class="num">半径 60 · 8 伤</td><td>❌ once</td><td>A 主武器</td></tr>
+      <tr><td>4</td><td><strong>暴击强化</strong> <code>crit</code></td><td>20% 概率暴击 · 3× 伤害</td><td class="num">critChance += 0.2（上限 60%）</td><td>✅ 可叠加</td><td>A 主武器</td></tr>
+      <tr><td>5</td><td><strong>环绕光刃</strong> <code>orbit</code></td><td>3 把光刃绕玩家旋转</td><td class="num">3 把 · r=100 · 15 伤/秒每敌</td><td>❌ once</td><td>B 副技能</td></tr>
+      <tr><td>6</td><td><strong>定时地雷</strong> <code>mines</code></td><td>每 3 秒在脚下放雷</td><td class="num">每 3s 放 · 3s 引爆 · 半径 80 · 30 伤</td><td>❌ once</td><td>B 副技能</td></tr>
+      <tr><td>7</td><td><strong>无人机僚机</strong> <code>drone</code></td><td>召唤 1 台自动射击的小无人机</td><td class="num">每 500 ms 射 · 弹伤 8 · 弹速 380</td><td>❌ once</td><td>B 副技能</td></tr>
+      <tr><td>8</td><td><strong>强化装甲</strong> <code>armor</code></td><td>血量上限 +50（补满当前血）</td><td class="num">hpMax += 50; hp = hpMax</td><td>✅ 可叠加</td><td>C 光环</td></tr>
+      <tr><td>9</td><td><strong>急促脚步</strong> <code>boots</code></td><td>移速 +20%</td><td class="num">speed *= 1.2</td><td>✅ 可叠加</td><td>C 光环</td></tr>
+      <tr><td>10</td><td><strong>吸血涂层</strong> <code>lifesteal</code></td><td>击杀敌人回 2 血</td><td class="num">lifesteal += 2</td><td>✅ 可叠加</td><td>C 光环</td></tr>
     </tbody>
   </table>
-  <p style="color:#6b7494;font-size:12.5px"><strong>一页中庸</strong>：不做符文书分页（可切卡 · 不会臃重）。K师拍中庸版——足够量、不至于让玩家在菜单里迷路。</p>
 
-  <h3>7.2 升级价格曲线（指数——肝有回报的重手感）</h3>
-  <p>结算局外商店固定价一次性买断，货币：<strong>异生晶核 Xenocore</strong>（对局产出物资）。</p>
-  <table>
-    <thead><tr><th>属性符文等级</th><th>价格（异生晶核）</th><th>效果强度</th></tr></thead>
-    <tbody>
-      <tr><td>L1</td><td class="num">50</td><td>属性 +5%</td></tr>
-      <tr><td>L2</td><td class="num">150</td><td>属性 +12%</td></tr>
-      <tr><td>L3</td><td class="num">400</td><td>属性 +22%</td></tr>
-      <tr><td>L4</td><td class="num">1 000</td><td>属性 +35%</td></tr>
-      <tr><td>L5</td><td class="num">2 500</td><td>属性 +50%（天花板）</td></tr>
-    </tbody>
-  </table>
-  <p style="color:#6b7494;font-size:12.5px">精华符文单卡价格更高（预估 L1 200 → L5 5 000）——一旦拍得就能反馈「这局不一样」。</p>
-
-  <h3>7.3 机制循环</h3>
+  <h3>抽卡权重 / 刷新规则</h3>
+  <p>白模 <code>pick3(state)</code> 实现：</p>
   <ol>
-    <li>局内击杀敌人 / 通关 Boss → 产出 <strong>异生晶核</strong>（基础 20-50 / 局 · Boss 额外 200）</li>
-    <li>结算回局外 → <strong>符文商店</strong> → 固定价升级已有符文（非抽卡，无运气射）</li>
-    <li>下一局自动生效当前符文面板</li>
+    <li>从卡池过滤掉<strong>已选过的 once 卡</strong>（<code>pool.filter(c =&gt; !(c.once &amp;&amp; s.cards.includes(c.id)))</code>）</li>
+    <li>Fisher-Yates 洗牌</li>
+    <li>取前 3 张</li>
+    <li>若池子剩 &lt;3 张，少给几张</li>
   </ol>
+  <p><em>MVP 权重均等</em>——每张卡出现概率相同。V1.0 可加稀有度分层（白 / 蓝 / 紫 / 橙）。</p>
 
+  <h3>卡池设计原则</h3>
   <div class="callout info">
-    <span class="cta">与技能卡的关系（双层分工）</span>
-    <ul style="margin:0">
-      <li><strong>符文 = 纯属性</strong>（数值型） · 局外 · 永久</li>
-      <li><strong>技能卡 = 纯机制</strong>（新行为 / 新效果） · 局内 · 一次性</li>
-      <li>两者 <strong>不重叠职能</strong>：想加攻击力 → 买红符文；想要新机制 → 抽技能卡</li>
+    <span class="cta">「6 次三选一，每次都在选」</span>
+    <ul style="margin: 0;">
+      <li><strong>卡强度接近，没有明显最优解</strong>——玩家真的在选，而不是「必拿 X 卡」</li>
+      <li>类型分布 4 / 3 / 3（主武器 / 副技能 / 光环）——每次抽卡大概率覆盖 2-3 个类型</li>
+      <li>4 张<strong>可叠加</strong> + 5 张 <strong>once</strong>——保证后期还有可抽的，同时防「一辈子叠射速」</li>
+      <li>吸血 / 装甲 / 移速三张<strong>生存卡</strong>—— Boss 前的救命关键（当前无 Boss，仍是 08:00 后压力峰值救命卡）</li>
     </ul>
   </div>
-</section>
 
-<!-- ============ 07b · L2 局内层 · 技能卡系统 ============ -->
-<section class="chapter" id="ch-07b">
-  <span class="chapter-num">CHAPTER · 07b</span>
-  <h2>技能卡系统 · L2 局内层（当局临时）<span class="chip warn">v0.2 重写</span></h2>
-
-  <p class="lead"><strong>30 张卡池</strong> = 22 通用 + 8 Trooper 专属 · <strong>升级抽 3 选 1</strong> · 只有技能卡，无纯属性卡（属性已归符文）。</p>
-
-  <h3>7b.1 抽卡规则</h3>
-  <ul>
-    <li>升级 → 从卡池抽 3 张 → 玩家选 1</li>
-    <li><strong>允许重复抽</strong>：拿到已有卡 → 升级该卡 1 级</li>
-    <li>每张卡 <strong>5 级</strong>：L3 = 质变 · L5 = 完全体</li>
-    <li><strong>完全体剔除</strong>：已 L5 的卡从池中移除</li>
-    <li><strong>保底机制</strong>：连续 3 次没抽到已有卡 → 强制塞一张已有卡（防新卡吃不满）</li>
-  </ul>
-
-  <h3>7b.2 通用卡文案铁律（写死 spec · 防未来污染）</h3>
-  <div class="callout warn">
-    <span class="cta">❗ 强制抽象槽</span>
-    通用卡描述<strong>必须操作抽象槽</strong>："你的主武器 / 你身上 / 以玩家为中心 / 召唤"。
-    <br><strong>禁词</strong>：XR-9 / BOBO / 步枪 / 狙击枪 / 无人机（Micro Drone / Cyber Drone 这种通用命名 OK）。
-    <br><strong>仅 Trooper 专属卡</strong>可用「步枪 / 弹幕 / 战术翻滚」等角色关键词。
-  </div>
-
-  <h3>7b.3 抽象槽定义（5 类）</h3>
+  <h3>XP 曲线（升级门槛）</h3>
   <table>
-    <thead><tr><th>抽象槽</th><th>通用定义</th><th>卡数</th></tr></thead>
+    <thead><tr><th>到达等级</th><th>本级需 XP</th><th>累计 XP</th><th>≈ 需击杀（纯 Crawler 计 · 5 XP/只）</th></tr></thead>
     <tbody>
-      <tr><td><strong>主武器强化</strong></td><td>你的主要输出手段的射速 / 伤害 / 形态</td><td class="num">5 张</td></tr>
-      <tr><td><strong>副武器</strong></td><td>玩家自主释放的额外输出源（不依附主武器）</td><td class="num">4 张</td></tr>
-      <tr><td><strong>生存</strong></td><td>玩家（不是宠物）的抗压能力</td><td class="num">4 张</td></tr>
-      <tr><td><strong>AoE 光环</strong></td><td>以玩家为中心的持续性区域效果</td><td class="num">4 张</td></tr>
-      <tr><td><strong>战术</strong></td><td>改变 Run 全局节奏的机制</td><td class="num">5 张</td></tr>
-      <tr><td colspan="2" style="text-align:right"><strong>通用小计</strong></td><td class="num">22 张</td></tr>
-      <tr><td><strong>Trooper 专属</strong></td><td>弹幕流 + 硬汉 + 战术翻滚 三向度</td><td class="num">8 张</td></tr>
-      <tr><td colspan="2" style="text-align:right"><strong>总计</strong></td><td class="num">30 张</td></tr>
+      <tr><td>Lv 2</td><td class="num">20</td><td class="num">20</td><td class="num">4</td></tr>
+      <tr><td>Lv 3</td><td class="num">30</td><td class="num">50</td><td class="num">10</td></tr>
+      <tr><td>Lv 5</td><td class="num">50</td><td class="num">140</td><td class="num">28</td></tr>
+      <tr><td>Lv 7</td><td class="num">70</td><td class="num">270</td><td class="num">54</td></tr>
+      <tr><td>Lv 10</td><td class="num">100</td><td class="num">540</td><td class="num">108</td></tr>
     </tbody>
   </table>
-
-  <div class="callout info">
-    <span class="cta">❗ Micro Drone vs XR-9 视觉区分</span>
-    U08 <strong>微型无人机 Micro Drone</strong>（通用卡）≠ Commander 专属 <strong>XR-9</strong>（V1.0 上）。两者视觉与机制上均需区分：
-    <ul style="margin:6px 0 0">
-      <li><strong>Micro Drone</strong>：小型辅助火力 · 召唤型 · 多台并驱 · 任何英雄可抽</li>
-      <li><strong>XR-9</strong>：大型战术核心 · Commander 的英雄机制 · 战术调度中枢</li>
-    </ul>
-    <p style="margin:8px 0 0;font-size:12px;color:#b0b8d0">MVP V0.1 主角是 Trooper，v0.1 demo 里的自动开火机制是 Trooper 的（K师 07-16 11:57 拍板）。XR-9 是 Commander 专属，V1.0 才上。</p>
-  </div>
-
-  <h3>7b.4 XP 曲线（沿用 v0.1）</h3>
-  <table>
-    <thead><tr><th>到达等级</th><th>本级需 XP</th><th>累计 XP</th></tr></thead>
-    <tbody>
-      <tr><td>Lv 2</td><td class="num">20</td><td class="num">20</td></tr>
-      <tr><td>Lv 3</td><td class="num">30</td><td class="num">50</td></tr>
-      <tr><td>Lv 5</td><td class="num">50</td><td class="num">140</td></tr>
-      <tr><td>Lv 7</td><td class="num">70</td><td class="num">270</td></tr>
-      <tr><td>Lv 10</td><td class="num">100</td><td class="num">540</td></tr>
-    </tbody>
-  </table>
-  <p style="color:#6b7494;font-size:12.5px">公式 <code>xpToNext(lv) = 20 + (lv-1) × 10</code>。实测预计 10 分钟单局 Lv 6-9 附近 → 抽卡 6-8 次。</p>
-</section>
-
-<!-- ============ 07c · 技能卡完整数据表 30×5 ============ -->
-<section class="chapter" id="ch-07c">
-  <span class="chapter-num">CHAPTER · 07c</span>
-  <h2>技能卡完整数据表 · 30 张 × 5 级<span class="chip warn">v0.2 新增</span></h2>
-
-  <p class="lead">150 条数据（每张卡 5 级）。<strong>L3 质变行黄色底</strong> · <strong>L5 完全体行金色底</strong>。</p>
-
-  <style>
-    .card-table { width: 100%; border-collapse: collapse; margin: 16px 0 32px; font-size: 12.5px; }
-    .card-table th, .card-table td { border: 1px solid #1f2940; padding: 6px 10px; vertical-align: top; }
-    .card-table th { background: #131a2e; color: #66e9ff; font-weight: 600; text-align: left; }
-    .card-table tr.card-name td { background: #1a2138; color: #fff; font-weight: 700; }
-    .card-table tr.lvl-quantum td { background: rgba(255, 207, 64, 0.10); }
-    .card-table tr.lvl-final td { background: rgba(255, 165, 0, 0.16); color: #ffe08a; font-weight: 600; }
-    .card-table .lvl-cell { color: #6b7494; font-family: "SF Mono", monospace; width: 90px; white-space: nowrap; }
-    .card-slot { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 10.5px; margin-left: 6px; font-weight: 600; }
-    .slot-weapon  { background: rgba(255,107,53,.18); color: #ff9a4d; }
-    .slot-sub     { background: rgba(102,233,255,.15); color: #66e9ff; }
-    .slot-survive { background: rgba(147,255,128,.12); color: #93ff80; }
-    .slot-aoe     { background: rgba(197,134,255,.18); color: #d0a4ff; }
-    .slot-tactic  { background: rgba(255,207,64,.15); color: #ffdc80; }
-    .slot-trooper { background: rgba(255,46,46,.18); color: #ff8a8a; }
-  </style>
-
-  <h3>通用卡 · 22 张</h3>
-
-  <h4>主武器强化（5 张）</h4>
-  <table class="card-table">
-  <thead><tr><th style="width:220px">卡</th><th>级</th><th>效果</th></tr></thead>
-  <tbody>
-  <tr class="card-name"><td colspan="3"><code>U01</code> · 加速射击 Rapid Fire <span class="card-slot slot-weapon">主武器强化</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">射速 +15%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">射速 +25%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">射速 +40% + 每 5 发触发爆裂弹（60 范围）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">射速 +50% + 每 3 发爆裂</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">射速 +75% + 每 2 发爆裂 + 爆裂带燃烧 DoT</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U02</code> · 穿透弹 Piercing Round <span class="card-slot slot-weapon">主武器强化</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">穿透 1</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">穿透 2</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">穿透 3 + 每穿一层伤害 +10%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">穿透 5 + 每层 +15%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">穿透 8 + 每层 +20% + 穿透留残影再打一次</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U03</code> · 双联发 Twin Shot <span class="card-slot slot-weapon">主武器强化</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 3 次开火多发 1 弹</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 2 次多发</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每次同时 2 弹散射 15°</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">3 弹散射 20°</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">5 弹扇形 40° + 中间弹穿透</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U04</code> · 弹幕暴走 Barrage <span class="card-slot slot-weapon">主武器强化</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">主武器伤害 +15%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+25%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+40% + 每 10 秒进 3 秒射速翻倍</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+50% + 每 8 秒</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+70% + 每 5 秒 + 暴走时子弹自动追踪</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U05</code> · 精准锁定 Precision Lock <span class="card-slot slot-weapon">主武器强化</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">暴击率 +10%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+20%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+30% + 暴击伤害 +50%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+40% + 暴伤 +80%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+50% + 暴伤 +120% + 暴击必穿透</td></tr>
-  </tbody>
-</table>
-
-  <h4>副武器（4 张）</h4>
-  <table class="card-table">
-  <thead><tr><th style="width:220px">卡</th><th>级</th><th>效果</th></tr></thead>
-  <tbody>
-  <tr class="card-name"><td colspan="3"><code>U06</code> · 卫星激光 Orbital Laser <span class="card-slot slot-sub">副武器</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 8 秒一道激光（半径 80，伤害 100）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 6 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 4 秒同时降 2 道</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 3 秒 3 道</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 2 秒 5 道 + 命中处留 3 秒燃烧地板</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U07</code> · 能量脉冲 Energy Pulse <span class="card-slot slot-sub">副武器</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 5 秒玩家周身脉冲波（半径 100）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 4 秒 + 半径 130</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 3 秒 + 半径 160 + 击退</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 2 秒 + 半径 200</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 1 秒 + 半径 250 + 击退变击晕 1s</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U08</code> · 微型无人机 Micro Drone <span class="chip warn">≠ XR-9</span> <span class="card-slot slot-sub">副武器</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">召唤 1 台自动攻击</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">无人机伤害 +50%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">召唤 2 台</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">3 台</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">4 台 + 死亡爆炸</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U09</code> · 地雷投掷 Mine Deploy <span class="card-slot slot-sub">副武器</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 6 秒扔 1 颗地雷</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 4 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 3 秒 + 触发范围 +50%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 2 秒</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 1 秒 + 三连爆炸</td></tr>
-  </tbody>
-</table>
-
-  <h4>生存（4 张）</h4>
-  <table class="card-table">
-  <thead><tr><th style="width:220px">卡</th><th>级</th><th>效果</th></tr></thead>
-  <tbody>
-  <tr class="card-name"><td colspan="3"><code>U10</code> · 能量护盾 Aegis <span class="card-slot slot-survive">生存</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 10 秒 1 层护盾（挡 1 次伤害）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 8 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 6 秒 + 最多叠 3 层</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 4 秒 + 5 层</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 3 秒 + 8 层 + 破盾时反弹 50% 伤害</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U11</code> · 吸血汲取 Lifesteal <span class="card-slot slot-survive">生存</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">命中回 0.5 HP</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">回 1 HP</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">暴击回 3 HP</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">命中 2 / 暴击 5</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">命中 3 / 暴击 8 + 满血时溢出转护盾</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U12</code> · 幻影闪避 Phase Dodge <span class="card-slot slot-survive">生存</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 15 秒获 1 次无敌闪避</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 10 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 6 秒 + 闪避后 2 秒射速翻倍</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 4 秒</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 3 秒 + 闪避留残影反击</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U13</code> · 生命强化 Vitality <span class="card-slot slot-survive">生存</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">最大 HP +15%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+25%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+40% + 每分钟回 5%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+60% + 每分钟 10%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+100% + 每分钟 15% + 低血量狂暴</td></tr>
-  </tbody>
-</table>
-
-  <h4>AoE 光环（4 张）</h4>
-  <table class="card-table">
-  <thead><tr><th style="width:220px">卡</th><th>级</th><th>效果</th></tr></thead>
-  <tbody>
-  <tr class="card-name"><td colspan="3"><code>U14</code> · 燃烧光环 Pyro Field <span class="card-slot slot-aoe">AoE 光环</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">玩家周身半径 60 燃烧地板（5 DPS）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">半径 80 + 8 DPS</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">半径 120 + 12 DPS + 敌人被点燃后 3s 持续 8 DPS</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">半径 150 + 18 DPS</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">半径 200 + 25 DPS + 燃烧持续伤害翻倍</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U15</code> · 寒霜光环 Cryo Aura <span class="card-slot slot-aoe">AoE 光环</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">敌人进入半径 80 减速 20%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">半径 100 减速 30%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">半径 130 减速 50% + 5 秒后冻结 1s</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">半径 160 减速 60% + 冻结 2s</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">半径 200 减速 70% + 冻结 3s + 冻结破碎爆炸</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U16</code> · 电磁场 Tesla Field <span class="card-slot slot-aoe">AoE 光环</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">半径 80 每秒随机劈 1 敌</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">半径 100 劈 2</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">半径 130 劈 3 + 传导 2 敌</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">半径 160 劈 4 + 传导 3</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">半径 200 劈 5 + 传导 5 + 麻痹 0.5s</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U17</code> · 引力扭曲 Gravity Well <span class="card-slot slot-aoe">AoE 光环</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 15 秒生成 1 个引力井（3s 吸引敌人）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 12 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 8 秒 + 井持续 5s + 每秒伤害</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 6 秒</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 4 秒 + 井爆炸时黑洞吞噬</td></tr>
-  </tbody>
-</table>
-
-  <h4>战术（5 张）</h4>
-  <table class="card-table">
-  <thead><tr><th style="width:220px">卡</th><th>级</th><th>效果</th></tr></thead>
-  <tbody>
-  <tr class="card-name"><td colspan="3"><code>U18</code> · 时间领域 Chronos <span class="card-slot slot-tactic">战术</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 15 秒触发 2 秒全场减速 30%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 12 秒 3 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 8 秒 4 秒减速 50%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 6 秒 5 秒</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 4 秒 6 秒减速 70% + 玩家不减速</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U19</code> · 磁力拾取 Magnetic Pull <span class="card-slot slot-tactic">战术</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">拾取半径 +50%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+100%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+200% + 击杀敌人掉落金币 +25%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">全屏拾取 + 掉落 +50%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">全屏 + 掉落 +100% + 每分钟自动召唤 1 波磁暴（吸引全场敌人到玩家附近 2 秒）</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U20</code> · 经验加成 XP Amplifier <span class="card-slot slot-tactic">战术</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">经验 +15%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+25%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+40% + 升级瞬间回满血</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+60%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+100% + 升级触发全场脉冲</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U21</code> · 财富之手 Fortune <span class="card-slot slot-tactic">战术</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">金币 +20%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+35%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+50% + 5% 概率掉稀有物资</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+80% + 10%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+150% + 20% 稀有 + Boss 掉双倍</td></tr>
-  <tr class="card-name"><td colspan="3"><code>U22</code> · 复仇怒火 Vengeance <span class="card-slot slot-tactic">战术</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">受伤时 3 秒攻速 +20%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+40%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+60% + 反弹 20% 伤害</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+80% + 反弹 40%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+100% + 反弹 100% + 濒死无敌 3s</td></tr>
-  </tbody>
-</table>
-
-  <h3>Trooper 专属 · 8 张</h3>
-  <table class="card-table">
-  <thead><tr><th style="width:220px">卡</th><th>级</th><th>效果</th></tr></thead>
-  <tbody>
-  <tr class="card-name"><td colspan="3"><code>T01</code> · 弹幕专精 Barrage Mastery（招牌） <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">主武器射速 +10% + 弹匣 +20%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">射速 +18% + 弹匣 +35%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">射速 +30% + 弹匣 +60% + 换弹速度 +100%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">射速 +40% + 换弹 +150%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">射速 +50% + 弹匣 +100% + 无需换弹（打 30s 才需换）</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T02</code> · 等离子爆头 Plasma Headshot <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">暴击伤害 +30%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+50%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+80% + 暴击引爆敌人（半径 40 溅射）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+120% + 溅射 60</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+200% + 暴击引爆连锁 3 次</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T03</code> · 战术翻滚 Combat Roll（Trooper 特有位移） <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">10 秒解锁 1 次翻滚（短距无敌 + 位移）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 8 秒</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 6 秒 + 翻滚后 3 秒射速 +50%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 4 秒 + 5 秒</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每 2 秒 + 翻滚留燃烧尾迹</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T04</code> · 曳光弹 Tracer Round <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">每 5 发有 1 发曳光弹（伤害 +50%）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每 4 发</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">每 3 发 + 曳光留燃烧轨迹</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">每 2 发</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">每发都是曳光 + 燃烧轨迹持续 3s</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T05</code> · 爆裂步枪 Burst Rifle（改主武器形态） <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">主武器改 3 连发（射速略降但每发伤害 +20%）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">每发 +30%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">5 连发 + 每发 +40%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">7 连发</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">10 连发 + 连发中最后一发暴击</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T06</code> · 战场镇定 Battlefield Cool（Trooper 硬汉设定） <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">低血量（<30%）时伤害 +20%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+35%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+50% + 每秒回 2% HP</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+70% + 每秒回 4%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+100% + 每秒回 6% + 濒死时全场爆裂</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T07</code> · 弹药储备 Ammo Reserve（消耗品经济） <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">Run 内金币 +25%</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+40%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+60% + 金币可买子弹升级（Run 内商店）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+80%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+120% + 击杀敌人 5% 掉临时武器升级</td></tr>
-  <tr class="card-name"><td colspan="3"><code>T08</code> · 步兵之魂 Trooper's Soul（招牌灵魂） <span class="card-slot slot-trooper">Trooper 专属</span></td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L1</td><td colspan="2">通关 Boss 后奖励一次全属性 +10%（Run 内）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L2</td><td colspan="2">+15%</td></tr>
-  <tr class="lvl-row lvl-quantum"><td class="lvl-cell">L3【质变】</td><td colspan="2">+25% + Boss 奖励额外符文槽（Run 内临时）</td></tr>
-  <tr class="lvl-row"><td class="lvl-cell">L4</td><td colspan="2">+40%</td></tr>
-  <tr class="lvl-row lvl-final"><td class="lvl-cell">L5【完全体】</td><td colspan="2">+60% + 结算时多得 20% 异生晶核</td></tr>
-  </tbody>
-</table>
-
-  <div class="callout info">
-    <span class="cta">数据源</span>
-    完整草稿也归档于 <code>~/shared-agents/project-proposal/mvs-007-rift-ranger/handoff/2026-07-16-skill-cards-30-draft.md</code>——未来实装 / 平衡调整以本表 + handoff 为单一事实源。
-  </div>
+  <p style="color:#6b7494;font-size:12.5px;">公式 <code>xpToNext(lv) = 20 + (lv-1) × 10</code>（v0.1.1 P2 放缓曲线）。Rusher = 15 XP / Spitter = 30 XP 会大幅提速。实测预计 10 分钟单局 Lv 6-9 附近。</p>
 </section>
 
 <!-- ============ 08 ============ -->
@@ -1474,60 +1073,12 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   </div>
 </section>
 
-<!-- ============ 11 · 术语说明 ============ -->
+<!-- ============ 11 ============ -->
 <section class="chapter" id="ch-11">
   <span class="chapter-num">CHAPTER · 11</span>
-  <h2>术语说明 · Roguelike vs Roguelite<span class="chip warn">v0.2 新增</span></h2>
-
-  <p class="lead">v0.2 全文把「Roguelike」精确化为 <strong>Roguelite</strong>（除面向普通玩家的宣发文案外）。</p>
-
-  <table>
-    <thead><tr><th>维度</th><th>Roguelike（原教旨）</th><th>Roguelite（本作 · Rift Ranger）</th></tr></thead>
-    <tbody>
-      <tr><td>回合制</td><td>是（Nethack / ADOM 血脉）</td><td>否 · 实时动作</td></tr>
-      <tr><td>随机生成</td><td>是</td><td>是（Wave 组合 / 抽卡）</td></tr>
-      <tr><td>Run-based（一局结算）</td><td>是</td><td>是</td></tr>
-      <tr><td>永久死亡</td><td>是（严格）</td><td>是（局内死→回结算），但…</td></tr>
-      <tr><td><strong>元进度</strong>（跨局积累）</td><td>否</td><td><strong>是</strong>（符文 L1 常驻）</td></tr>
-      <tr><td>网格 ASCII</td><td>是（历史特征）</td><td>否 · 2D 像素</td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout info">
-    <span class="cta">为什么 Rift Ranger 是 Roguelite 不是 Roguelike</span>
-    <ul style="margin:0">
-      <li><strong>加了元进度</strong>（符文系统 L1）——Roguelike 原教旨反对永久成长</li>
-      <li><strong>实时动作</strong>——非回合制</li>
-      <li><strong>友好度更高</strong>——不惩罚新玩家死亡；老玩家有肝的方向</li>
-      <li>参考同类：Vampire Survivors / Dead Cells / Hades / LoL Swarm 都是 Roguelite</li>
-    </ul>
-  </div>
-
-  <div class="callout warn">
-    <span class="cta">宣发文案例外</span>
-    <strong>面向普通玩家的宣发文案</strong>可保留「Roguelike」——大众语义已扩大化，「Roguelike 割草」是搜索/发现的通用 tag，蹭流量必要。<em>spec 内部（本文档）严格用 Roguelite。</em>
-  </div>
-</section>
-
-<!-- ============ 12 · 变更日志 ============ -->
-<section class="chapter" id="ch-12">
-  <span class="chapter-num">CHAPTER · 12</span>
   <h2>变更日志</h2>
 
-  <h3>v0.2 · 2026-07-16（本版）</h3>
-  <ul>
-    <li>★ <strong>K师 07-16 拍板 · 双层玩家属性系统落定</strong>：L1 <strong>符文系统</strong>（局外买断 · 跨局持久 · A3 中庸版一页 · 红/黄/蓝/精华四色槽 · 指数价格曲线 · D 大差距路线肝有回报）+ L2 <strong>技能卡系统</strong>（局内抽 3 选 1 · 30 张 × 5 级 · L3 质变 L5 完全体 · 完全体剔除 · 保底 3 次机制）</li>
-    <li>★ <strong>30 张技能卡完整数据表落地</strong>：22 通用（主武器强化 5 / 副武器 4 / 生存 4 / AoE 光环 4 / 战术 5）+ 8 Trooper 专属（弹幕流 + 硬汉 + 战术翻滚 三向度）——见 Ch·07c</li>
-    <li>★ <strong>通用卡文案铁律</strong>：强制抽象槽表述、禁词 XR-9/BOBO/步枪/狙击枪/无人机（Micro Drone/Cyber Drone 通用命名 OK）——防未来污染</li>
-    <li>★ <strong>Micro Drone vs XR-9 视觉区分</strong>：U08 通用小无人机 ≠ Commander 专属 XR-9（V1.0 上）</li>
-    <li>★ <strong>Trooper 定位深化</strong>：MVP V0.1 主角，v0.1 demo 的自动开火是 Trooper 的机制（K师 07-16 11:57 拍板）；8 张专属卡呼应「弹幕流 + 硬汉 + 战术翻滚」三向</li>
-    <li>★ <strong>术语精确化</strong>：spec 全文 Roguelike → Roguelite（新增 Ch·11 术语说明）；宣发文案层例外</li>
-    <li>Ch·07 三章重写：旧「升级卡 · Build 系统」拆为 Ch·07 符文 + Ch·07b 抽卡 + Ch·07c 数据表；旧 10 张卡池完整替换为新 30 张</li>
-    <li>目录 + 顶部摘要 + 页脚版本号同步更新到 v0.2</li>
-    <li>数据源归档：<code>handoff/2026-07-16-skill-cards-30-draft.md</code></li>
-  </ul>
-
-  <h3>v0.1 · 2026-07-15</h3>
+  <h3>v0.1 · 2026-07-15（本版）</h3>
   <ul>
     <li>★ <strong>Trooper 等离子步枪加射程限制 500 px</strong>（K师 07-15 拍板）——白模现状无限射程 → 加限制强迫「移动 + 输出」双 Verb 咬合</li>
     <li>产品名统一 · <strong>裂隙幸存者 / Rift Ranger</strong>（K师 07-07 拍板 · 代号 MVS-007 保留）</li>
@@ -1560,8 +1111,8 @@ td.hot { color: #ff9a4d; font-weight: 600; }
 </section>
 
 <div class="doc-footer">
-  《裂隙幸存者 Rift Ranger》· 玩法规格 v0.2 · 凝视 The Gaze<br>
-  代号 MVS-007 · v0.1 落盘 2026-07-15 / v0.2 落盘 2026-07-16 · 基于白模 v0.1.5 真实数值 · 世界观锚定 Rift Ranger<br>
+  《裂隙幸存者 Rift Ranger》· 玩法规格 v0.1 · 凝视 The Gaze<br>
+  代号 MVS-007 · 落盘 2026-07-15 · 基于白模 v0.1.2 真实数值 · 世界观锚定 Rift Ranger<br>
   —— 马启航Marvis
 </div>
 
@@ -1742,7 +1293,7 @@ td.hot { color: #ff9a4d; font-weight: 600; }
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'gameplay-spec-v0.2-edited-' + timestamp() + '.html';
+    a.download = 'gameplay-spec-v0.1-edited-' + timestamp() + '.html';
     document.body.appendChild(a);
     a.click();
     setTimeout(function() {
