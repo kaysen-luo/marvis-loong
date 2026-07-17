@@ -28,7 +28,10 @@ a:hover { color: #66e9ff; }
   display: grid;
   grid-template-columns: 280px 1fr;
   min-height: 100vh;
+  min-width: 0;
 }
+/* Grid item 默认 min-width:auto = 内容宽,宽表格会撑破 → 强制 0 */
+.sidebar, main { min-width: 0; }
 .sidebar {
   background: #0d1220;
   border-right: 1px solid #1f2940;
@@ -106,6 +109,7 @@ a:hover { color: #66e9ff; }
 main {
   padding: 48px 56px 80px;
   max-width: 960px;
+  overflow-x: hidden;
 }
 
 /* === DOC HEADER === */
@@ -333,22 +337,22 @@ td.hot { color: #ff9a4d; font-weight: 600; }
   section.chapter h4 { font-size: 14px; }
   p, li { font-size: 14px; }
   p.lead { font-size: 14.5px; padding: 12px 14px; }
-  /* 表格横滑（宽表格安全策略 + 视觉提示：两侧阴影渐变，滑到边阴影消失） */
+  /* 表格 wrap 策略 (iPhone 17 402pt 竖屏更友好：宽表变高表,不撑破) */
   table {
     font-size: 12.5px;
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
+    display: table;
+    width: 100%;
     max-width: 100%;
-    background:
-      linear-gradient(to right, #131a2e 30%, rgba(19,26,46,0)) left center / 20px 100% no-repeat,
-      linear-gradient(to left, #131a2e 30%, rgba(19,26,46,0)) right center / 20px 100% no-repeat,
-      linear-gradient(to right, rgba(0,212,255,0.4), rgba(0,212,255,0)) left center / 8px 100% no-repeat,
-      linear-gradient(to left, rgba(0,212,255,0.4), rgba(0,212,255,0)) right center / 8px 100% no-repeat;
-    background-attachment: local, local, scroll, scroll;
+    table-layout: auto;
   }
-  th, td { padding: 8px 10px; }
+  th, td {
+    padding: 8px 10px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 200px;
+  }
+  td.num { white-space: normal; }
   .callout { padding: 12px 14px; font-size: 13px; }
   .diagram { padding: 12px; margin: 16px 0; }
   .diagram svg { width: 100%; height: auto; }
