@@ -1,47 +1,46 @@
-/* MVS-007 Phaser 3 白模 v0.1.6-landscape · grep: Crawler Rusher Spitter joystick pulse energyPulse setVelocity AUTO_FIRE_RANGE
+/* MVS-007 Phaser 3 白模 v0.1.7-landscape-v2 · LANDSCAPE PREVIEW v2
  *
- * v0.1.6-landscape (2026-07-17):
- *   · 灰度分支：Canvas 1080x1920 → 1920x1080 横屏
- *   · UI 位置按新宽高重算：摇杆左下 1/4、脉冲右下、HUD 顶部一横条、升级/结算面板宽度收紧到 800
- *   · 手感/数值/机制不动：射程 500 / 子弹速度 / 摇杆响应 / iFrame / 拖尾 / 白光闪 全部保留
+ * 灰度目标（K师 07-17 拍板）：不是坐标翻转，是真正横屏 UX 重做。
+ * 竖屏基线：public/mvs-007/game.js v0.1.8 (v0.1.5 线上版逻辑一行不动)
+ * 手感/机制/数值：fireRate 260 / bulletSpeed 600 / speed 240 / AUTO_FIRE_RANGE 500 /
+ *                 iFrame 300ms / pushable false / sampleStick 动态摇杆 /
+ *                 拖尾 / 白光闪 / 15 粒粒子 / 卡池 10 张 —— 全部保留
  *
- * v0.1.8 (2026-07-16):
- *   · 机制归属收口：XR-9 是 Commander 专属（V1.0 才上），MVP V0.1 主角 = Trooper
- *   · v0.1 demo 里的自动开火机制 = Trooper 的机制（不再代表 XR-9）
- *   · 注释里“XR-9 射程圈” → “自动开火射程圈”（中性命名）
+ * v2 UX 改动（仅 UI 层）：
+ *   · Canvas 1080×1920 → 1920×1080
+ *   · 摇杆：左下拇指自然区 (200+safeLeft, H-200)，基座半径 200→140，摇杆头 45→30，
+ *          默认 alpha 0.5、touch 0.9，动态摇杆响应区限左下 1/3 屏
+ *   · HUD 四角布局：
+ *       左上：血量条 180×20 + 等级章圆 40 + XP 副条
+ *       右上：击杀 36px + 时间 20px
+ *       正上中央：Boss 血条 1000×24（本 v2 没 Boss 隐藏、不占位）
+ *       右下：脉冲主动按钮 R=90（触感 120×120）+ CD
+ *   · 升级面板：卡片横排 3 张，320×460，间距 60，居中在 1920 中间
+ *   · 结算面板：左侧数据 40% / 中间 20% 留白 / 右侧按钮 40%
+ *   · Safe area：iOS 灵动岛/Home Indicator 兜底 env(safe-area-inset-*) 通过 CSS var 读入
+ *   · 首帧动画：摇杆基座脉冲提示 scale 1.0→1.15→1.0 (600ms)
  *
- * v0.1.7 (2026-07-16):
- *   · AI 副手名字收口：BOBO → XR-9（与世界观圣经/spec 一致）
- *   · 常量 BOBO_ATTACK_RANGE → AUTO_FIRE_RANGE，注释一并扫平
- *
- * v0.1.6 (2026-07-16):
- *   · 初始攻速 +15%（fireRate 300 → 260 ms）
- *
- * v0.1.5 (2026-07-16):
- *   · 锁敌范围恢复 500px（敌人必须进射程才开火）+ 保留 v0.1.4 子弹飞行 500px 上限
- *   · 双重保障：不朝屏外瞎打，也不会能量浪费
- *
- * v0.1.4 (2026-07-16):
- *   · 修复摇杆中心偏右上 + 黏笨感：改为动态摇杆（触摸落点即基座中心）
- *   · 子弹添加 spawnX/spawnY 字段，飞行距离 >= 500 就销毁
- * v0.1.3 射程限制(2026-07-16):
- *   · AUTO_FIRE_RANGE = 500 px 引入（常量化），`nearestEnemy()` 加距离过滤
- *   · 以玩家为圆心绘半透明青蓝虚线射程圈（rgba(100,200,255,0.15)）
- *   · 产品名：Xenobreach → Rift Ranger（K师 2026-07-07 拍板，07-15 英文定 Ranger）
- * v0.1.2 手感优化(2026-07-15): 摇杆即时响应混合式（固定基座 + 落点即偏移 + 动态基座 + 8px 死区），speed 200→240
- * v0.1.1 手感优化(2026-07-03):
- *   P0 · 摇杆每帧 update 采样 pointer 位置(不用 pointermove 事件)、玩家 pushable=false、
- *        子弹速度 400→600、iFrame 500→300ms
- *   P1 · 玩家 8 帧位移拖尾、击杀白光闪、受击 200ms 红 tint、暴击金色大字
- *   P2 · 单关 5min→10min、Rusher 90→180s、Spitter 150→300s、450s Crawler 密度翻倍、
- *        540s Rusher 密度翻倍、XP 曲线放缓 nextLv = 20 + (lv-1)*10
- * 10 卡: 加速射击 穿透弹 爆裂弹 暴击强化 环绕光刃 定时地雷 无人机僚机 强化装甲 急促脚步 吸血涂层
+ * 10 卡：加速射击 穿透弹 爆裂弹 暴击强化 环绕光刃 定时地雷 无人机僚机 强化装甲 急促脚步 吸血涂层
  */
 (function () {
 'use strict';
-const W = 1920, H = 1080;   // 横屏
-const TOTAL_SEC = 600;                // v0.1.1: 5min → 10min
-const AUTO_FIRE_RANGE = 500;        // v0.1.3: Trooper 自动摄敲射程（px）
+const W = 1920, H = 1080;
+const TOTAL_SEC = 600;
+const AUTO_FIRE_RANGE = 500;
+
+function getSafeArea() {
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    const parse = (v) => parseInt(v, 10) || 0;
+    return {
+      top:    parse(cs.getPropertyValue('--sa-top')),
+      right:  parse(cs.getPropertyValue('--sa-right')),
+      bottom: parse(cs.getPropertyValue('--sa-bottom')),
+      left:   parse(cs.getPropertyValue('--sa-left')),
+    };
+  } catch (e) { return { top: 0, right: 0, bottom: 0, left: 0 }; }
+}
+
 const COLORS = {
   player: 0xffffff, bullet: 0x88ddff,
   crawler: 0xff4444, rusher: 0xff9933, spitter: 0xaa66ff,
@@ -49,14 +48,12 @@ const COLORS = {
   energy: 0x66ff99,
 };
 
-// v0.1.1 P2: 到达 level+1 需要的经验增量 = 20 + (level-1)*10
-// Lv2=20 Lv3=30 Lv4=40 Lv5=50 Lv6=60 Lv7=70 Lv8=80 Lv9=90 Lv10=100 (累计 20/50/90/140/200/270/350/440/540)
 function xpFor(level) { return 20 + (level - 1) * 10; }
 
 function freshState() {
   return {
     hpMax: 100, hp: 100, speed: 240,
-    fireRate: 260, bulletDmg: 10, bulletSpeed: 600,     // v0.1.6: 300→260 初始攻速 +15%（K师 07-16 09:07 拍板）
+    fireRate: 260, bulletDmg: 10, bulletSpeed: 600,
     pierce: 0, explosive: false, critChance: 0, critMult: 3,
     pulseCd: 8000, pulseReady: 0,
     level: 1, xp: 0, xpToNext: xpFor(1), kills: 0, startTime: 0,
@@ -64,7 +61,7 @@ function freshState() {
     lifesteal: 0, cards: [],
     paused: false, ended: false,
     rusherUnlocked: false, spitterUnlocked: false,
-    crawlerDense: false, rusherDense: false,             // v0.1.1 P2: 后期密度翻倍
+    crawlerDense: false, rusherDense: false,
   };
 }
 let state = freshState();
@@ -99,24 +96,23 @@ class MainScene extends Phaser.Scene {
     state.startTime = this.time.now;
     state.pulseReady = this.time.now;
 
+    this.safeArea = getSafeArea();
+
     const g = this.add.graphics();
     g.lineStyle(1, 0x0f1a1a, 1);
     for (let x = 0; x < W; x += 80) { g.moveTo(x, 0); g.lineTo(x, H); }
     for (let y = 0; y < H; y += 80) { g.moveTo(0, y); g.lineTo(W, y); }
     g.strokePath();
 
-    // v0.1.1 P1: 拖尾图层(用 graphics 比生 8 个 circle 便宜)
     this.trailGfx = this.add.graphics().setDepth(5);
     this.trail = [];
 
-    // v0.1.3: 自动开火射程圈 UI（玩家为圆心、青蓝半透明虚线、500 px）
     this.rangeRingGfx = this.add.graphics().setDepth(4);
 
     this.player = this.add.circle(W / 2, H / 2, 15, COLORS.player);
     this.physics.add.existing(this.player);
     this.player.body.setCircle(15);
     this.player.body.setCollideWorldBounds(true);
-    // v0.1.1 P0: 玩家不被敌人推动(消除"黏连"感)
     this.player.body.pushable = false;
     this.player.iFrameUntil = 0;
 
@@ -153,41 +149,52 @@ class MainScene extends Phaser.Scene {
     this.buildUI();
     this.cameras.main.setBackgroundColor('#000000');
     this.orbitAngle = 0;
+
+    // 首帧摇杆基座脉冲提示（600ms scale 1→1.15→1）
+    this.tweens.add({
+      targets: this.stickBase,
+      scale: { from: 1, to: 1.15 },
+      duration: 300, yoyo: true, ease: 'Sine.Out',
+    });
   }
 
   setupTouch() {
-    // v0.1.2: 即时响应混合摇杆——基座默认固定在左下 1/4，落点即偏移(首帧就有输入)。
-    // 拉太远时基座跟着手指走(动态基座)，避免拉不到屏幕边。
-    // landscape: 左下 1/4 区域（W/4, H*3/4）
-    const BASE_X = Math.round(W / 4), BASE_Y = Math.round(H * 3 / 4);
+    // 横屏 v2：左下角拇指自然区
+    // 基座半径 200→140 摇杆头 45→30 默认 alpha 0.5 touch 0.9
+    const STICK_BASE_R = 140;
+    const STICK_KNOB_R = 30;
+    const BASE_X = 200 + this.safeArea.left;
+    const BASE_Y = H - 200;
     this.stickBaseHome = { x: BASE_X, y: BASE_Y };
     this.stickMaxR = 90;
     this.stick = { active: false, cx: BASE_X, cy: BASE_Y, dx: 0, dy: 0, pointer: null };
-    this.stickBase = this.add.circle(BASE_X, BASE_Y, 90, 0xffffff, 0.08).setDepth(150).setVisible(false);
-    this.stickKnob = this.add.circle(BASE_X, BASE_Y, 45, 0xffffff, 0.35).setDepth(151).setVisible(false);
+    this.stickBase = this.add.circle(BASE_X, BASE_Y, STICK_BASE_R, 0xffffff, 0.08).setDepth(150).setAlpha(0.5);
+    this.stickKnob = this.add.circle(BASE_X, BASE_Y, STICK_KNOB_R, 0xffffff, 0.35).setDepth(151).setAlpha(0.5);
 
-    const btnR = 105;
-    // landscape: 脉冲按钮保持右下，距边距按新宽高
-    const bx = W - 170, by = H - 170;
+    // 右下脉冲主动按钮 R=90（safe area 让开右侧 Home Indicator）
+    const btnR = 90;
+    const bx = W - 160 - this.safeArea.right;
+    const by = H - 160;
     this.pulseBtnR = btnR; this.pulseBtnX = bx; this.pulseBtnY = by;
     this.pulseBtn = this.add.circle(bx, by, btnR, 0x66ff99, 0.28)
-      .setDepth(150).setStrokeStyle(5, 0x66ff99, 0.9);
-    this.pulseLabel = this.add.text(bx, by - 8, '脉冲', {
-      fontFamily: 'sans-serif', fontSize: '48px', color: '#eaffea', fontStyle: 'bold'
+      .setDepth(150).setStrokeStyle(4, 0x66ff99, 0.9);
+    this.pulseLabel = this.add.text(bx, by - 6, '脉冲', {
+      fontFamily: 'sans-serif', fontSize: '32px', color: '#eaffea', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(151);
-    this.pulseCdLabel = this.add.text(bx, by + 42, '', {
-      fontFamily: 'sans-serif', fontSize: '32px', color: '#ffffff'
+    this.pulseCdLabel = this.add.text(bx, by + 28, '', {
+      fontFamily: 'sans-serif', fontSize: '22px', color: '#ffffff'
     }).setOrigin(0.5).setDepth(151);
 
+    // 摇杆响应区：左下 1/3（x < W/2 && y > H/3）
+    const inStickZone = (px, py) => px < W / 2 && py > H / 3;
+
     this.input.on('pointerdown', (p) => {
-      // v0.1.4: 动态摇杆——触摸落点即摇杆基座中心（修 v0.1.3 固定式摇杆的中心偏右上/黏笨感 bug）
-      this.stickBaseHome.x = p.x;
-      this.stickBaseHome.y = p.y;
       if (state.paused || state.ended) return;
       const dxb = p.x - bx, dyb = p.y - by;
       if (dxb * dxb + dyb * dyb <= btnR * btnR) { this.tryPulse(); return; }
-      if (p.x < W / 2) {
-        // v0.1.2: 基座保持在固定 home 位置，落点相对基座的偏移直接作为首帧输入
+      if (inStickZone(p.x, p.y)) {
+        this.stickBaseHome.x = p.x;
+        this.stickBaseHome.y = p.y;
         this.stick.active = true;
         this.stick.pointer = p;
         this.stick.cx = this.stickBaseHome.x;
@@ -195,7 +202,6 @@ class MainScene extends Phaser.Scene {
         let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
         const max = this.stickMaxR;
         const len = Math.hypot(dx, dy);
-        // 如果落点离基座过远(>1.5x)，基座跟手指走(动态基座)
         if (len > max * 1.5) {
           const shift = len - max;
           this.stick.cx += dx / len * shift;
@@ -207,8 +213,8 @@ class MainScene extends Phaser.Scene {
         if (nlen > max) { ndx = ndx * max / nlen; ndy = ndy * max / nlen; }
         this.stick.dx = ndx / max;
         this.stick.dy = ndy / max;
-        this.stickBase.setPosition(this.stick.cx, this.stick.cy).setVisible(true);
-        this.stickKnob.setPosition(this.stick.cx + ndx, this.stick.cy + ndy).setVisible(true);
+        this.stickBase.setPosition(this.stick.cx, this.stick.cy).setAlpha(0.9);
+        this.stickKnob.setPosition(this.stick.cx + ndx, this.stick.cy + ndy).setAlpha(0.9);
       }
     });
     const endStick = (p) => {
@@ -216,15 +222,17 @@ class MainScene extends Phaser.Scene {
       this.stick.active = false;
       this.stick.dx = 0; this.stick.dy = 0;
       this.stick.pointer = null;
-      this.stickBase.setVisible(false);
-      this.stickKnob.setVisible(false);
+      this.tweens.add({
+        targets: [this.stickBase, this.stickKnob], alpha: 0.5, duration: 200,
+      });
+      this.stickBase.setPosition(this.stickBaseHome.x, this.stickBaseHome.y);
+      this.stickKnob.setPosition(this.stickBaseHome.x, this.stickBaseHome.y);
     };
     this.input.on('pointerup', endStick);
     this.input.on('pointerupoutside', endStick);
     this.input.on('pointercancel', endStick);
   }
 
-  // v0.1.2: 每帧从 pointer 位置采样；加 8px 死区；拉过 1.5x 时基座跟手指走(动态基座)
   sampleStick() {
     if (!this.stick.active || !this.stick.pointer) return;
     const p = this.stick.pointer;
@@ -232,7 +240,6 @@ class MainScene extends Phaser.Scene {
     const max = this.stickMaxR;
     let dx = p.x - this.stick.cx, dy = p.y - this.stick.cy;
     let len = Math.hypot(dx, dy);
-    // 动态基座：拉出 1.5x 时基座跟着手指移动一段，保持
     if (len > max * 1.5) {
       const shift = len - max;
       this.stick.cx += dx / len * shift;
@@ -241,7 +248,6 @@ class MainScene extends Phaser.Scene {
       dx = p.x - this.stick.cx; dy = p.y - this.stick.cy;
       len = Math.hypot(dx, dy);
     }
-    // 死区：<8px 当 0，避免微抖
     if (len < 8) { this.stick.dx = 0; this.stick.dy = 0; this.stickKnob.setPosition(this.stick.cx, this.stick.cy); return; }
     let kdx = dx, kdy = dy;
     if (len > max) { kdx = dx * max / len; kdy = dy * max / len; }
@@ -251,28 +257,51 @@ class MainScene extends Phaser.Scene {
   }
 
   buildUI() {
-    // landscape: HUD 顶部一横条（不挡视野），时间居中，击杀左、等级右，xp bar 紧贴其下
-    const topPad = 24;
-    this.timeLabel = this.add.text(W / 2, topPad, '10:00', {
-      fontFamily: 'sans-serif', fontSize: '48px', color: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5, 0).setDepth(200);
-    this.killLabel = this.add.text(40, topPad + 10, '击杀 0', {
-      fontFamily: 'sans-serif', fontSize: '32px', color: '#ffcc66'
-    }).setOrigin(0, 0).setDepth(200);
-    this.lvLabel = this.add.text(W - 40, topPad + 10, 'Lv 1', {
-      fontFamily: 'sans-serif', fontSize: '32px', color: '#88ffcc'
+    // 横屏 v2 HUD 分四角
+    const topY = 30 + this.safeArea.top;
+    const leftX = 30 + this.safeArea.left;
+    const rightX = W - 30 - this.safeArea.right;
+
+    // 左上：血量条 180×20 + 等级章圆 40 + XP 副条
+    this.topHpBarBg = this.add.rectangle(leftX + 50, topY + 8, 180, 20, 0x222222, 0.75)
+      .setOrigin(0, 0).setStrokeStyle(2, 0x333333, 1).setDepth(200);
+    this.topHpBar = this.add.rectangle(leftX + 52, topY + 10, 176, 16, COLORS.hpFull)
+      .setOrigin(0, 0).setDepth(201);
+    this.topHpText = this.add.text(leftX + 140, topY + 18, '100/100', {
+      fontFamily: 'sans-serif', fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(202);
+    this.lvBadge = this.add.circle(leftX + 20, topY + 18, 20, 0x114422, 0.85)
+      .setStrokeStyle(2, 0x88ffcc, 0.95).setDepth(200);
+    this.lvLabel = this.add.text(leftX + 20, topY + 18, '1', {
+      fontFamily: 'sans-serif', fontSize: '20px', color: '#88ffcc', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(201);
+    this.xpBarBg = this.add.rectangle(leftX + 50, topY + 34, 180, 4, 0x222222, 0.75)
+      .setOrigin(0, 0).setDepth(200);
+    this.xpBar = this.add.rectangle(leftX + 50, topY + 34, 0, 4, 0x88ffcc)
+      .setOrigin(0, 0).setDepth(201);
+
+    // 右上：击杀 + 时间
+    this.killLabel = this.add.text(rightX, topY, '0', {
+      fontFamily: 'sans-serif', fontSize: '36px', color: '#ffcc66', fontStyle: 'bold',
     }).setOrigin(1, 0).setDepth(200);
-    this.xpBarBg = this.add.rectangle(W / 2, topPad + 80, W - 80, 8, 0x333333).setOrigin(0.5).setDepth(200);
-    this.xpBar   = this.add.rectangle(40, topPad + 80, 0, 8, 0x88ffcc).setOrigin(0, 0.5).setDepth(201);
-    // wave 提示字
-    this.waveLabel = this.add.text(W / 2, H / 2 - 120, '', {
-      fontFamily: 'sans-serif', fontSize: '56px', color: '#ffcc66', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 6,
+    this.killTag = this.add.text(rightX - 60, topY + 14, '击杀', {
+      fontFamily: 'sans-serif', fontSize: '14px', color: '#ffcc66',
+    }).setOrigin(1, 0).setDepth(200);
+    this.timeLabel = this.add.text(rightX, topY + 44, '10:00', {
+      fontFamily: 'sans-serif', fontSize: '20px', color: '#ffffff',
+    }).setOrigin(1, 0).setDepth(200);
+
+    // 正上中央：Boss 血条占位（本 v2 没 Boss 隐藏）
+    this.bossBarBg = this.add.rectangle(W / 2, topY + 12, 1000, 24, 0x330000, 0.8)
+      .setStrokeStyle(2, 0xff5555, 0.9).setDepth(200).setVisible(false);
+    this.bossBar = this.add.rectangle(W / 2 - 500, topY + 12, 1000, 20, 0xff3333)
+      .setOrigin(0, 0.5).setDepth(201).setVisible(false);
+
+    // wave 提示
+    this.waveLabel = this.add.text(W / 2, H / 2 - 200, '', {
+      fontFamily: 'sans-serif', fontSize: '48px', color: '#ffcc66', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(300).setAlpha(0);
-    this.hintLabel = this.add.text(W / 2, H - 24,
-      '左半屏 触摸 = 摇杆 · 右下 = 脉冲 · 键盘 WASD/方向键',
-      { fontFamily: 'sans-serif', fontSize: '20px', color: '#666666' }
-    ).setOrigin(0.5, 1).setDepth(200);
   }
 
   showWave(text) {
@@ -288,15 +317,13 @@ class MainScene extends Phaser.Scene {
   update(time, delta) {
     if (state.paused || state.ended) return;
 
-    // v0.1.1 P0: 每帧从 pointer 位置采样摇杆(替代 pointermove 事件)
     this.sampleStick();
 
     const elapsed = time - state.startTime;
-    // v0.1.1 P2: timeline 拉长，新增 450s/540s 密度翻倍 wave
     if (!state.rusherUnlocked   && elapsed >= 180000) { state.rusherUnlocked  = true; this.showWave('Rusher 加入'); }
     if (!state.spitterUnlocked  && elapsed >= 300000) { state.spitterUnlocked = true; this.showWave('Spitter 加入'); }
-    if (!state.crawlerDense     && elapsed >= 450000) { state.crawlerDense    = true; this.showWave('Crawler 密度翻倍！'); }
-    if (!state.rusherDense      && elapsed >= 540000) { state.rusherDense     = true; this.showWave('Rusher 密度翻倍！'); }
+    if (!state.crawlerDense     && elapsed >= 450000) { state.crawlerDense    = true; this.showWave('Crawler 密度翻倍'); }
+    if (!state.rusherDense      && elapsed >= 540000) { state.rusherDense     = true; this.showWave('Rusher 密度翻倍'); }
 
     let vx = 0, vy = 0;
     if (this.cursors.left.isDown  || this.keys.A.isDown) vx -= 1;
@@ -308,7 +335,6 @@ class MainScene extends Phaser.Scene {
     if (mag > 1) { vx /= mag; vy /= mag; }
     this.player.body.setVelocity(vx * state.speed, vy * state.speed);
 
-    // v0.1.1 P1: 拖尾(记录 8 帧位移，画淏出中的半透明圆)
     this.trail.push({ x: this.player.x, y: this.player.y });
     if (this.trail.length > 8) this.trail.shift();
     this.trailGfx.clear();
@@ -319,11 +345,10 @@ class MainScene extends Phaser.Scene {
       this.trailGfx.fillCircle(this.trail[i].x, this.trail[i].y, r);
     }
 
-    // v0.1.3: 自动开火射程圈（玩家为圆心 · 青蓝半透明虚线 · 500 px）
     this.rangeRingGfx.clear();
     this.rangeRingGfx.lineStyle(2, 0x64c8ff, 0.15);
     const rrCx = this.player.x, rrCy = this.player.y, rrR = AUTO_FIRE_RANGE;
-    const dashCount = 48;              // 48 段 ≈ 每 7.5°一段
+    const dashCount = 48;
     const dashArc = (Math.PI * 2) / dashCount;
     for (let i = 0; i < dashCount; i += 2) {
       const a0 = i * dashArc;
@@ -349,7 +374,6 @@ class MainScene extends Phaser.Scene {
     this.eProjs.getChildren().forEach(p => {
       if (p.x < -80 || p.x > W + 80 || p.y < -80 || p.y > H + 80) p.destroy();
     });
-    // v0.1.4: 子弹射程上限 500 px（起点距离 >= AUTO_FIRE_RANGE 就销毁）
     const rangeSq = AUTO_FIRE_RANGE * AUTO_FIRE_RANGE;
     this.bullets.getChildren().forEach(b => {
       if (b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) { b.destroy(); return; }
@@ -373,26 +397,29 @@ class MainScene extends Phaser.Scene {
   }
 
   updateUI(time) {
-    const totalMs = TOTAL_SEC * 1000;   // v0.1.1 P2: 10min
+    const totalMs = TOTAL_SEC * 1000;
     const left = Math.max(0, totalMs - (time - state.startTime));
     const mm = Math.floor(left / 60000);
     const ss = Math.floor((left % 60000) / 1000);
-    this.timeLabel.setText(`${mm}:${ss.toString().padStart(2, '0')}`);
-    this.killLabel.setText(`击杀 ${state.kills}`);
-    this.lvLabel.setText(`Lv ${state.level}`);
-    this.xpBar.width = (W - 80) * Math.min(1, state.xp / state.xpToNext);
-    // xpBar 在横屏中从左端对齐时 origin (0,0.5)；起点 x=40，条宽满 W-80
+    this.timeLabel.setText(mm + ':' + ss.toString().padStart(2, '0'));
+    this.killLabel.setText(String(state.kills));
+    this.lvLabel.setText(String(state.level));
 
+    const hpPct = Math.max(0, state.hp / state.hpMax);
+    this.topHpBar.width = 176 * hpPct;
+    this.topHpBar.fillColor = hpPct > 0.6 ? COLORS.hpFull : hpPct > 0.3 ? COLORS.hpMid : COLORS.hpLow;
+    this.topHpText.setText(Math.max(0, Math.ceil(state.hp)) + '/' + state.hpMax);
+    this.xpBar.width = 180 * Math.min(1, state.xp / state.xpToNext);
 
     const cdLeft = state.pulseReady - time;
     if (cdLeft > 0) {
       this.pulseBtn.setFillStyle(0x666666, 0.2);
-      this.pulseBtn.setStrokeStyle(5, 0x666666, 0.6);
+      this.pulseBtn.setStrokeStyle(4, 0x666666, 0.6);
       this.pulseLabel.setColor('#888888');
       this.pulseCdLabel.setText(Math.ceil(cdLeft / 1000) + 's');
     } else {
       this.pulseBtn.setFillStyle(0x66ff99, 0.28);
-      this.pulseBtn.setStrokeStyle(5, 0x66ff99, 0.95);
+      this.pulseBtn.setStrokeStyle(4, 0x66ff99, 0.95);
       this.pulseLabel.setColor('#eaffea');
       this.pulseCdLabel.setText('');
     }
@@ -422,13 +449,12 @@ class MainScene extends Phaser.Scene {
     b.pierce = pierce;
     b.explosive = explosive;
     b.hitSet = new Set();
-    // v0.1.4: 子弹射程上限——记录发射起点，飞行距离 >= AUTO_FIRE_RANGE 就销毁
     b.spawnX = x;
     b.spawnY = y;
   }
 
-  nearestEnemy(x, y, maxRange = Infinity) {
-    // v0.1.4: 恢复无限锁敌范围——射程限制改由子弹生命周期负责（子弹飞 500 px 就消失）
+  nearestEnemy(x, y, maxRange) {
+    if (maxRange === undefined) maxRange = Infinity;
     let best = null, bestD = Infinity;
     const maxD2 = maxRange === Infinity ? Infinity : maxRange * maxRange;
     this.enemies.getChildren().forEach(e => {
@@ -453,7 +479,6 @@ class MainScene extends Phaser.Scene {
   spawnCrawler() {
     if (state.paused || state.ended) return;
     const elapsed = this.time.now - state.startTime;
-    // v0.1.1 P2: 适应 10min，波次拉长为 120s 一阶，后期密度翻倍
     let wave = Math.min(4, 1 + Math.floor(elapsed / 120000));
     if (state.crawlerDense) wave *= 2;
     for (let i = 0; i < wave; i++) {
@@ -468,7 +493,6 @@ class MainScene extends Phaser.Scene {
 
   spawnRusher() {
     if (state.paused || state.ended || !state.rusherUnlocked) return;
-    // v0.1.1 P2: 密度翻倍
     const base = Phaser.Math.Between(1, 2);
     const num = state.rusherDense ? base * 2 : base;
     for (let i = 0; i < num; i++) {
@@ -527,7 +551,7 @@ class MainScene extends Phaser.Scene {
     if (!enemy.active || state.ended) return;
     const t = this.time.now;
     if (t < player.iFrameUntil) return;
-    player.iFrameUntil = t + 300;    // v0.1.1 P0: 500 → 300ms 更灵敏
+    player.iFrameUntil = t + 300;
     this.hurtPlayer(enemy.dmg || 5);
     if (enemy.type === 'Rusher') this.damageEnemy(enemy, 999, false);
   }
@@ -540,7 +564,6 @@ class MainScene extends Phaser.Scene {
 
   hurtPlayer(dmg) {
     state.hp -= dmg;
-    // v0.1.1 P1: 屏震宝变强，玩家 200ms 红色 tint(原 80ms 过短看不到)
     this.cameras.main.shake(100, 0.01);
     this.player.setFillStyle(0xff3333);
     this.time.delayedCall(200, () => { if (this.player.active) this.player.setFillStyle(COLORS.player); });
@@ -550,7 +573,6 @@ class MainScene extends Phaser.Scene {
   damageEnemy(enemy, dmg, isCrit) {
     if (!enemy.active) return;
     enemy.hp -= dmg;
-    // 击中反馈
     const oc = enemy.fillColor;
     if (enemy.setFillStyle) {
       enemy.setFillStyle(0xffffff);
@@ -561,7 +583,6 @@ class MainScene extends Phaser.Scene {
   }
 
   killEnemy(enemy) {
-    // v0.1.1 P1: 白光闪 + 多发粒子 = “敌人确实死了”的反馈
     const flash = this.add.circle(enemy.x, enemy.y, 24, 0xffffff, 0.9).setDepth(70);
     this.tweens.add({
       targets: flash, alpha: 0, scale: 2.4, duration: 120,
@@ -574,7 +595,6 @@ class MainScene extends Phaser.Scene {
       state.hp = Math.min(state.hpMax, state.hp + state.lifesteal);
     }
     enemy.destroy();
-    // v0.1.1 P2: 升级曲线放缓(nextLv = 20 + (lv-1)*10)
     while (state.xp >= state.xpToNext) {
       state.xp -= state.xpToNext;
       state.level += 1;
@@ -584,11 +604,10 @@ class MainScene extends Phaser.Scene {
   }
 
   spawnDmgNum(x, y, val, isCrit) {
-    // v0.1.1 P1: 暴击字更大更亮 + 描边，一眼能看到
     const color = isCrit ? '#ffee55' : '#ffffff';
     const size = isCrit ? '48px' : '28px';
     const t = this.add.text(x, y, String(val), {
-      fontFamily: 'sans-serif', fontSize: size, color, fontStyle: 'bold',
+      fontFamily: 'sans-serif', fontSize: size, color: color, fontStyle: 'bold',
       stroke: '#000000', strokeThickness: isCrit ? 4 : 2,
     }).setOrigin(0.5).setDepth(80);
     this.tweens.add({
@@ -598,7 +617,6 @@ class MainScene extends Phaser.Scene {
   }
 
   spawnBoom(x, y, color) {
-    // v0.1.1 P1: 5 → 15 粒，散开更开，看起来“确实炸了”
     for (let i = 0; i < 15; i++) {
       const p = this.add.circle(x, y, 3, color);
       const ang = Math.random() * Math.PI * 2;
@@ -614,13 +632,11 @@ class MainScene extends Phaser.Scene {
   }
 
   explosion(x, y, radius, dmg) {
-    // 视觉圈
     const c = this.add.circle(x, y, radius, 0xffcc66, 0.35).setDepth(30);
     this.tweens.add({
       targets: c, alpha: 0, scale: 1.6, duration: 260,
       onComplete: () => c.destroy(),
     });
-    // 伤害:范围内敌人扣血
     this.enemies.getChildren().forEach(e => {
       if (!e.active) return;
       const dx = e.x - x, dy = e.y - y;
@@ -628,13 +644,11 @@ class MainScene extends Phaser.Scene {
     });
   }
 
-  // ---- 主动技能:能量脉冲 energyPulse ----
   tryPulse() {
     const t = this.time.now;
     if (t < state.pulseReady) return;
     state.pulseReady = t + state.pulseCd;
     const cx = this.player.x, cy = this.player.y;
-    // 白光扩散
     const ring = this.add.circle(cx, cy, 30, 0xffffff, 0.55).setDepth(60);
     this.tweens.add({
       targets: ring, radius: 260, alpha: 0, scale: 8, duration: 320,
@@ -642,7 +656,6 @@ class MainScene extends Phaser.Scene {
     });
     this.cameras.main.shake(160, 0.012);
     this.cameras.main.flash(120, 255, 255, 255);
-    // 范围伤害
     this.enemies.getChildren().forEach(e => {
       if (!e.active) return;
       const dx = e.x - cx, dy = e.y - cy;
@@ -650,7 +663,6 @@ class MainScene extends Phaser.Scene {
     });
   }
 
-  // ---- 环绕光刃 ----
   updateOrbits(delta) {
     if (this.orbitBlades.length === 0) {
       for (let i = 0; i < 3; i++) {
@@ -665,13 +677,12 @@ class MainScene extends Phaser.Scene {
       const a = this.orbitAngle + b.offset;
       b.obj.setPosition(this.player.x + Math.cos(a) * radius, this.player.y + Math.sin(a) * radius);
       b.obj.setRotation(a + Math.PI / 2);
-      // 命中检测
       this.enemies.getChildren().forEach(e => {
         if (!e.active) return;
         const dx = e.x - b.obj.x, dy = e.y - b.obj.y;
         if (dx * dx + dy * dy <= 26 * 26) {
           const last = b.lastHit.get(e) || 0;
-          if (now - last >= 1000) {   // 1 秒最多命中同一敌人一次(15 伤/秒)
+          if (now - last >= 1000) {
             b.lastHit.set(e, now);
             this.damageEnemy(e, 15, false);
           }
@@ -680,14 +691,12 @@ class MainScene extends Phaser.Scene {
     });
   }
 
-  // ---- 定时地雷 ----
   dropMine() {
     if (state.paused || state.ended || !state.hasMines) return;
     const mx = this.player.x, my = this.player.y;
     const m = this.add.circle(mx, my, 12, 0xffaa33, 0.85).setStrokeStyle(2, 0xff6600, 1).setDepth(20);
     this.physics.add.existing(m);
     this.mines.add(m);
-    // 闪烁提示
     this.tweens.add({
       targets: m, alpha: 0.3, duration: 300, yoyo: true, repeat: 4,
     });
@@ -698,7 +707,6 @@ class MainScene extends Phaser.Scene {
     });
   }
 
-  // ---- 无人机 ----
   updateDrones(delta) {
     if (this.drones.getChildren().length === 0) {
       const d = this.add.circle(this.player.x + 60, this.player.y, 8, 0x66ddff).setStrokeStyle(2, 0xffffff, 1).setDepth(35);
@@ -711,7 +719,6 @@ class MainScene extends Phaser.Scene {
       const rr = 70;
       const tx = this.player.x + Math.cos(d.orbitAng) * rr;
       const ty = this.player.y + Math.sin(d.orbitAng) * rr;
-      // 平滑跟随
       d.x += (tx - d.x) * 0.1;
       d.y += (ty - d.y) * 0.1;
     });
@@ -726,35 +733,64 @@ class MainScene extends Phaser.Scene {
     });
   }
 
-  // ---- 升级面板 ----
+  // ---- 升级面板 · 横屏 v2 ----
+  // 卡片横排 3 张：320 x 460，间距 60，居中在 1920 中间（左右各 420px 边距）
+  // 卡内：图标（96px 圆）+ 名称（32px）+ 描述（20px 4-5 行）
   openLevelUp() {
     if (state.paused || state.ended) return;
     state.paused = true;
     this.physics.world.pause();
     const cards = pick3(state);
-    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7).setDepth(500);
-    // landscape: 面板收紧到 ~800 宽，卡片改为 3 列横排（横屏更合理）
-    const title = this.add.text(W / 2, 80, 'Lv ' + state.level + ' · 选一张升级', {
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.75).setDepth(500);
+    const title = this.add.text(W / 2, 100, 'Lv ' + state.level + '  ·  选一张升级', {
       fontFamily: 'sans-serif', fontSize: '40px', color: '#ffffff', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(501);
-    const cardObjs = [];
-    const n = cards.length;
-    const cardW = 260, cardH = 380, gap = 24;
-    const totalW = n * cardW + (n - 1) * gap;
-    const startX = W / 2 - totalW / 2 + cardW / 2;
+
+    const cardW = 320, cardH = 460, gap = 60;
+    const totalW = cards.length * cardW + (cards.length - 1) * gap;
+    const startX = (W - totalW) / 2 + cardW / 2;
     const cy = H / 2 + 20;
+
+    const uiObjs = [overlay, title];
     cards.forEach((c, i) => {
       const cx = startX + i * (cardW + gap);
-      const bg = this.add.rectangle(cx, cy, cardW, cardH, 0x111a22, 0.95).setStrokeStyle(4, 0x66ff99, 0.9).setDepth(501).setInteractive({ useHandCursor: true });
-      const name = this.add.text(cx, cy - 130, c.name, {
-        fontFamily: 'sans-serif', fontSize: '32px', color: '#eaffea', fontStyle: 'bold'
+      // 阴影层（视觉浮起，阴影 0 20px 40px rgba(0,212,255,0.15) 的等效）
+      const shadow = this.add.rectangle(cx + 3, cy + 14, cardW, cardH, 0x000000, 0.55).setDepth(500);
+      const glow   = this.add.rectangle(cx, cy + 4, cardW + 20, cardH + 20, 0x00d4ff, 0.06).setDepth(500);
+      // 卡片主体
+      const bg = this.add.rectangle(cx, cy, cardW, cardH, 0x0f1a24, 0.98)
+        .setStrokeStyle(3, 0x00d4ff, 0.85).setDepth(501)
+        .setInteractive({ useHandCursor: true });
+      // 图标区（占卡片上部 1/3）
+      const iconBg = this.add.circle(cx, cy - cardH / 2 + 100, 48, 0x00d4ff, 0.18)
+        .setStrokeStyle(2, 0x00d4ff, 0.75).setDepth(502);
+      const icon = this.add.text(cx, cy - cardH / 2 + 100, (c.name || '?').charAt(0), {
+        fontFamily: 'sans-serif', fontSize: '48px', color: '#eaffff', fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(503);
+      // 名称
+      const name = this.add.text(cx, cy - cardH / 2 + 200, c.name, {
+        fontFamily: 'sans-serif', fontSize: '32px', color: '#eaffff', fontStyle: 'bold'
       }).setOrigin(0.5).setDepth(502);
-      const desc = this.add.text(cx, cy + 20, c.desc, {
-        fontFamily: 'sans-serif', fontSize: '20px', color: '#cccccc',
-        wordWrap: { width: cardW - 30 }, align: 'center',
-      }).setOrigin(0.5).setDepth(502);
-      bg.on('pointerdown', () => this.pickCard(c, [overlay, title, ...cardObjs]));
-      cardObjs.push(bg, name, desc);
+      // 分隔线
+      const sep = this.add.rectangle(cx, cy - cardH / 2 + 235, cardW - 60, 2, 0x00d4ff, 0.35).setDepth(502);
+      // 描述
+      const desc = this.add.text(cx, cy - cardH / 2 + 320, c.desc, {
+        fontFamily: 'sans-serif', fontSize: '20px', color: '#c8dbe4',
+        wordWrap: { width: cardW - 50 }, align: 'center', lineSpacing: 8,
+      }).setOrigin(0.5, 0.5).setDepth(502);
+
+      // hover 视觉
+      bg.on('pointerover', () => {
+        bg.setStrokeStyle(4, 0x88ffff, 1);
+        this.tweens.add({ targets: [bg, iconBg, icon, name, sep, desc, glow], scale: 1.03, duration: 120 });
+      });
+      bg.on('pointerout', () => {
+        bg.setStrokeStyle(3, 0x00d4ff, 0.85);
+        this.tweens.add({ targets: [bg, iconBg, icon, name, sep, desc, glow], scale: 1.0, duration: 120 });
+      });
+      bg.on('pointerdown', () => this.pickCard(c, uiObjs));
+      uiObjs.push(shadow, glow, bg, iconBg, icon, name, sep, desc);
     });
   }
 
@@ -766,7 +802,8 @@ class MainScene extends Phaser.Scene {
     this.physics.world.resume();
   }
 
-  // ---- 结算 ----
+  // ---- 结算 · 横屏 v2 左右分栏 ----
+  // 全屏暗化背景 / 左 40% 数据 / 中 20% 留白 / 右 40% 按钮
   endGame(reason) {
     if (state.ended) return;
     state.ended = true;
@@ -776,42 +813,63 @@ class MainScene extends Phaser.Scene {
     const elapsed = Math.min(TOTAL_SEC, Math.floor((this.time.now - state.startTime) / 1000));
     const mm = Math.floor(elapsed / 60);
     const ss = elapsed % 60;
-    const timeStr = `${mm}:${ss.toString().padStart(2, '0')}`;
+    const timeStr = mm + ':' + ss.toString().padStart(2, '0');
     const survived = reason === 'time';
 
-    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85).setDepth(600);
-    // landscape: 面板整体在 800 宽内布局
-    const title = this.add.text(W / 2, 60, survived ? '存活到终点!' : '倒下了…', {
-      fontFamily: 'sans-serif', fontSize: '52px', color: survived ? '#88ffcc' : '#ff8888', fontStyle: 'bold'
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.88).setDepth(600);
+
+    // 左栏：数据（40%，center x 约 W*0.25）
+    const leftCx = W * 0.25;
+    const title = this.add.text(leftCx, H / 2 - 320, survived ? '存活到终点' : '倒下了…', {
+      fontFamily: 'sans-serif', fontSize: '54px', color: survived ? '#88ffcc' : '#ff8888', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(601);
+    const subTitle = this.add.text(leftCx, H / 2 - 250, survived ? 'MISSION COMPLETE' : 'MISSION FAILED', {
+      fontFamily: 'sans-serif', fontSize: '18px', color: '#888888', fontStyle: 'normal'
     }).setOrigin(0.5).setDepth(601);
 
-    const stats = [
-      `击杀: ${state.kills}`,
-      `存活: ${survived ? '是' : '否'}`,
-      `时长: ${timeStr}`,
-      `等级: Lv ${state.level}`,
-      `卡池: ${state.cards.length > 0 ? state.cards.map(id => (CARDS.find(c => c.id === id) || {}).name).filter(Boolean).join(' / ') : '(无)'}`,
+    // 数据 4 行 label:value
+    const dataRows = [
+      { label: '时长', value: timeStr },
+      { label: '击杀', value: String(state.kills) },
+      { label: '等级', value: 'Lv ' + state.level },
+      { label: '卡池', value: state.cards.length > 0 ? state.cards.map(id => (CARDS.find(c => c.id === id) || {}).name).filter(Boolean).join(' · ') : '(无)' },
     ];
-    const statsStartY = 150;
-    stats.forEach((line, i) => {
-      this.add.text(W / 2, statsStartY + i * 44, line, {
-        fontFamily: 'sans-serif', fontSize: '26px', color: '#ffffff',
-        wordWrap: { width: 800 }, align: 'center',
-      }).setOrigin(0.5).setDepth(601);
+    dataRows.forEach((row, i) => {
+      const rowY = H / 2 - 120 + i * 80;
+      this.add.text(leftCx - 200, rowY, row.label, {
+        fontFamily: 'sans-serif', fontSize: '24px', color: '#888888'
+      }).setOrigin(0, 0.5).setDepth(601);
+      // 分隔线
+      this.add.rectangle(leftCx, rowY + 20, 400, 1, 0x333333, 0.6).setDepth(601);
+      this.add.text(leftCx + 200, rowY, row.value, {
+        fontFamily: 'sans-serif', fontSize: i === 3 ? '18px' : '30px',
+        color: '#ffffff', fontStyle: 'bold',
+        wordWrap: { width: 380 }, align: 'right',
+      }).setOrigin(1, 0.5).setDepth(601);
     });
 
-    const mkBtn = (label, x, y, color, cb) => {
-      const btn = this.add.rectangle(x, y, 260, 80, color, 0.8).setStrokeStyle(4, 0xffffff, 0.9).setDepth(601).setInteractive({ useHandCursor: true });
-      const t = this.add.text(x, y, label, {
-        fontFamily: 'sans-serif', fontSize: '32px', color: '#ffffff', fontStyle: 'bold'
-      }).setOrigin(0.5).setDepth(602);
-      btn.on('pointerdown', cb);
-      return [btn, t];
-    };
-    // 横排双按钮
-    mkBtn('再来一局', W / 2 - 150, H - 80, 0x33aa66, () => this.scene.restart());
-    mkBtn('返回', W / 2 + 150, H - 80, 0x555555, () => {
-      // 若从其他页跳来,history 可回
+    // 右栏：按钮（40%，center x 约 W*0.75）
+    const rightCx = W * 0.75;
+
+    // 再来一局（大按钮）
+    const primaryBtn = this.add.rectangle(rightCx, H / 2 - 60, 480, 130, 0x33aa66, 0.9)
+      .setStrokeStyle(4, 0x88ffcc, 0.95).setDepth(601).setInteractive({ useHandCursor: true });
+    const primaryTxt = this.add.text(rightCx, H / 2 - 60, '再来一局', {
+      fontFamily: 'sans-serif', fontSize: '40px', color: '#ffffff', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(602);
+    primaryBtn.on('pointerover', () => primaryBtn.setFillStyle(0x44cc77, 0.95));
+    primaryBtn.on('pointerout',  () => primaryBtn.setFillStyle(0x33aa66, 0.9));
+    primaryBtn.on('pointerdown', () => this.scene.restart());
+
+    // 回主菜单（小按钮）
+    const secondaryBtn = this.add.rectangle(rightCx, H / 2 + 100, 360, 90, 0x333333, 0.85)
+      .setStrokeStyle(2, 0x888888, 0.85).setDepth(601).setInteractive({ useHandCursor: true });
+    const secondaryTxt = this.add.text(rightCx, H / 2 + 100, '回主菜单', {
+      fontFamily: 'sans-serif', fontSize: '26px', color: '#c8dbe4'
+    }).setOrigin(0.5).setDepth(602);
+    secondaryBtn.on('pointerover', () => secondaryBtn.setFillStyle(0x555555, 0.9));
+    secondaryBtn.on('pointerout',  () => secondaryBtn.setFillStyle(0x333333, 0.85));
+    secondaryBtn.on('pointerdown', () => {
       if (window.history.length > 1) window.history.back();
       else location.reload();
     });
