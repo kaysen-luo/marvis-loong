@@ -12,7 +12,9 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh; /* dvh: Safari chrome 收起后自动扩展 */
       background: #000;
       overflow: hidden;
       touch-action: none;
@@ -21,18 +23,20 @@
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior: none;
     }
-    /* Safe area CSS vars — game.js reads these via getComputedStyle */
+    /* Safe area CSS vars — game.js reads these via getComputedStyle
+       max(env, N) 兜底：iOS 陈旧机型 env 值可能为 0 但实际仍有刘海/HI */
     :root {
-      --sa-top: env(safe-area-inset-top, 0px);
-      --sa-right: env(safe-area-inset-right, 0px);
-      --sa-bottom: env(safe-area-inset-bottom, 0px);
-      --sa-left: env(safe-area-inset-left, 0px);
+      --sa-top: max(env(safe-area-inset-top, 0px), 0px);
+      --sa-right: max(env(safe-area-inset-right, 0px), 0px);
+      --sa-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+      --sa-left: max(env(safe-area-inset-left, 0px), 0px);
     }
     #game-container {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -40,7 +44,11 @@
       transition: opacity 300ms ease;
     }
     #game-container.ready { opacity: 1; }
-    canvas { display: block; touch-action: none; }
+    canvas {
+      display: block;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
     #loading {
       position: fixed; inset: 0;
       display: flex; justify-content: center; align-items: center;
@@ -48,6 +56,54 @@
       font-size: 14px; letter-spacing: 2px;
       z-index: 10;
     }
+    /* 全屏按钮：右上角，Apple HIG 44×44,让开 safe-area-inset-top/right */
+    #fs-btn {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 12px);
+      right: calc(env(safe-area-inset-right, 0px) + 12px);
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(15, 26, 36, 0.72);
+      border: 1.5px solid rgba(102, 255, 153, 0.55);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: background 150ms ease, transform 100ms ease;
+    }
+    #fs-btn:active { background: rgba(102, 255, 153, 0.28); transform: scale(0.94); }
+    #fs-btn svg { width: 22px; height: 22px; display: block; pointer-events: none; }
+    #fs-btn .icon-exit { display: none; }
+    body.is-fullscreen #fs-btn .icon-enter { display: none; }
+    body.is-fullscreen #fs-btn .icon-exit  { display: block; }
+    /* Toast */
+    #fs-toast {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 64px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 26, 36, 0.9);
+      border: 1px solid rgba(102, 255, 153, 0.55);
+      color: #eaffea;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      z-index: 1001;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 250ms ease;
+      max-width: 80vw;
+      text-align: center;
+      line-height: 1.5;
+    }
+    #fs-toast.show { opacity: 1; }
     /* Orientation lock overlay — 竖屏时显示 */
     #orient-lock {
       position: fixed; inset: 0;
@@ -83,12 +139,31 @@
     @media (orientation: portrait) {
       #orient-lock { display: flex; }
       #game-container { display: none; }
+      #fs-btn { display: none; }
     }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
   <div id="loading">LOADING...</div>
+
+  <!-- 全屏按钮（右上，Apple HIG 44×44,含 iOS webkit fallback） -->
+  <button id="fs-btn" type="button" aria-label="全屏">
+    <svg class="icon-enter" viewBox="0 0 24 24" fill="none" stroke="#66ff99" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 9 4 4 9 4" />
+      <polyline points="20 9 20 4 15 4" />
+      <polyline points="4 15 4 20 9 20" />
+      <polyline points="20 15 20 20 15 20" />
+    </svg>
+    <svg class="icon-exit" viewBox="0 0 24 24" fill="none" stroke="#66ff99" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 4 9 9 4 9" />
+      <polyline points="15 4 15 9 20 9" />
+      <polyline points="9 20 9 15 4 15" />
+      <polyline points="15 20 15 15 20 15" />
+    </svg>
+  </button>
+  <div id="fs-toast"></div>
+
   <div id="orient-lock">
     <svg viewBox="0 0 64 64" fill="none" stroke="#66ff99" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="14" y="8" width="36" height="48" rx="4" />
@@ -99,11 +174,78 @@
     <div class="txt-main">请横屏游玩</div>
     <div class="txt-sub">ROTATE YOUR DEVICE</div>
   </div>
+
   <script>
     // Try lock orientation (iOS silent fail — that's fine, CSS media query covers it)
     if (screen.orientation && typeof screen.orientation.lock === 'function') {
       screen.orientation.lock('landscape').catch(() => { /* iOS silent fail */ });
     }
+
+    // ---- 全屏按钮逻辑（含 iOS Safari webkit fallback + toast 兜底） ----
+    (function () {
+      const btn = document.getElementById('fs-btn');
+      const toast = document.getElementById('fs-toast');
+      let toastTimer = null;
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+      }
+      function isFsActive() {
+        return !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement);
+      }
+      function syncBtn() {
+        document.body.classList.toggle('is-fullscreen', isFsActive());
+      }
+      function enterFs() {
+        const el = document.documentElement;
+        // 标准 API
+        if (el.requestFullscreen) {
+          el.requestFullscreen({ navigationUI: 'hide' }).then(() => {
+            // 全屏后尝试锁横屏（Android Chrome 可以，iOS 静默失败）
+            if (screen.orientation && typeof screen.orientation.lock === 'function') {
+              screen.orientation.lock('landscape').catch(() => {});
+            }
+          }).catch(() => {
+            fallback();
+          });
+          return;
+        }
+        // WebKit prefix（老 Safari / iPad）
+        if (el.webkitRequestFullscreen) {
+          try { el.webkitRequestFullscreen(); return; } catch (e) {}
+        }
+        // iOS Safari 对 canvas 单独走 webkitEnterFullscreen（仅 <video> 真支持,canvas 一般返回 undefined）
+        const canvas = document.querySelector('#game-container canvas');
+        if (canvas && typeof canvas.webkitEnterFullscreen === 'function') {
+          try { canvas.webkitEnterFullscreen(); return; } catch (e) {}
+        }
+        fallback();
+      }
+      function fallback() {
+        // iOS Safari 老 trick：滚一下让地址栏收起
+        window.scrollTo(0, 1);
+        showToast('iOS Safari 请手动向上滑一下屏幕来隐藏地址栏');
+      }
+      function exitFs() {
+        if (document.exitFullscreen) { document.exitFullscreen().catch(() => {}); return; }
+        if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); return; }
+      }
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (isFsActive()) exitFs();
+        else enterFs();
+      });
+      // touchstart passive:false（防 iOS 拖拽页面/双 tap 缩放）
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+      document.addEventListener('fullscreenchange', syncBtn);
+      document.addEventListener('webkitfullscreenchange', syncBtn);
+      // esc / 系统退出 → 同步 icon
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setTimeout(syncBtn, 50);
+      });
+    })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
   <script src="./game.js"></script>

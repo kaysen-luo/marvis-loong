@@ -28,15 +28,26 @@ const W = 1920, H = 1080;
 const TOTAL_SEC = 600;
 const AUTO_FIRE_RANGE = 500;
 
-function getSafeArea() {
+// safe-area 读 CSS var（CSS 像素）→ 按 Phaser FIT scale 换算成 game 内部坐标
+// Phaser FIT 会等比缩放，CSS 一个 inset px = (W / canvas.clientWidth) 个 Phaser px
+function getSafeArea(scene) {
   try {
     const cs = getComputedStyle(document.documentElement);
     const parse = (v) => parseInt(v, 10) || 0;
+    let sx = 1, sy = 1;
+    if (scene && scene.scale) {
+      const dw = scene.scale.displaySize && scene.scale.displaySize.width;
+      const dh = scene.scale.displaySize && scene.scale.displaySize.height;
+      if (dw > 0) sx = W / dw;
+      if (dh > 0) sy = H / dh;
+    }
+    // FIT 是等比，取较大者更保守（让开更多）
+    const s = Math.max(sx, sy);
     return {
-      top:    parse(cs.getPropertyValue('--sa-top')),
-      right:  parse(cs.getPropertyValue('--sa-right')),
-      bottom: parse(cs.getPropertyValue('--sa-bottom')),
-      left:   parse(cs.getPropertyValue('--sa-left')),
+      top:    Math.round(parse(cs.getPropertyValue('--sa-top'))    * s),
+      right:  Math.round(parse(cs.getPropertyValue('--sa-right'))  * s),
+      bottom: Math.round(parse(cs.getPropertyValue('--sa-bottom')) * s),
+      left:   Math.round(parse(cs.getPropertyValue('--sa-left'))   * s),
     };
   } catch (e) { return { top: 0, right: 0, bottom: 0, left: 0 }; }
 }
@@ -96,7 +107,22 @@ class MainScene extends Phaser.Scene {
     state.startTime = this.time.now;
     state.pulseReady = this.time.now;
 
-    this.safeArea = getSafeArea();
+    this.safeArea = getSafeArea(this);
+    // 兜底最小 inset（部分老 iOS 或非灵动岛机型 env 值可能为 0 但顶栏还在）
+    // 值以 Phaser 内部坐标（1920×1080）为准
+    this.safeArea.top    = Math.max(this.safeArea.top,    40);
+    this.safeArea.right  = Math.max(this.safeArea.right,  20);
+    this.safeArea.bottom = Math.max(this.safeArea.bottom, 20);
+    this.safeArea.left   = Math.max(this.safeArea.left,   20);
+    // 监听 resize（Safari chrome 收起/展开会触发）
+    this.scale.on('resize', () => {
+      const sa = getSafeArea(this);
+      this.safeArea.top    = Math.max(sa.top,    40);
+      this.safeArea.right  = Math.max(sa.right,  20);
+      this.safeArea.bottom = Math.max(sa.bottom, 20);
+      this.safeArea.left   = Math.max(sa.left,   20);
+      if (this.relayoutHud) this.relayoutHud();
+    });
 
     const g = this.add.graphics();
     g.lineStyle(1, 0x0f1a1a, 1);
@@ -136,6 +162,10 @@ class MainScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('W,A,S,D');
     this.setupTouch();
 
+    // 键盘 F 键也可 toggleFullscreen（桂面调试方便）
+    // 主入口在 index.html 的 #fs-btn，此处提供键盘快捷兼向 game.js 暴露
+    this.input.keyboard.on('keydown-F', () => this.toggleFullscreen());
+
     this.time.addEvent({ delay: 100,  loop: true, callback: this.tryFire,      callbackScope: this });
     this.time.addEvent({ delay: 1200, loop: true, callback: this.spawnCrawler, callbackScope: this });
     this.time.addEvent({ delay: 5000, loop: true, callback: this.spawnRusher,  callbackScope: this });
@@ -163,18 +193,19 @@ class MainScene extends Phaser.Scene {
     // 基座半径 200→140 摇杆头 45→30 默认 alpha 0.5 touch 0.9
     const STICK_BASE_R = 140;
     const STICK_KNOB_R = 30;
+    // 摇杆默认位：底部也让开 safe area
     const BASE_X = 200 + this.safeArea.left;
-    const BASE_Y = H - 200;
+    const BASE_Y = H - 200 - this.safeArea.bottom;
     this.stickBaseHome = { x: BASE_X, y: BASE_Y };
     this.stickMaxR = 90;
     this.stick = { active: false, cx: BASE_X, cy: BASE_Y, dx: 0, dy: 0, pointer: null };
     this.stickBase = this.add.circle(BASE_X, BASE_Y, STICK_BASE_R, 0xffffff, 0.08).setDepth(150).setAlpha(0.5);
     this.stickKnob = this.add.circle(BASE_X, BASE_Y, STICK_KNOB_R, 0xffffff, 0.35).setDepth(151).setAlpha(0.5);
 
-    // 右下脉冲主动按钮 R=90（safe area 让开右侧 Home Indicator）
+    // 右下脉冲主动按钮 R=90（safe area 让开右侧+底部 Home Indicator）
     const btnR = 90;
     const bx = W - 160 - this.safeArea.right;
-    const by = H - 160;
+    const by = H - 160 - this.safeArea.bottom;
     this.pulseBtnR = btnR; this.pulseBtnX = bx; this.pulseBtnY = by;
     this.pulseBtn = this.add.circle(bx, by, btnR, 0x66ff99, 0.28)
       .setDepth(150).setStrokeStyle(4, 0x66ff99, 0.9);
@@ -190,8 +221,10 @@ class MainScene extends Phaser.Scene {
 
     this.input.on('pointerdown', (p) => {
       if (state.paused || state.ended) return;
-      const dxb = p.x - bx, dyb = p.y - by;
-      if (dxb * dxb + dyb * dyb <= btnR * btnR) { this.tryPulse(); return; }
+      // 用当前脉冲按钮位置（relayout 后可能已变）
+      const pbx = this.pulseBtnX, pby = this.pulseBtnY, pbr = this.pulseBtnR;
+      const dxb = p.x - pbx, dyb = p.y - pby;
+      if (dxb * dxb + dyb * dyb <= pbr * pbr) { this.tryPulse(); return; }
       if (inStickZone(p.x, p.y)) {
         this.stickBaseHome.x = p.x;
         this.stickBaseHome.y = p.y;
@@ -302,6 +335,71 @@ class MainScene extends Phaser.Scene {
       fontFamily: 'sans-serif', fontSize: '48px', color: '#ffcc66', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(300).setAlpha(0);
+  }
+
+  // 重新排 HUD/摇杆/脉冲按钮（safe-area 变化 / Safari chrome 收起 / 全屏切换时调）
+  // 全屏切换（内部包装，兼容 iOS Safari webkitRequestFullscreen 前缀）
+  // 与 index.html 的 #fs-btn 共享逻辑：同时尝试标准 requestFullscreen
+  // 和 webkit 前缀（iOS Safari canvas 仅对 <video> 真支持,fallback 靠 DOM 层）
+  toggleFullscreen() {
+    try {
+      const el = document.documentElement;
+      const active = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (active) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        return;
+      }
+      if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } catch (e) { /* silent */ }
+  }
+
+  relayoutHud() {
+    const sa = this.safeArea;
+    const topY = 30 + sa.top;
+    const leftX = 30 + sa.left;
+    const rightX = W - 30 - sa.right;
+    // 左上
+    if (this.topHpBarBg) {
+      this.topHpBarBg.setPosition(leftX + 50, topY + 8);
+      this.topHpBar.setPosition(leftX + 52, topY + 10);
+      this.topHpText.setPosition(leftX + 140, topY + 18);
+      this.lvBadge.setPosition(leftX + 20, topY + 18);
+      this.lvLabel.setPosition(leftX + 20, topY + 18);
+      this.xpBarBg.setPosition(leftX + 50, topY + 34);
+      this.xpBar.setPosition(leftX + 50, topY + 34);
+    }
+    // 右上
+    if (this.killLabel) {
+      this.killLabel.setPosition(rightX, topY);
+      this.killTag.setPosition(rightX - 60, topY + 14);
+      this.timeLabel.setPosition(rightX, topY + 44);
+    }
+    // Boss 坐标
+    if (this.bossBarBg) {
+      this.bossBarBg.setPosition(W / 2, topY + 12);
+      this.bossBar.setPosition(W / 2 - 500, topY + 12);
+    }
+    // 脉冲按钮
+    if (this.pulseBtn) {
+      const bx = W - 160 - sa.right;
+      const by = H - 160 - sa.bottom;
+      this.pulseBtnX = bx; this.pulseBtnY = by;
+      this.pulseBtn.setPosition(bx, by);
+      this.pulseLabel.setPosition(bx, by - 6);
+      this.pulseCdLabel.setPosition(bx, by + 28);
+    }
+    // 摇杆默认位
+    if (this.stickBase && !this.stick.active) {
+      const bx2 = 200 + sa.left;
+      const by2 = H - 200 - sa.bottom;
+      this.stickBaseHome.x = bx2;
+      this.stickBaseHome.y = by2;
+      this.stick.cx = bx2; this.stick.cy = by2;
+      this.stickBase.setPosition(bx2, by2);
+      this.stickKnob.setPosition(bx2, by2);
+    }
   }
 
   showWave(text) {
