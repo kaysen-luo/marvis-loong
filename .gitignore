@@ -69,3 +69,7 @@ yarn-debug.log*
 public/*.bak-pre-*
 workers/**/node_modules
 workers/**/.wrangler
+
+# 游戏 demo 备份文件
+public/mvs-007/*.bak-v*
+public/mvs-007/*.bak-*
