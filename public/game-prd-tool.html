@@ -306,6 +306,10 @@
   }
   .cloud-modal-body input:focus { outline: none; border-color: var(--accent); }
   .cloud-modal-body .help { color: var(--text-3); font-size: 12px; margin-top: 8px; }
+  /* v1.1 2026-07-30：表单内联错误态 */
+  .cloud-modal-body input.is-invalid { border-color: var(--danger); background: rgba(248,113,113,0.06); }
+  .cloud-modal-body input.is-invalid:focus { border-color: var(--danger); }
+  .cloud-modal-body .field-error { display: none; color: var(--danger); font-size: 12px; margin-top: 6px; }
   .cloud-list { display: flex; flex-direction: column; gap: 6px; }
   .cloud-list__row {
     display: flex; align-items: center; gap: 10px; padding: 8px 10px;
@@ -1704,7 +1708,17 @@ function cloudModal(opts) {
       closeBtn.removeEventListener('click', cancelH);
       resolve(v);
     }
-    function okH() { cleanup({ ok: true, root: $('#modal-cloud-body') }); }
+    function okH() {
+      // v1.1 2026-07-30：支持内联校验——不合法时 modal 不关闭，输入框标红 + 框下提示
+      if (typeof opts.validate === 'function') {
+        var err = opts.validate($('#modal-cloud-body'));
+        if (err) {
+          cloudShowFieldError($('#modal-cloud-body'), err);
+          return;
+        }
+      }
+      cleanup({ ok: true, root: $('#modal-cloud-body') });
+    }
     function cancelH() { cleanup({ ok: false }); }
     okBtn.addEventListener('click', okH);
     cancelBtn.addEventListener('click', cancelH);
@@ -1713,7 +1727,45 @@ function cloudModal(opts) {
       var f = mask.querySelector('input');
       if (f) f.focus();
     }, 30);
+    // 回车提交（走同一校验链）
+    mask.addEventListener('keydown', function kd(e) {
+      if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
+        e.preventDefault();
+        okH();
+      }
+    });
   });
+}
+
+// v1.1 2026-07-30：表单内联错误提示（替代“关 modal + 右下角 toast”的易漏看交互）
+function cloudShowFieldError(root, msg) {
+  if (!root) return;
+  var input = root.querySelector('input');
+  if (input) {
+    input.classList.add('is-invalid');
+    input.setAttribute('aria-invalid', 'true');
+    input.focus();
+    input.select && input.select();
+  }
+  var box = root.querySelector('.field-error');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'field-error';
+    box.setAttribute('role', 'alert');
+    if (input && input.parentNode) input.parentNode.insertBefore(box, input.nextSibling);
+    else root.appendChild(box);
+  }
+  box.textContent = msg;
+  box.style.display = 'block';
+  if (input && !input._errClear) {
+    input._errClear = true;
+    input.addEventListener('input', function () {
+      input.classList.remove('is-invalid');
+      input.removeAttribute('aria-invalid');
+      var b = root.querySelector('.field-error');
+      if (b) b.style.display = 'none';
+    });
+  }
 }
 
 function cloudEscapeHtml(s) {
@@ -1737,15 +1789,17 @@ async function cloudPromptPassword(reason) {
       '<p>云端采用零知识加密（zero-knowledge）：密码永远不离开浏览器，服务端只见密文。</p>' +
       '<p><strong>设置密码</strong></p>' +
       '<input type="password" id="cloud-pw" autocomplete="new-password" placeholder="至少 8 位">' +
-      '<div class="help">' + cloudEscapeHtml(help) + '</div>'
+      '<div class="help">' + cloudEscapeHtml(help) + '</div>',
+    validate: function (root) {
+      var el = root.querySelector('#cloud-pw');
+      var v = (el && el.value) || '';
+      if (!v) return '请输入密码';
+      if (v.length < 8) return '密码至少 8 位，当前 ' + v.length + ' 位';
+      return null;
+    }
   });
   if (!res.ok) return null;
-  var pw = res.root.querySelector('#cloud-pw').value || '';
-  if (pw.length < 8) {
-    toast('密码至少 8 位', 'err');
-    return null;
-  }
-  return pw;
+  return res.root.querySelector('#cloud-pw').value || '';
 }
 
 async function cloudEnable(silent) {
