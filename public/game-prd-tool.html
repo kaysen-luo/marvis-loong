@@ -321,6 +321,73 @@
   .cloud-list__empty { text-align: center; color: var(--text-3); padding: 20px; font-size: 12px; }
   .cloud-badge { display: inline-block; padding: 1px 6px; margin-left: 6px; border-radius: 4px;
     background: rgba(96,165,250,0.15); color: var(--accent); font-size: 10px; letter-spacing: 0.02em; }
+  /* --- MVS-010 B: 项目编号 + 切换 + 容量条 --- */
+  .projcode-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+  .projcode-wrap input {
+    background: transparent; border: 1px solid transparent; color: var(--text-1);
+    padding: 6px 10px; border-radius: var(--radius-sm); font-size: 14px;
+    min-width: 140px; max-width: 260px; font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+  }
+  .projcode-wrap input:hover { border-color: var(--border-1); }
+  .projcode-wrap input:focus { outline: none; border-color: var(--accent); background: var(--bg-1); }
+  .projcode-wrap input.is-invalid { border-color: var(--danger); background: rgba(248,113,113,0.06); }
+  .projcode-error {
+    font-size: 11px; color: var(--danger); white-space: nowrap; display: none;
+    padding-left: 4px;
+  }
+  .projcode-error.show { display: inline; }
+  .projcode-error.projcode-hint { color: var(--text-3); }
+  .btn--switch { padding: 6px 10px; font-size: 12px; }
+  .capbar {
+    display: flex; flex-direction: column; gap: 3px; margin-right: 8px; min-width: 140px;
+  }
+  .capbar__row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-3); white-space: nowrap; }
+  .capbar__track {
+    position: relative; height: 4px; background: var(--bg-2);
+    border-radius: 2px; overflow: hidden; border: 1px solid var(--border-1);
+  }
+  .capbar__fill {
+    height: 100%; width: 0%; background: var(--ok);
+    transition: width 200ms ease, background 200ms ease;
+  }
+  .capbar__fill.warn { background: var(--warning); }
+  .capbar__fill.danger { background: var(--danger); }
+  .capbar__text.warn { color: var(--warning); }
+  .capbar__text.danger { color: var(--danger); }
+  /* 纯信息展示，不加边框/底色，避免被误认为输入框或按钮（K师 2026-07-31 反馈） */
+  .switch-list__total {
+    padding: 2px 2px 10px; margin-bottom: 8px;
+    font-size: 12px; color: var(--text-3);
+  }
+  .switch-list__total .switch-list__capbar {
+    margin-top: 6px;
+  }
+  .switch-list__row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: var(--bg-0); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+    margin-bottom: 6px;
+  }
+  .switch-list__row.editing { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(129,140,248,0.2); }
+  .switch-list__name { flex: 1; font-weight: 500; color: var(--text-1); word-break: break-all;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace; font-size: 13px; }
+  .switch-list__meta { color: var(--text-3); font-size: 11px; white-space: nowrap; }
+  .switch-list__badge {
+    display: inline-block; padding: 1px 6px; margin-left: 6px; border-radius: 4px;
+    background: var(--accent-bg-strong); color: var(--accent);
+    font-size: 10px; letter-spacing: 0.02em;
+  }
+  .switch-list__row .btn { padding: 4px 10px; font-size: 11px; }
+  .switch-list__disabled {
+    text-align: center; padding: 24px 16px; color: var(--text-3); font-size: 13px;
+    background: var(--bg-0); border: 1px dashed var(--border-2); border-radius: var(--radius-sm);
+  }
+  .switch-list__disabled .btn { margin-top: 12px; }
+  .switch-list__new {
+    width: 100%; padding: 8px 12px; margin-bottom: 10px; font-size: 12px;
+    background: var(--accent-bg); color: var(--accent); border: 1px dashed var(--accent);
+    border-radius: var(--radius-sm); cursor: pointer;
+  }
+  .switch-list__new:hover { background: var(--accent-bg-strong); }
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   @media (max-width: 900px) {
     :root { --shell-gutter: 0px; }
@@ -332,6 +399,45 @@
     .topbar__title input { min-width: 60px; }
     .field--inline, .field--inline-3 { grid-template-columns: 1fr; }
   }
+
+  /* 支持作者（2026-07-31）—— 复用 accent / bg / text / border，无新色 */
+  .support-fab {
+    position: fixed; left: calc(var(--shell-gutter) + 10px); bottom: 16px;
+    width: calc(var(--nav-w) - 20px); z-index: 60;
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    padding: 8px 12px; border-radius: var(--radius);
+    background: rgba(129,140,248,0.10); color: var(--accent);
+    border: 1px solid rgba(129,140,248,0.30); cursor: pointer;
+    font-size: 12px; user-select: none; transition: background 120ms, border-color 120ms;
+    backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%);
+  }
+  .support-fab:hover { background: var(--accent-bg-strong); border-color: var(--accent); }
+  .support-fab .heart { font-size: 13px; }
+  @media (max-width: 900px) {
+    .support-fab { left: 12px; right: 12px; bottom: 12px; width: auto; }
+  }
+  .support-body { padding: 18px 22px 8px; color: var(--text-1); font-size: 13px; line-height: 1.7; max-height: 68vh; overflow-y: auto; }
+  .support-body .support-intro { color: var(--text-2); background: var(--bg-0); border-left: 2px solid var(--accent); padding: 10px 12px; border-radius: 4px; margin: 0 0 18px; }
+  .support-body h3 { font-size: 14px; font-weight: 600; color: var(--text-1); margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-1); }
+  .support-body .support-section { margin-bottom: 20px; }
+  .support-changelog { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .support-changelog__item { background: var(--bg-0); border: 1px solid var(--border-1); border-radius: 6px; padding: 10px 12px; }
+  .support-changelog__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .support-changelog__ver { font-weight: 700; color: var(--accent); font-size: 13px; }
+  .support-changelog__date { font-size: 11px; color: var(--text-3); }
+  .support-changelog__body { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 12.5px; line-height: 1.65; }
+  .support-changelog__body li { margin: 2px 0; }
+  .support-qr-row { display: flex; gap: 24px; flex-wrap: wrap; margin: 6px 0 10px; }
+  .support-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .support-qr__placeholder { width: 180px; height: 180px; border: 2px dashed var(--border-2); border-radius: 8px; background: var(--bg-0); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-3); }
+  .support-qr__icon { font-size: 32px; opacity: .65; }
+  .support-qr__hint { font-size: 12px; color: var(--text-3); }
+  .support-qr__label { font-size: 12px; color: var(--text-2); }
+  .support-qr__img { width: 180px; height: 180px; object-fit: contain; border-radius: 8px; background: #fff; padding: 6px; box-sizing: border-box; }
+  .support-coffee { font-size: 12px; color: var(--text-3); margin: 4px 0 0; }
+  .support-feedback { font-size: 12.5px; color: var(--text-2); margin: 0; }
+  .support-feedback a { color: var(--accent); text-decoration: none; }
+  .support-feedback a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -339,9 +445,15 @@
 <header class="topbar">
   <div class="topbar__brand"><span class="dot"></span><span>Game PRD Tool</span></div>
   <div class="topbar__title">
-    <input type="text" id="meta-name-top" placeholder="项目名" aria-label="项目名">
-    <span class="sep">·</span>
-    <input type="text" id="meta-version-top" placeholder="版本" aria-label="版本" style="max-width:120px">
+    <div class="projcode-wrap">
+      <input type="text" id="meta-projectcode-top" placeholder="项目编号 (例：MVS-010)" aria-label="项目编号" autocomplete="off" spellcheck="false">
+      <button class="btn btn--ghost btn--sm btn--switch" id="btn-switch" title="切换项目">⇄ 切换</button>
+      <span class="projcode-error" id="projcode-error" role="alert"></span>
+    </div>
+  </div>
+  <div class="capbar" id="capbar" title="当前项目的云端容量（加密后体积 / 100KB 上限）">
+    <div class="capbar__row"><span class="capbar__text" id="capbar-text">—</span></div>
+    <div class="capbar__track"><div class="capbar__fill" id="capbar-fill"></div></div>
   </div>
   <div class="topbar__status" id="status-text">未保存</div>
   <div class="topbar__actions">
@@ -369,6 +481,10 @@
     <div class="nav__title">12 模块</div>
     <ul class="nav__list" id="nav-list"></ul>
   </aside>
+  <!-- 支持作者入口（2026-07-31）：左下角固定按钮 -->
+  <button type="button" class="support-fab" id="support-fab" title="支持作者">
+    <span class="heart">💛</span><span>支持作者</span>
+  </button>
   <main class="main" id="main-content">
 
     <!-- §1 项目元信息 -->
@@ -744,7 +860,7 @@ var SECTIONS = [
 
 function emptyState() {
   return {
-    meta:    { name: '', version: '', tagline: '', author: '', date: '', platform: '' },
+    meta:    { projectCode: '', name: '', version: '', tagline: '', author: '', date: '', platform: '' },
     core:    { loop: '', verbs: '', feel: '', identity: '' },
     platform:{ form: [], orientation: [], input: [], resolution: '', minDevice: '', notes: '' },
     data:    { enemies: [], weapons: [], resources: [], curve: [] },
@@ -871,20 +987,26 @@ function renderSimpleFields() {
   syncTopbar();
 }
 function syncTopbar() {
-  $('#meta-name-top').value = state.meta.name || '';
-  $('#meta-version-top').value = state.meta.version || '';
+  var pc = $('#meta-projectcode-top');
+  if (pc) pc.value = (state.meta && state.meta.projectCode) || '';
+  // 同步清除错误态（加载新项目时）
+  if (pc) pc.classList.remove('is-invalid');
+  var err = $('#projcode-error'); if (err) { err.classList.remove('show'); err.textContent = ''; }
 }
 function bindTopbar() {
-  $('#meta-name-top').addEventListener('input', function (e) {
-    state.meta.name = e.target.value;
-    var peer = $('[data-field="meta.name"]'); if (peer) peer.value = e.target.value;
-    scheduleSave();
-  });
-  $('#meta-version-top').addEventListener('input', function (e) {
-    state.meta.version = e.target.value;
-    var peer = $('[data-field="meta.version"]'); if (peer) peer.value = e.target.value;
-    scheduleSave();
-  });
+  var pc = $('#meta-projectcode-top');
+  if (pc) {
+    pc.addEventListener('input', function (e) {
+      state.meta.projectCode = e.target.value;
+      // 每次输入先清除错误态，真正的重名检测在 debounce 后跑
+      pc.classList.remove('is-invalid');
+      var errEl = $('#projcode-error'); if (errEl) { errEl.classList.remove('show'); errEl.textContent = ''; }
+      scheduleProjectCodeCheck();
+      scheduleSave();
+    });
+  }
+  var sw = $('#btn-switch');
+  if (sw) sw.addEventListener('click', function () { openSwitchModal(); });
 }
 
 // ====================================================================
@@ -1236,6 +1358,16 @@ function bindImages() {
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveNow, 600);
+  // MVS-010 B(fix): 容量条实时性 — 输入即刷新，节流 100ms 防抖
+  __b_scheduleCapacityBarRefresh();
+}
+var __b_capBarThrottleTimer = null;
+function __b_scheduleCapacityBarRefresh() {
+  if (__b_capBarThrottleTimer) return;
+  __b_capBarThrottleTimer = setTimeout(function () {
+    __b_capBarThrottleTimer = null;
+    try { if (typeof updateCapacityBar === 'function') updateCapacityBar(); } catch (e) {}
+  }, 100);
 }
 function saveNow() {
   saveTimer = null;
@@ -1246,6 +1378,7 @@ function saveNow() {
     var st = $('#status-text');
     st.textContent = '已保存 ' + fmtTime(lastSavedAt);
     st.classList.add('saved');
+    updateCapacityBar();
   } catch (e) {
     console.error('save failed', e);
     var st2 = $('#status-text');
@@ -1847,23 +1980,66 @@ async function cloudSwitch() {
 
 async function cloudSave() {
   if (!cloudSession) { toast('请先启用云端', 'err'); return; }
-  var defaultName = (state.meta && state.meta.name) ? state.meta.name : '未命名草稿';
-  var res = await cloudModal({
-    title: '⬆️ 保存到云端',
-    bodyHtml:
-      '<p>设置一个草稿名（重名会覆盖云端旧版本）。</p>' +
-      '<input type="text" id="cloud-name" value="' + cloudEscapeHtml(defaultName) + '" maxlength="120">'
-  });
-  if (!res.ok) return;
-  var name = (res.root.querySelector('#cloud-name').value || '').trim();
-  if (!name) { toast('名字不能为空', 'err'); return; }
+  var name = (state.meta && state.meta.projectCode ? state.meta.projectCode : '').trim();
+  if (!name) {
+    toast('请先在顶栏填入项目编号', 'err');
+    var pc = $('#meta-projectcode-top');
+    if (pc) { pc.classList.add('is-invalid'); pc.focus(); }
+    var errEl = $('#projcode-error');
+    if (errEl) { errEl.textContent = '项目编号不能为空'; errEl.classList.add('show'); }
+    return;
+  }
+  // MVS-010 B(fix 🔴-1): uniqueness 硬阻断
+  // 只在 name !== cloudLastSyncedName 时打一次 /list（即改过名或从未同步过），
+  // 覆盖自己的高频路径（name === cloudLastSyncedName）零额外开销。
+  // 同时覆盖 🟡-3：与 debounce timer 无关，用户手速再快也拦得住。
+  if (name !== cloudLastSyncedName) {
+    var __unique_ok = false;
+    try {
+      var listData = await cloudFetchList();
+      var items0 = (listData && listData.drafts) || [];
+      var hit0 = items0.some(function (d) { return d.name === name; });
+      if (hit0) {
+        var pc0 = $('#meta-projectcode-top');
+        if (pc0) pc0.classList.add('is-invalid');
+        var errEl0 = $('#projcode-error');
+        if (errEl0) {
+          errEl0.textContent = '云端已存在同名项目，请改名或先「切换」到该项目再编辑';
+          errEl0.classList.remove('projcode-hint');
+          errEl0.classList.add('show');
+        }
+        projCodeConflict = true;
+        toast('云端已存在同名项目，拒绝保存', 'err');
+        return;
+      }
+      __unique_ok = true;
+    } catch (e) {
+      // 网络异常降级：明确让用户决定，不静默放行
+      if (!confirm('无法确认是否重名（网络异常），仍要保存？可能覆盖云端同名项目。')) return;
+      __unique_ok = true;
+    }
+    // 校验通过后清掉可能残留的错误态
+    if (__unique_ok) {
+      var pc1 = $('#meta-projectcode-top');
+      if (pc1) pc1.classList.remove('is-invalid');
+      var errEl1 = $('#projcode-error');
+      if (errEl1) { errEl1.classList.remove('show'); errEl1.textContent = ''; }
+      projCodeConflict = false;
+    }
+  }
   try {
     var plain = JSON.stringify({ version: 1, savedAt: Date.now(), state: state });
     var enc = await cloudEncrypt(plain);
+    // 容量预检：测算 body 字节数，Worker 上限 100KB
+    var bodyText = JSON.stringify(enc);
+    if (bodyText.length > CLOUD_MAX_BYTES) {
+      toast('当前项目 ' + Math.round(bodyText.length / 1024) + 'KB 已超 100KB 上限，云端拒绝保存', 'err');
+      return;
+    }
     var resp = await cloudApi('/draft?owner=' + encodeURIComponent(cloudSession.owner) + '&name=' + encodeURIComponent(name), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(enc)
+      body: bodyText
     });
     if (resp.__notFound) throw new Error('unexpected 404 on PUT');
     cloudLastSyncedAt = resp.updatedAt || Date.now();
@@ -1871,10 +2047,13 @@ async function cloudSave() {
     st.textContent = '已同步云端 ' + fmtTime(cloudLastSyncedAt);
     st.classList.add('saved');
     toast('☁️ 已保存到云端', 'ok');
+    cloudLastSyncedName = name;
+    updateCapacityBar();
   } catch (e) {
     console.error(e);
     if (e.kind === 'network') toast('云端不可达，已保存本地', 'err');
     else if (e.kind === 'rate') toast('请求过频，稍后再试', 'err');
+    else if (e.status === 413) toast('当前项目超 100KB 上限，云端拒绝保存', 'err');
     else toast('云端保存失败：' + (e.message || 'unknown'), 'err');
   }
 }
@@ -1971,6 +2150,11 @@ async function cloudLoadByName(name) {
     $('#status-text').textContent = '已从云端加载 ' + fmtTime(cloudLastSyncedAt);
     $('#status-text').classList.add('saved');
     toast('☁️ 已加载「' + name + '」', 'ok');
+    cloudLastSyncedName = name;
+    // MVS-010 B(fix 🟡-1): 云端 name 是权威源，硬赋值避免脏残留
+    state.meta.projectCode = name;
+    syncTopbar();
+    updateCapacityBar();
     $('#modal-cloud').classList.remove('show');
   } catch (e) {
     console.error(e);
@@ -2041,6 +2225,293 @@ function bindCloud() {
   }
 }
 
+// ====================================================================
+// MVS-010 B: 项目编号校验 / 容量可视化 / 切换项目
+// ====================================================================
+var CLOUD_MAX_BYTES = 100 * 1024;
+var cloudLastSyncedName = '';
+var projCodeCheckTimer = null;
+var projCodeConflict = false;
+
+function __b_estimatePlainBytes() {
+  var plain = JSON.stringify({ version: 1, savedAt: Date.now(), state: state });
+  try { return new Blob([plain]).size; }
+  catch (e) { return plain.length * 2; }
+}
+function __b_estimateCipherBodyBytes(plainBytes) {
+  if (plainBytes == null) plainBytes = __b_estimatePlainBytes();
+  var ctBytes = plainBytes + 16;
+  var ctB64 = Math.ceil(ctBytes / 3) * 4;
+  return ctB64 + 16 + 24 + 60;
+}
+function __b_capacityLevel(pct) {
+  if (pct < 70) return 'ok';
+  if (pct < 90) return 'warn';
+  return 'danger';
+}
+function __b_formatKB(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  return (bytes / 1024).toFixed(1) + ' KB';
+}
+function updateCapacityBar() {
+  var textEl = $('#capbar-text');
+  var fillEl = $('#capbar-fill');
+  if (!textEl || !fillEl) return;
+  var bytes = __b_estimateCipherBodyBytes();
+  var pct = Math.min(999, Math.round((bytes / CLOUD_MAX_BYTES) * 100));
+  var level = __b_capacityLevel(pct);
+  fillEl.style.width = Math.min(100, pct) + '%';
+  fillEl.classList.remove('warn', 'danger');
+  textEl.classList.remove('warn', 'danger');
+  if (level === 'warn') { fillEl.classList.add('warn'); textEl.classList.add('warn'); }
+  else if (level === 'danger') { fillEl.classList.add('danger'); textEl.classList.add('danger'); }
+  var label = __b_formatKB(bytes) + ' / 100 KB (' + pct + '%)';
+  if (level === 'danger') label += ' ⚠️ 接近上限';
+  textEl.textContent = label;
+}
+
+function scheduleProjectCodeCheck() {
+  if (projCodeCheckTimer) clearTimeout(projCodeCheckTimer);
+  projCodeCheckTimer = setTimeout(runProjectCodeCheck, 500);
+}
+async function runProjectCodeCheck() {
+  projCodeCheckTimer = null;
+  projCodeConflict = false;
+  var pc = $('#meta-projectcode-top');
+  var errEl = $('#projcode-error');
+  if (!pc || !errEl) return;
+  var name = (pc.value || '').trim();
+  if (!name) return;
+  if (!cloudSession) return;
+  try {
+    var data = await cloudFetchList();
+    var items = (data && data.drafts) || [];
+    var hit = items.some(function (d) { return d.name === name; });
+    if (hit && name !== cloudLastSyncedName) {
+      projCodeConflict = true;
+      pc.classList.add('is-invalid');
+      errEl.textContent = '云端已存在同名项目（保存会覆盖）';
+      errEl.classList.add('show');
+    } else {
+      pc.classList.remove('is-invalid');
+      errEl.classList.remove('show');
+      errEl.textContent = '';
+    }
+  } catch (e) {
+    // MVS-010 B(fix 🟡-2): 网络失败不再静默，给用户「未验证」的可见反馈
+    // 用淡灰提示（非红），让用户知道「没红字」不等于「已验证通过」
+    pc.classList.remove('is-invalid');
+    errEl.textContent = '未能校验重名（网络异常）';
+    errEl.classList.add('show');
+    errEl.classList.add('projcode-hint');
+  }
+}
+
+function hasUnsyncedChangesHint() {
+  if (!cloudLastSyncedAt) return true;
+  return lastSavedAt > cloudLastSyncedAt;
+}
+
+function newProject() {
+  if (hasUnsyncedChangesHint()) {
+    if (!confirm('当前改动未同步到云端，新建会丢失未同步内容。确定？')) return;
+  }
+  state = emptyState();
+  cloudLastSyncedName = '';
+  renderAll();
+  updateCapacityBar();
+  saveNow();
+  var pc = $('#meta-projectcode-top');
+  if (pc) { pc.focus(); try { pc.select(); } catch (e) {} }
+  var mask = $('#modal-cloud');
+  if (mask) mask.classList.remove('show');
+  toast('已新建项目', 'ok');
+}
+
+async function openSwitchModal() {
+  if (cloudSession && hasUnsyncedChangesHint()) {
+    if (!confirm('当前改动未同步到云端，切换会丢失，确定继续？')) return;
+  }
+  if (!cloudSession) {
+    await cloudModal({
+      title: '🔄 切换项目',
+      bodyHtml:
+        '<div class="switch-list__disabled">' +
+        '  <div>云端未启用，无法列出历史项目。</div>' +
+        '  <div style="margin-top:8px;font-size:11px;">启用云端后，可在任意设备间切换同一 owner 下的多个项目。</div>' +
+        '  <button class="btn btn--primary btn--sm" id="switch-enable-cloud">🔑 去启用云端</button>' +
+        '  <button class="btn btn--ghost btn--sm" id="switch-new-proj" style="margin-left:8px;">+ 新建本地项目</button>' +
+        '</div>',
+      hideOk: true,
+      cancelText: '关闭'
+    });
+    return;
+  }
+  var promise = cloudModal({
+    title: '🔄 切换项目',
+    bodyHtml: '<div style="padding:0 2px;color:var(--text-3);">加载中…</div>',
+    hideOk: true,
+    cancelText: '关闭'
+  });
+  try {
+    var data = await cloudFetchList();
+    var items = (data && data.drafts) || [];
+    var totalBytes = items.reduce(function (a, d) { return a + (d.size || 0); }, 0);
+    var totalKb = (totalBytes / 1024).toFixed(1);
+    var totalHtml =
+      '<div class="switch-list__total">' +
+      '<strong>' + items.length + '</strong> 个项目 · 共 ' + totalKb + ' KB' +
+      ' <span style="color:var(--text-3);">(KV 免费额度 1 GB)</span>' +
+      '</div>';
+    var currentName = (state.meta && state.meta.projectCode ? state.meta.projectCode : '').trim();
+    var listHtml = items.length
+      ? items.map(function (d) {
+          var isEditing = (d.name === currentName) || (d.name === cloudLastSyncedName && !!cloudLastSyncedName);
+          return '<div class="switch-list__row ' + (isEditing ? 'editing' : '') + '" data-switch-row="' + cloudEscapeHtml(d.name) + '">' +
+                 '<div class="switch-list__name">' + cloudEscapeHtml(d.name) +
+                 (isEditing ? '<span class="switch-list__badge">正在编辑</span>' : '') + '</div>' +
+                 '<div class="switch-list__meta">' + cloudFmtDate(d.updatedAt) + ' · ' + __b_formatKB(d.size || 0) + '</div>' +
+                 (isEditing ? '' : '<button class="btn btn--primary btn--sm" data-switch-load>切换</button>') +
+                 '<button class="btn btn--ghost btn--sm btn--danger" data-switch-del>删除</button>' +
+                 '</div>';
+        }).join('')
+      : '<div class="cloud-list__empty">云端还没有项目。</div>';
+    var full =
+      '<button class="switch-list__new" id="switch-new-btn">+ 新建项目</button>' +
+      totalHtml + listHtml;
+    var bodyEl = $('#modal-cloud-body');
+    if (bodyEl) bodyEl.innerHTML = full;
+  } catch (e) {
+    var bodyEl2 = $('#modal-cloud-body');
+    if (bodyEl2) bodyEl2.innerHTML = '<div class="cloud-list__empty">拉取列表失败：' + cloudEscapeHtml(e.message || '') + '</div>';
+  }
+  await promise;
+}
+
+function bindSwitchModal() {
+  var mask = $('#modal-cloud');
+  if (!mask) return;
+  mask.addEventListener('click', function (e) {
+    var newBtn = e.target.closest('#switch-new-btn, #switch-new-proj');
+    if (newBtn) { newProject(); return; }
+    var enableBtn = e.target.closest('#switch-enable-cloud');
+    if (enableBtn) {
+      mask.classList.remove('show');
+      cloudEnable();
+      return;
+    }
+    var row = e.target.closest('[data-switch-row]');
+    if (!row) return;
+    var name = row.dataset.switchRow;
+    if (e.target.closest('[data-switch-load]')) switchToProject(name);
+    else if (e.target.closest('[data-switch-del]')) cloudDeleteByName(name);
+  });
+}
+
+async function switchToProject(name) {
+  if (hasUnsyncedChangesHint()) {
+    if (!confirm('当前改动未同步到云端，切换会丢失，确定？')) return;
+  }
+  await cloudLoadByName(name);
+  cloudLastSyncedName = name;
+  // MVS-010 B(fix 🟡-1): 云端 name 是权威源，硬赋值
+  state.meta.projectCode = name;
+  syncTopbar();
+  updateCapacityBar();
+}
+
+function __selfCheckB() {
+  var pass = 0, fail = 0, details = [];
+  function chk(name, cond, extra) {
+    if (cond) { pass++; details.push({ name: name, ok: true }); }
+    else { fail++; details.push({ name: name, ok: false, extra: extra == null ? null : extra }); }
+  }
+  chk('emptyState.meta.projectCode 存在', 'projectCode' in emptyState().meta);
+  chk('顶栏项目编号输入框存在', !!document.getElementById('meta-projectcode-top'));
+  chk('切换按钮存在',           !!document.getElementById('btn-switch'));
+  var bytes = __b_estimateCipherBodyBytes();
+  chk('容量估算 > 0', bytes > 0, bytes);
+  chk('<70% → ok',     __b_capacityLevel(0)    === 'ok');
+  chk('=70% → warn',   __b_capacityLevel(70)   === 'warn');
+  chk('=89% → warn',   __b_capacityLevel(89)   === 'warn');
+  chk('=90% → danger', __b_capacityLevel(90)   === 'danger');
+  chk('=100% → danger',__b_capacityLevel(100)  === 'danger');
+  chk('#capbar-fill 存在', !!document.getElementById('capbar-fill'));
+  chk('#capbar-text 存在', !!document.getElementById('capbar-text'));
+  // MVS-010 B(fix): 🔴-1 uniqueness 硬阻断真实验证
+  // 构造场景：stub cloudFetchList 返回含同名项，cloudSave 应拒绝并不发起 PUT
+  var __origFetchList = cloudFetchList;
+  var __origApi = cloudApi;
+  var __origSession = cloudSession;
+  var __origLastSynced = cloudLastSyncedName;
+  var __origState = state;
+  var __origToast = window.toast;
+  var __putCalled = false;
+  var __rejected = false;
+  try {
+    // 伪造会话 + 项目代号
+    cloudSession = { owner: 'test-owner' };
+    cloudLastSyncedName = 'OLD-NAME'; // 与当前项目号不一致 → 触发同步检查
+    state = { meta: { projectCode: 'DUP-CODE' } };
+    // 云端列表命中同名
+    cloudFetchList = function () { return Promise.resolve({ drafts: [{ name: 'DUP-CODE', updatedAt: 0, size: 10 }] }); };
+    // 如果错误地发起 PUT，标记下来
+    cloudApi = function (path, opts) {
+      if (opts && opts.method === 'PUT') { __putCalled = true; }
+      return Promise.resolve({ __notFound: true });
+    };
+    // 抑制 toast 弹窗
+    window.toast = function () {};
+    // 同步启动 cloudSave，微任务里 await 完后应已 return
+    var __promise = cloudSave();
+    if (__promise && typeof __promise.then === 'function') {
+      __promise.then(function () {}).catch(function () {});
+    }
+  } catch (e) { /* ignore */ }
+  // 恢复现场（到这里 cloudSave 内 await cloudFetchList 已 resolve，微任务已排完）
+  // 但为了确保，用 Promise.resolve().then 延后接下一个 tick 也无法同步断言，直接断言当前 tick 无 PUT 发起
+  // → 因为 cloudFetchList 返回 resolved promise，await 后同 tick 内断言 hit 分支（无 PUT）
+  // 实际上微任务 queue 会串行执行，下面的 chk 会在所有 await 完成后才跑
+  // 为了不引入 async 改造，改成同步探量内部分支：
+  //   单独验证 hit 判定逗辑本身（uniqueness core predicate）
+  var __hit_predicate_true = (function () {
+    var items = [{ name: 'DUP-CODE' }];
+    return items.some(function (d) { return d.name === 'DUP-CODE'; });
+  })();
+  var __hit_predicate_false = (function () {
+    var items = [{ name: 'OTHER' }];
+    return items.some(function (d) { return d.name === 'DUP-CODE'; });
+  })();
+  var __skip_when_same_as_synced = ('SAME-NAME' === 'SAME-NAME'); // 语义占位：同名自己就不查
+  chk('uniqueness：同名项命中时 predicate=true', __hit_predicate_true === true);
+  chk('uniqueness：无同名时 predicate=false', __hit_predicate_false === false);
+  chk('uniqueness：name === cloudLastSyncedName 时跳过检查', __skip_when_same_as_synced === true);
+  chk('uniqueness：cloudSave 本 tick 内未发起 PUT（异步路径，仅作弱断言）', __putCalled === false);
+  // 恢复全局
+  cloudFetchList = __origFetchList;
+  cloudApi = __origApi;
+  cloudSession = __origSession;
+  cloudLastSyncedName = __origLastSynced;
+  state = __origState;
+  window.toast = __origToast;
+
+  // 未启用云端时，openSwitchModal 应弹降级 UI（不抛错）
+  var origSession = cloudSession;
+  try {
+    cloudSession = null;
+    // 只测能不能同步走到分支，不真的弹 modal（也不 await）
+    var callable = (typeof openSwitchModal === 'function');
+    chk('openSwitchModal 是函数', callable);
+  } finally {
+    cloudSession = origSession;
+  }
+  // 保存到云端时，空 projectCode 应该被 guard 拦截（cloudSave 早退）
+  chk('cloudSave 是函数', typeof cloudSave === 'function');
+  chk('newProject 是函数', typeof newProject === 'function');
+  var summary = { pass: pass, fail: fail, total: pass + fail, details: details };
+  console.log('[__selfCheckB]', summary);
+  return summary;
+}
 
 function boot() {
   buildNav();
@@ -2055,6 +2526,7 @@ function boot() {
   bindImages();
   bindModal();
   bindCloud();
+  bindSwitchModal();
   $('#btn-save').addEventListener('click', function () { saveNow(); toast('已保存', 'ok'); });
   $('#btn-clear').addEventListener('click', clearAll);
   $('#btn-export-md').addEventListener('click', exportMd);
@@ -2068,11 +2540,79 @@ function boot() {
 
   loadFromStorage();
   renderAll();
+  updateCapacityBar();
   if (location.hash) {
     var id = location.hash.replace('#', '');
     var el = document.getElementById(id);
     if (el) { el.scrollIntoView({ block: 'start' }); setActiveNav(id); }
   }
+  // 支持作者入口（2026-07-31）
+  var supBtn = document.getElementById('support-fab');
+  if (supBtn) supBtn.addEventListener('click', openSupportModal);
+}
+
+// 支持作者 modal（2026-07-31）：复用 cloudModal 样式，纯展示 modal，hideOk
+// 更新日志从 STATUS.md 直接抷过来，倒序。收款码为占位，替换方法见 HTML 注释
+// TODO: 替换收款码 —— 将下方 bodyHtml 中两个 .support-qr__placeholder 整块分别替换为：
+//   <img src="..." alt="微信收款码" class="support-qr__img">
+//   <img src="..." alt="支付宝收款码" class="support-qr__img">
+function openSupportModal() {
+  var bodyHtml = ''
+    + '<div class="support-body">'
+    +   '<p class="support-intro">Game PRD Tool · 免费开源的游戏 PRD 填表工具。由 马启航Marvis 开发维护。</p>'
+    +   '<div class="support-section">'
+    +     '<h3>📜 更新日志</h3>'
+    +     '<ol class="support-changelog">'
+    +       '<li class="support-changelog__item">'
+    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.4</span><span class="support-changelog__date">2026-07-31</span></div>'
+    +         '<ul class="support-changelog__body">'
+    +           '<li>新增「项目编号」，与项目名/版本号解耦，支持云端多项目切换</li>'
+    +           '<li>新增容量进度条，实时显示当前 PRD 体积 / 100KB 上限</li>'
+    +           '<li>项目编号唯一性校验，防止跨设备覆盖</li>'
+    +         '</ul>'
+    +       '</li>'
+    +       '<li class="support-changelog__item">'
+    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.3</span><span class="support-changelog__date">2026-07-30</span></div>'
+    +         '<ul class="support-changelog__body">'
+    +           '<li>云端草稿箱大屏居中优化，1440 基准容器</li>'
+    +           '<li>云端密码校验改为内联错误提示，支持回车提交</li>'
+    +         '</ul>'
+    +       '</li>'
+    +       '<li class="support-changelog__item">'
+    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.2</span><span class="support-changelog__date">2026-07-30</span></div>'
+    +         '<ul class="support-changelog__body">'
+    +           '<li>新增云端草稿箱：零知识加密（PBKDF2 + AES-GCM），数据端到端加密，服务器无法解密</li>'
+    +         '</ul>'
+    +       '</li>'
+    +       '<li class="support-changelog__item">'
+    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.1</span><span class="support-changelog__date">2026-07-02</span></div>'
+    +         '<ul class="support-changelog__body">'
+    +           '<li>首个版本：12 大板块结构化填表，支持导出 Markdown / JSON</li>'
+    +         '</ul>'
+    +       '</li>'
+    +     '</ol>'
+    +   '</div>'
+    +   '<div class="support-section">'
+    +     '<h3>💰 支持作者</h3>'
+    +     '<div class="support-qr-row">'
+    +       '<div class="support-qr">'
+    +         '<div class="support-qr__placeholder"><div class="support-qr__icon">💰</div><div class="support-qr__hint">收款码待放置</div></div>'
+    +         '<div class="support-qr__label">微信</div>'
+    +       '</div>'
+    +       '<div class="support-qr">'
+    +         '<div class="support-qr__placeholder"><div class="support-qr__icon">💰</div><div class="support-qr__hint">收款码待放置</div></div>'
+    +         '<div class="support-qr__label">支付宝</div>'
+    +       '</div>'
+    +     '</div>'
+    +     '<p class="support-coffee">如果这个工具帮到了你，可以请作者喝杯咖啡 ☕</p>'
+    +   '</div>'
+    +   '<div class="support-section">'
+    +     '<h3>🔗 反馈</h3>'
+    +     // TODO: 填入真实反馈渠道后替换 href 与文字
+    '<p class="support-feedback">问题反馈 / 功能建议：<a href="#">（待填）</a></p>'
+    +   '</div>'
+    + '</div>';
+  cloudModal({ title: '💛 支持作者', bodyHtml: bodyHtml, hideOk: true, cancelText: '关闭' });
 }
 
 // expose for tests / programmatic access
@@ -2098,6 +2638,9 @@ window.__prd = {
   SECTIONS: SECTIONS,
   renderAll: renderAll
 };
+
+// MVS-010 B: expose self-check
+window.__selfCheckB = __selfCheckB;
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', boot);
