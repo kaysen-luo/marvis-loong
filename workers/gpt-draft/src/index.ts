@@ -3,14 +3,14 @@
  * ----------------------------------------------------------
  * 服务端只见密文。密码只在浏览器,PBKDF2 派生 key + owner。
  * KV 结构:
- *   draft:<owner>:<name>   → {ciphertext, iv, salt, updatedAt}
+ *   draft:<owner>:<name>   → {ciphertext, iv, updatedAt}
  *   owner:<owner>:index    → {names: [name1, ...]}
  *   rl:<ip>:<minuteBucket> → 计数(TTL 60s)
  *
  * API:
  *   GET    /list?owner=<hash>
  *   GET    /draft?owner=<hash>&name=<name>
- *   PUT    /draft?owner=<hash>&name=<name>  body {ciphertext, iv, salt}
+ *   PUT    /draft?owner=<hash>&name=<name>  body {ciphertext, iv}
  *   DELETE /draft?owner=<hash>&name=<name>
  */
 
@@ -191,15 +191,16 @@ async function handlePutDraft(request: Request, env: Env, url: URL): Promise<Res
   } catch {
     return badRequest(request, "body must be JSON");
   }
-  if (typeof body?.ciphertext !== "string" || typeof body?.iv !== "string" || typeof body?.salt !== "string") {
-    return badRequest(request, "missing ciphertext/iv/salt");
+  // v0.5 隐私改造：salt 由客户端 SHA-256(username) 推导，服务端不需要也不应该存
+  // 故 salt 降为可选：新版客户端不传，旧版传了也兼容（不再回写入库）
+  if (typeof body?.ciphertext !== "string" || typeof body?.iv !== "string") {
+    return badRequest(request, "missing ciphertext/iv");
   }
   // 服务端不解密,不校验密文格式,仅存字符串
   const updatedAt = Date.now();
   const draftObj = {
     ciphertext: body.ciphertext,
     iv: body.iv,
-    salt: body.salt,
     updatedAt,
   };
   await env.DRAFTS.put(`draft:${owner}:${name}`, JSON.stringify(draftObj));

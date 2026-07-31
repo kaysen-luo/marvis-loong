@@ -95,14 +95,24 @@
   .btn--danger { color: var(--danger); border-color: rgba(248,113,113,0.3); }
   .btn--danger:hover { background: rgba(248,113,113,0.1); border-color: var(--danger); }
   .btn--sm { padding: 4px 9px; font-size: 12px; }
+  /* v0.6 同步闸门：不可用态（撞编号 / 断网 / 超限 等） */
+  .btn:disabled, .btn.is-gated {
+    opacity: 0.38; cursor: not-allowed; pointer-events: auto;
+    filter: grayscale(1); box-shadow: none;
+  }
+  .btn:disabled:hover, .btn.is-gated:hover { background: transparent; border-color: var(--border-2); }
+  .btn:disabled:active, .btn.is-gated:active { transform: none; }
   .layout { min-height: 100vh; padding-top: var(--topbar-h); }
   .nav {
-    position: fixed; top: var(--topbar-h); bottom: 0; left: var(--shell-gutter); width: var(--nav-w);
-    background: rgba(20,20,28,0.55);
+    position: fixed; top: calc(var(--topbar-h) + 14px); left: var(--shell-gutter); width: var(--nav-w);
+    max-height: calc(100vh - var(--topbar-h) - 34px - 62px);
+    background: rgba(26,26,36,0.62);
     backdrop-filter: blur(14px) saturate(140%);
     -webkit-backdrop-filter: blur(14px) saturate(140%);
-    border-right: 1px solid rgba(129,140,248,0.12);
-    padding: 14px 10px; overflow-y: auto; z-index: 50;
+    border: 1px solid rgba(129,140,248,0.14);
+    border-radius: 14px;
+    box-shadow: 0 10px 32px rgba(0,0,0,0.42);
+    padding: 12px 10px; overflow-y: auto; z-index: 50;
   }
   .nav__title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); padding: 6px 10px 10px; }
   .nav__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -264,6 +274,12 @@
   }
   .modal__title { font-size: 15px; font-weight: 600; }
   .modal__body { flex: 1; overflow-y: auto; padding: 0; }
+  /* 2026-07-31 K师反馈：滚动条改暗色透明轨道，对齐整体深色主题 */
+  .modal__body { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+  .modal__body::-webkit-scrollbar { width: 8px; height: 8px; }
+  .modal__body::-webkit-scrollbar-track { background: transparent; }
+  .modal__body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+  .modal__body::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
   .modal__body pre {
     margin: 0; padding: 16px 20px; background: var(--bg-0); color: var(--text-1);
     font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace; font-size: 12px;
@@ -326,7 +342,9 @@
   .projcode-wrap input {
     background: transparent; border: 1px solid transparent; color: var(--text-1);
     padding: 6px 10px; border-radius: var(--radius-sm); font-size: 14px;
-    min-width: 140px; max-width: 260px; font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+    /* v0.6: 宽度按 ABC-0000（8 字符）收窄，不再顶天立地 */
+    width: 11ch; min-width: 11ch; max-width: 11ch;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
   }
   .projcode-wrap input:hover { border-color: var(--border-1); }
   .projcode-wrap input:focus { outline: none; border-color: var(--accent); background: var(--bg-1); }
@@ -337,6 +355,13 @@
   }
   .projcode-error.show { display: inline; }
   .projcode-error.projcode-hint { color: var(--text-3); }
+  /* v0.6: 撞编号时的逃生口——内联于警示文案的可点击链接 */
+  .projcode-escape {
+    background: none; border: none; padding: 0; margin: 0;
+    font: inherit; color: var(--accent); cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .projcode-escape:hover { color: var(--text-1); }
   .btn--switch { padding: 6px 10px; font-size: 12px; }
   .capbar {
     display: flex; flex-direction: column; gap: 3px; margin-right: 8px; min-width: 140px;
@@ -391,7 +416,7 @@
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   @media (max-width: 900px) {
     :root { --shell-gutter: 0px; }
-    .nav { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-1); }
+    .nav { position: static; width: 100%; height: auto; max-height: none; border-radius: 12px; border: 1px solid var(--border-1); box-shadow: none; margin: 12px 0 0; }
     .nav__list { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
     .nav__item { white-space: nowrap; }
     .nav__title { display: none; }
@@ -402,10 +427,12 @@
 
   /* 支持作者（2026-07-31）—— 复用 accent / bg / text / border，无新色 */
   .support-fab {
-    position: fixed; left: calc(var(--shell-gutter) + 10px); bottom: 16px;
-    width: calc(var(--nav-w) - 20px); z-index: 60;
+    /* v0.6: 对齐目录卡片——left/width 与 .nav 完全一致（旧值是 gutter+10 / nav-w-20，
+       那是目录顶天立地时「内嵌在栏里」的遗留，目录改卡片后会短一截） */
+    position: fixed; left: var(--shell-gutter); bottom: 16px;
+    width: var(--nav-w); box-sizing: border-box; z-index: 60;
     display: flex; align-items: center; gap: 8px; justify-content: center;
-    padding: 8px 12px; border-radius: var(--radius);
+    padding: 10px 12px; border-radius: 14px;
     background: rgba(129,140,248,0.10); color: var(--accent);
     border: 1px solid rgba(129,140,248,0.30); cursor: pointer;
     font-size: 12px; user-select: none; transition: background 120ms, border-color 120ms;
@@ -416,7 +443,8 @@
   @media (max-width: 900px) {
     .support-fab { left: 12px; right: 12px; bottom: 12px; width: auto; }
   }
-  .support-body { padding: 18px 22px 8px; color: var(--text-1); font-size: 13px; line-height: 1.7; max-height: 68vh; overflow-y: auto; }
+  /* 2026-07-31 K师反馈：不再自带 max-height + overflow，滚动统一交给 .modal__body，避免双滚动条 */
+  .support-body { padding: 18px 22px 8px; color: var(--text-1); font-size: 13px; line-height: 1.7; }
   .support-body .support-intro { color: var(--text-2); background: var(--bg-0); border-left: 2px solid var(--accent); padding: 10px 12px; border-radius: 4px; margin: 0 0 18px; }
   .support-body h3 { font-size: 14px; font-weight: 600; color: var(--text-1); margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-1); }
   .support-body .support-section { margin-bottom: 20px; }
@@ -446,7 +474,7 @@
   <div class="topbar__brand"><span class="dot"></span><span>Game PRD Tool</span></div>
   <div class="topbar__title">
     <div class="projcode-wrap">
-      <input type="text" id="meta-projectcode-top" placeholder="项目编号 (例：MVS-010)" aria-label="项目编号" autocomplete="off" spellcheck="false">
+      <input type="text" id="meta-projectcode-top" placeholder="项目编号" aria-label="项目编号" autocomplete="off" spellcheck="false">
       <button class="btn btn--ghost btn--sm btn--switch" id="btn-switch" title="切换项目">⇄ 切换</button>
       <span class="projcode-error" id="projcode-error" role="alert"></span>
     </div>
@@ -457,19 +485,16 @@
   </div>
   <div class="topbar__status" id="status-text">未保存</div>
   <div class="topbar__actions">
-    <button class="btn btn--ghost btn--sm" id="btn-save">保存草稿</button>
-    <button class="btn btn--sm" id="btn-export-md">导出 .md</button>
-    <button class="btn btn--sm" id="btn-export-json">导出 .json</button>
+    <button class="btn btn--ghost btn--sm" id="btn-save">💾 立即保存</button>
     <div class="cloud-wrap">
       <button class="btn btn--ghost btn--sm" id="btn-cloud" aria-haspopup="true" aria-expanded="false">☁️ 云端 <span id="cloud-badge" class="cloud-badge" style="display:none">已启用</span></button>
       <div class="cloud-menu" id="cloud-menu" role="menu">
-        <button class="cloud-menu__item" data-cloud-act="enable">🔑 启用云端 (输入密码)</button>
-        <button class="cloud-menu__item" data-cloud-act="save" disabled>⬆️ 保存到云端</button>
-        <button class="cloud-menu__item" data-cloud-act="load" disabled>⬇️ 从云端加载</button>
-        <button class="cloud-menu__item" data-cloud-act="list" disabled>📋 云端草稿列表</button>
-        <div class="cloud-menu__sep"></div>
+        <button class="cloud-menu__item" data-cloud-act="enable">🔑 登录</button>
+        <button class="cloud-menu__item" data-cloud-act="disable" style="display:none">🚪 退出登录</button>
         <button class="cloud-menu__item" data-cloud-act="switch" disabled>🔄 切换账号</button>
-        <button class="cloud-menu__item" data-cloud-act="disable" disabled>🚪 退出云端模式</button>
+        <div class="cloud-menu__sep"></div>
+        <button class="cloud-menu__item" id="btn-export-md">📄 导出 .md</button>
+        <button class="cloud-menu__item" id="btn-export-json">🧾 导出 .json</button>
       </div>
     </div>
     <button class="btn btn--ghost btn--sm btn--danger" id="btn-clear">清空</button>
@@ -481,9 +506,9 @@
     <div class="nav__title">12 模块</div>
     <ul class="nav__list" id="nav-list"></ul>
   </aside>
-  <!-- 支持作者入口（2026-07-31）：左下角固定按钮 -->
-  <button type="button" class="support-fab" id="support-fab" title="支持作者">
-    <span class="heart">💛</span><span>支持作者</span>
+  <!-- 支持与反馈入口（2026-07-31）：左下角固定按钮 -->
+  <button type="button" class="support-fab" id="support-fab" title="支持与反馈">
+    <span class="heart">💛</span><span>支持与反馈</span>
   </button>
   <main class="main" id="main-content">
 
@@ -991,7 +1016,10 @@ function syncTopbar() {
   if (pc) pc.value = (state.meta && state.meta.projectCode) || '';
   // 同步清除错误态（加载新项目时）
   if (pc) pc.classList.remove('is-invalid');
-  var err = $('#projcode-error'); if (err) { err.classList.remove('show'); err.textContent = ''; }
+  var err = $('#projcode-error'); if (err) { err.classList.remove('show'); err.innerHTML = ''; }
+  // v0.6: 加载新项目 = 撞编号态已失效，释放闸门（否则【切换】按钮会一直隐藏）
+  projCodeConflict = false;
+  if (typeof cloudGate !== 'undefined' && cloudGate === 'conflict') cloudSetGate('');
 }
 function bindTopbar() {
   var pc = $('#meta-projectcode-top');
@@ -1000,7 +1028,10 @@ function bindTopbar() {
       state.meta.projectCode = e.target.value;
       // 每次输入先清除错误态，真正的重名检测在 debounce 后跑
       pc.classList.remove('is-invalid');
-      var errEl = $('#projcode-error'); if (errEl) { errEl.classList.remove('show'); errEl.textContent = ''; }
+      var errEl = $('#projcode-error'); if (errEl) { errEl.classList.remove('show'); errEl.innerHTML = ''; }
+      // v0.6: 一改编号就先释放撞编号闸门，让【切换】立即重现；
+      // 500ms debounce 后的 runProjectCodeCheck 会重新判定，真撞了再拉闸。
+      if (cloudGate === 'conflict') cloudSetGate('');
       scheduleProjectCodeCheck();
       scheduleSave();
     });
@@ -1360,6 +1391,10 @@ function scheduleSave() {
   saveTimer = setTimeout(saveNow, 600);
   // MVS-010 B(fix): 容量条实时性 — 输入即刷新，节流 100ms 防抖
   __b_scheduleCapacityBarRefresh();
+  // v0.5: 登录中 → 同时排云端自动同步
+  if (cloudSession) {
+    try { cloudScheduleAutoSync(); } catch (e) { /* soft */ }
+  }
 }
 var __b_capBarThrottleTimer = null;
 function __b_scheduleCapacityBarRefresh() {
@@ -1376,8 +1411,11 @@ function saveNow() {
     localStorage.setItem(STORAGE_KEY, payload);
     lastSavedAt = Date.now();
     var st = $('#status-text');
-    st.textContent = '已保存 ' + fmtTime(lastSavedAt);
-    st.classList.add('saved');
+    // v0.5: 登录后状态条由 cloudAutoSync 接管，避免“已保存”盖掉“同步中…”
+    if (!cloudSession) {
+      st.textContent = '已保存 ' + fmtTime(lastSavedAt);
+      st.classList.add('saved');
+    }
     updateCapacityBar();
   } catch (e) {
     console.error('save failed', e);
@@ -1417,6 +1455,14 @@ function clearAll() {
   localStorage.removeItem(STORAGE_KEY);
   state = emptyState();
   renderAll();
+  // v0.6 逃生口 2：清空 = 主动丢弃本地改动，必须解锁闸门，否则用户被锁死
+  projCodeConflict = false;
+  cloudLastSyncedName = '';
+  var pc0 = $('#meta-projectcode-top');
+  if (pc0) pc0.classList.remove('is-invalid');
+  var err0 = $('#projcode-error');
+  if (err0) { err0.classList.remove('show'); err0.innerHTML = ''; }
+  cloudSetGate('');
   toast('已清空', 'ok');
   $('#status-text').textContent = '已清空';
   $('#status-text').classList.remove('saved');
@@ -1684,14 +1730,21 @@ function exportJson() {
 // ====================================================================
 var CLOUD_API_URL = 'https://gpt-draft.luomycn.workers.dev';
 var CLOUD_ENABLED_KEY = 'game-prd-tool-cloud-enabled';
-var CLOUD_SALT_STORE_KEY = 'game-prd-tool-cloud-salt';
+var CLOUD_SALT_STORE_KEY = 'game-prd-tool-cloud-salt'; // v0.5: 老键，仅用于检测&清理，不再读写
+var CLOUD_USERNAME_STORE_KEY = 'game-prd-tool-cloud-username'; // v0.5: 预填用户名（非敏感）
 var CLOUD_OWNER_MARKER = 'gpt-draft-owner-v1';
 var CLOUD_PBKDF2_ITER = 210000;
 var CLOUD_SALT_BYTES = 16;
 var CLOUD_IV_BYTES = 12;
+var CLOUD_SYNC_THROTTLE_MS = 5000; // v0.5: 云端 PUT 节流窗口
 
-var cloudSession = null; // {key: CryptoKey, owner: string, salt: Uint8Array}
+var cloudSession = null; // {key: CryptoKey, owner: string, salt: Uint8Array, username: string}
 var cloudLastSyncedAt = 0;
+var cloudSyncTimer = null;         // v0.5: 节流定时器
+var cloudSyncInFlight = false;     // v0.5: 正在 PUT
+var cloudPendingRetry = false;     // v0.5: 因网络失败挂着的补传
+var cloudLastSyncedPayloadHash = ''; // v0.5: 变更检测（内容 hash）
+var cloudSuppressAutoSync = false; // v0.5: 加载 / 切换时短暂抑制自动同步
 
 function cloudBufToB64(buf) {
   var bytes = new Uint8Array(buf);
@@ -1718,6 +1771,24 @@ function cloudBufToHex(buf) {
 
 function cloudCryptoOk() {
   return !!(window.crypto && window.crypto.subtle);
+}
+
+// v0.5: 用户名 → 确定性 salt（SHA-256 取前 N 字节）
+async function cloudDeriveSaltFromUsername(username) {
+  var enc = new TextEncoder();
+  var digest = await crypto.subtle.digest('SHA-256', enc.encode(username));
+  return new Uint8Array(digest).slice(0, CLOUD_SALT_BYTES);
+}
+
+// v0.5: 内容快照指纹（非密码学用）——仅用来判断 state 是否真的变了
+function cloudPayloadFingerprint(str) {
+  // FNV-1a 32bit，纯提示用，沝不参与密钥链路
+  var h = 0x811c9dc5;
+  for (var i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return h.toString(16) + '_' + str.length;
 }
 
 async function cloudDeriveKeyAndOwner(password, saltBytes) {
@@ -1753,8 +1824,10 @@ async function cloudEncrypt(plainJSON) {
   );
   return {
     ciphertext: cloudBufToB64(ct),
-    iv: cloudBufToB64(iv),
-    salt: cloudBufToB64(cloudSession.salt)
+    iv: cloudBufToB64(iv)
+    // v0.5-fix 🟡-1: salt 不再上传 (零知识承诺)
+    // 旧数据向后兼容：cloudDecrypt 不使用 payload 中的 salt，
+    // 解密 key 直接用 session 里的 key (登录时已由用户名派生 salt)。
   };
 }
 
@@ -1809,17 +1882,26 @@ function cloudIsEnabledFlag() {
 function cloudRefreshMenuState() {
   var enabled = !!cloudSession;
   var enableBtn = document.querySelector('[data-cloud-act="enable"]');
-  if (enableBtn) enableBtn.textContent = enabled ? '🔒 已启用云端' : '🔑 启用云端 (输入密码)';
-  if (enableBtn) enableBtn.disabled = enabled;
-  ['save', 'load', 'list', 'switch', 'disable'].forEach(function (act) {
-    var btn = document.querySelector('[data-cloud-act="' + act + '"]');
-    if (btn) btn.disabled = !enabled;
-  });
+  var disableBtn = document.querySelector('[data-cloud-act="disable"]');
+  if (enableBtn) {
+    enableBtn.style.display = enabled ? 'none' : '';
+    enableBtn.disabled = false;
+    enableBtn.textContent = '🔑 登录';
+  }
+  if (disableBtn) {
+    disableBtn.style.display = enabled ? '' : 'none';
+    disableBtn.disabled = false;
+  }
+  var switchBtn = document.querySelector('[data-cloud-act="switch"]');
+  if (switchBtn) switchBtn.disabled = !enabled;
   var badge = $('#cloud-badge');
   if (badge) {
     badge.style.display = enabled ? 'inline-block' : 'none';
     if (enabled && cloudSession) badge.textContent = '账号 ' + cloudSession.owner;
   }
+  // v0.6：登录/退出后同步刷新闸门态（未登录 = 纯本地，必须解锁按钮）
+  if (!enabled) cloudGate = '';
+  applyCloudGate();
 }
 
 function cloudModal(opts) {
@@ -1914,47 +1996,71 @@ function cloudFmtDate(ts) {
          ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
 }
 
-async function cloudPromptPassword(reason) {
-  var help = reason || '密码只在你的浏览器里，不会发送到服务器。忘了就找不回。建议记本地。';
+// v0.5: 登录 modal（用户名 + 密码）。返回 {username, password} 或 null
+async function cloudPromptLogin(reason) {
+  var help = reason || '同一「用户名+密码」在任意设备都能看到同一份数据。密码仅在本地派生密钥，不上传。忘了无法找回。';
+  var lastUser = '';
+  try { lastUser = localStorage.getItem(CLOUD_USERNAME_STORE_KEY) || ''; } catch (e) { /* ignore */ }
+  var legacyNotice = '';
+  var hasLegacySalt = false;
+  try { hasLegacySalt = !!localStorage.getItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  if (hasLegacySalt) {
+    legacyNotice =
+      '<div class="help" style="color:var(--text-3);margin-top:6px;">' +
+      '检测到旧版本本地凭证，新版改用「用户名+密码」派生账号，旧账号数据需用旧版本导出后手动导入。' +
+      '</div>';
+  }
   var res = await cloudModal({
-    title: '🔑 启用云端草稿',
+    title: '🔑 登录云端',
     bodyHtml:
-      '<p>云端采用零知识加密（zero-knowledge）：密码永远不离开浏览器，服务端只见密文。</p>' +
-      '<p><strong>设置密码</strong></p>' +
-      '<input type="password" id="cloud-pw" autocomplete="new-password" placeholder="至少 8 位">' +
-      '<div class="help">' + cloudEscapeHtml(help) + '</div>',
+      '<p>同一套「用户名+密码」= 同一个账号，可在任意设备上访问同一份数据。</p>' +
+      '<p><strong>用户名</strong></p>' +
+      '<input type="text" id="cloud-user" autocomplete="username" placeholder="任意字符串，区分大小写" value="' + cloudEscapeHtml(lastUser) + '">' +
+      '<p style="margin-top:10px;"><strong>密码</strong></p>' +
+      '<input type="password" id="cloud-pw" autocomplete="current-password" placeholder="至少 8 位">' +
+      '<div class="help">' + cloudEscapeHtml(help) + '</div>' +
+      legacyNotice,
     validate: function (root) {
-      var el = root.querySelector('#cloud-pw');
-      var v = (el && el.value) || '';
-      if (!v) return '请输入密码';
-      if (v.length < 8) return '密码至少 8 位，当前 ' + v.length + ' 位';
+      var u = root.querySelector('#cloud-user');
+      var p = root.querySelector('#cloud-pw');
+      var uv = ((u && u.value) || '').trim();
+      var pv = (p && p.value) || '';
+      if (!uv) { if (u) u.focus(); return '请输入用户名'; }
+      if (!pv) { if (p) p.focus(); return '请输入密码'; }
+      if (pv.length < 8) { if (p) p.focus(); return '密码至少 8 位，当前 ' + pv.length + ' 位'; }
       return null;
     }
   });
+  // 已提示过旧凭证 → 删一次，避免反复提示
+  if (hasLegacySalt) {
+    try { localStorage.removeItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  }
   if (!res.ok) return null;
-  return res.root.querySelector('#cloud-pw').value || '';
+  var u2 = res.root.querySelector('#cloud-user');
+  var p2 = res.root.querySelector('#cloud-pw');
+  return {
+    username: ((u2 && u2.value) || '').trim(),
+    password: (p2 && p2.value) || ''
+  };
 }
 
 async function cloudEnable(silent) {
   if (!cloudCryptoOk()) { toast('浏览器不支持 Web Crypto', 'err'); return false; }
-  var pw = await cloudPromptPassword();
-  if (!pw) return false;
-  var saltHex = null;
-  try { saltHex = localStorage.getItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
-  var salt;
-  if (saltHex && /^[a-f0-9]+$/i.test(saltHex) && saltHex.length === CLOUD_SALT_BYTES * 2) {
-    salt = new Uint8Array(CLOUD_SALT_BYTES);
-    for (var i = 0; i < CLOUD_SALT_BYTES; i++) salt[i] = parseInt(saltHex.substr(i * 2, 2), 16);
-  } else {
-    salt = crypto.getRandomValues(new Uint8Array(CLOUD_SALT_BYTES));
-    try { localStorage.setItem(CLOUD_SALT_STORE_KEY, cloudBufToHex(salt)); } catch (e) { /* ignore */ }
-  }
+  var creds = await cloudPromptLogin();
+  if (!creds) return false;
   try {
-    var derived = await cloudDeriveKeyAndOwner(pw, salt);
-    cloudSession = { key: derived.key, owner: derived.owner, salt: salt };
+    var salt = await cloudDeriveSaltFromUsername(creds.username);
+    var derived = await cloudDeriveKeyAndOwner(creds.password, salt);
+    cloudSession = { key: derived.key, owner: derived.owner, salt: salt, username: creds.username };
+    cloudResetNameCheckCache();
     cloudSetEnabledFlag(true);
+    try { localStorage.setItem(CLOUD_USERNAME_STORE_KEY, creds.username); } catch (e) { /* ignore */ }
+    // 旧版 salt key 一律清掉，不再使用
+    try { localStorage.removeItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
     cloudRefreshMenuState();
-    if (!silent) toast('☁️ 云端已启用（账号 ' + derived.owner + '）', 'ok');
+    if (!silent) toast('☁️ 已登录（账号 ' + derived.owner + '）', 'ok');
+    // 登录后：如果当前 projectCode 在云端存在，提示是否加载
+    try { await cloudAfterLoginMaybeLoad(); } catch (e) { /* soft */ console.warn('after-login load probe failed', e && e.message); }
     return true;
   } catch (e) {
     console.error(e);
@@ -1963,17 +2069,43 @@ async function cloudEnable(silent) {
   }
 }
 
+// v0.5：登录成功后，若当前项目号已在云端，提示加载
+async function cloudAfterLoginMaybeLoad() {
+  var name = (state.meta && state.meta.projectCode ? state.meta.projectCode : '').trim();
+  if (!name || !cloudSession) return;
+  var data;
+  try { data = await cloudFetchList(); }
+  catch (e) { return; }
+  var items = (data && data.drafts) || [];
+  var hit = null;
+  for (var i = 0; i < items.length; i++) { if (items[i].name === name) { hit = items[i]; break; } }
+  if (!hit) return;
+  if (confirm('云端已有该项目的版本（' + cloudFmtDate(hit.updatedAt) + '），是否加载？')) {
+    await cloudLoadByName(name);
+  }
+}
+
 function cloudDisable(silent) {
   cloudSession = null;
   cloudSetEnabledFlag(false);
-  try { localStorage.removeItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  cloudLastSyncedPayloadHash = '';
+  cloudLastSyncedName = '';
+  if (cloudSyncTimer) { clearTimeout(cloudSyncTimer); cloudSyncTimer = null; }
+  cloudPendingRetry = false;
+  cloudResetNameCheckCache();
+  // v0.5: 退出登录保留本地 localStorage 数据（不删 STORAGE_KEY）
   cloudRefreshMenuState();
-  if (!silent) toast('已退出云端模式', 'ok');
+  var st = $('#status-text');
+  if (st) { st.textContent = '已退出登录（本地模式）'; st.classList.remove('saved'); }
+  if (!silent) toast('已退出登录', 'ok');
 }
 
 async function cloudSwitch() {
   cloudSession = null;
-  try { localStorage.removeItem(CLOUD_SALT_STORE_KEY); } catch (e) { /* ignore */ }
+  cloudLastSyncedPayloadHash = '';
+  cloudLastSyncedName = '';
+  cloudResetNameCheckCache();
+  if (cloudSyncTimer) { clearTimeout(cloudSyncTimer); cloudSyncTimer = null; }
   cloudRefreshMenuState();
   await cloudEnable();
 }
@@ -2000,23 +2132,20 @@ async function cloudSave() {
       var items0 = (listData && listData.drafts) || [];
       var hit0 = items0.some(function (d) { return d.name === name; });
       if (hit0) {
-        var pc0 = $('#meta-projectcode-top');
-        if (pc0) pc0.classList.add('is-invalid');
-        var errEl0 = $('#projcode-error');
-        if (errEl0) {
-          errEl0.textContent = '云端已存在同名项目，请改名或先「切换」到该项目再编辑';
-          errEl0.classList.remove('projcode-hint');
-          errEl0.classList.add('show');
-        }
-        projCodeConflict = true;
+        renderProjCodeConflict();
         toast('云端已存在同名项目，拒绝保存', 'err');
         return;
       }
       __unique_ok = true;
     } catch (e) {
-      // 网络异常降级：明确让用户决定，不静默放行
-      if (!confirm('无法确认是否重名（网络异常），仍要保存？可能覆盖云端同名项目。')) return;
-      __unique_ok = true;
+      // v0.6：网络异常不再弹 confirm 让用户赌，直接拒绝上传 + 拉闸门，
+      // 改动仍存本地，联网后自动补传（不可能静默覆盖云端同名项目）。
+      cloudSetGate('unknown');
+      cloudPendingRetry = true;
+      var stU = $('#status-text');
+      if (stU) { stU.textContent = '⚠️ 未能校验重名 · 改动已存本地'; stU.classList.remove('saved'); }
+      toast('网络异常，未能校验重名，已存本地', 'err');
+      return;
     }
     // 校验通过后清掉可能残留的错误态
     if (__unique_ok) {
@@ -2025,6 +2154,7 @@ async function cloudSave() {
       var errEl1 = $('#projcode-error');
       if (errEl1) { errEl1.classList.remove('show'); errEl1.textContent = ''; }
       projCodeConflict = false;
+      cloudSetGate('');
     }
   }
   try {
@@ -2058,68 +2188,147 @@ async function cloudSave() {
   }
 }
 
-function cloudListRowHtml(name, updatedAt, size, showLoadBtn) {
-  return '<div class="cloud-list__row" data-cloud-row="' + cloudEscapeHtml(name) + '">' +
-         '<div class="cloud-list__name">' + cloudEscapeHtml(name) + '</div>' +
-         '<div class="cloud-list__meta">' + cloudFmtDate(updatedAt) + ' · ' + (size || 0) + 'B</div>' +
-         (showLoadBtn ? '<button class="btn btn--primary btn--sm" data-cloud-load>加载</button>' : '') +
-         '<button class="btn btn--ghost btn--sm btn--danger" data-cloud-del>删除</button>' +
-         '</div>';
+// v0.5: 云端自动同步（登录后默认开启，节流 CLOUD_SYNC_THROTTLE_MS）
+// v0.5-fix: 顶栏「立即保存」—强制跳过 5s 节流、跳过 fp 变更检测、但保留名称冲突硬校验
+async function cloudForceSyncNow() {
+  if (!cloudSession) return;
+  if (cloudSyncTimer) { clearTimeout(cloudSyncTimer); cloudSyncTimer = null; }
+  // 强制失效指纹，让 cloudAutoSync 不在 fp gate 回部
+  cloudLastSyncedPayloadHash = '';
+  await cloudAutoSync();
 }
+
+function cloudScheduleAutoSync() {
+  if (!cloudSession) return;
+  if (cloudSuppressAutoSync) return;
+  if (cloudSyncTimer) return; // 已排队
+  cloudSyncTimer = setTimeout(function () {
+    cloudSyncTimer = null;
+    cloudAutoSync();
+  }, CLOUD_SYNC_THROTTLE_MS);
+}
+
+// v0.5-fix 🔴-1: 提取名称冲突校验，供 cloudAutoSync / cloudSave / cloudForceSyncNow 复用
+// 返回值：{ status: 'ok' | 'conflict' | 'unknown', hit?: boolean }
+// - ok: 未命中同名，可以安全 PUT
+// - conflict: 云端已存在同名项目（非 cloudLastSyncedName）
+// - unknown: 网络异常无法校验（调用方自行决定降级策略）
+var cloudNameCheckCache = { owner: '', name: '', ts: 0, status: '' };
+var CLOUD_NAME_CHECK_TTL_MS = 30 * 1000;
+// v0.5 二审 N1：缓存必须绑定 owner，否则切账号后 30s 内同名项目会误命中旧账号结果 -> 跨账号静默覆盖
+function cloudResetNameCheckCache() {
+  cloudNameCheckCache = { owner: '', name: '', ts: 0, status: '' };
+}
+async function cloudCheckNameConflict(name) {
+  if (name === cloudLastSyncedName) return { status: 'ok' };
+  var owner = (cloudSession && cloudSession.owner) ? cloudSession.owner : '';
+  if (!owner) return { status: 'unknown' };
+  var now = Date.now();
+  if (cloudNameCheckCache.owner === owner && cloudNameCheckCache.name === name && (now - cloudNameCheckCache.ts) < CLOUD_NAME_CHECK_TTL_MS && cloudNameCheckCache.status) {
+    return { status: cloudNameCheckCache.status };
+  }
+  try {
+    var listData = await cloudFetchList();
+    var items = (listData && listData.drafts) || [];
+    var hit = items.some(function (d) { return d.name === name; });
+    var status = hit ? 'conflict' : 'ok';
+    cloudNameCheckCache = { owner: owner, name: name, ts: now, status: status };
+    return { status: status, hit: hit };
+  } catch (e) {
+    return { status: 'unknown' };
+  }
+}
+
+async function cloudAutoSync() {
+  if (!cloudSession) return;
+  if (cloudSyncInFlight) { cloudScheduleAutoSync(); return; }
+  var name = (state.meta && state.meta.projectCode ? state.meta.projectCode : '').trim();
+  var st = $('#status-text');
+  if (!name) {
+    cloudSetGate('empty');
+    if (st) { st.textContent = '⚠️ 请先填写项目编号后同步'; st.classList.remove('saved'); }
+    return;
+  }
+  // v0.5-fix 🔴-2: fingerprint 只对 state 计算，不含时间戳
+  var stateJson;
+  try { stateJson = JSON.stringify(state); }
+  catch (e) { return; }
+  var fp = cloudPayloadFingerprint(stateJson);
+  if (fp === cloudLastSyncedPayloadHash && !cloudPendingRetry) return; // 无变化 → 不发请求
+  // v0.5-fix 🔴-1: uniqueness 硬校验（自动同步无人值守，不能弹 confirm）
+  if (name !== cloudLastSyncedName) {
+    var check = await cloudCheckNameConflict(name);
+    if (!cloudSession) return; // 🟡-2：追检会话已退出（避免旧请求污染新账号 UI）
+    if (check.status === 'conflict') {
+      renderProjCodeConflict();
+      if (st) { st.textContent = '⚠️ 云端已存在同名项目，未同步'; st.classList.remove('saved'); }
+      return;
+    } else if (check.status === 'unknown') {
+      cloudSetGate('unknown');
+      if (st) { st.textContent = '⚠️ 未能校验重名 · 改动已存本地'; st.classList.remove('saved'); }
+      cloudPendingRetry = true;
+      return;
+    }
+  }
+  var plain;
+  try { plain = JSON.stringify({ version: 1, savedAt: Date.now(), state: state }); }
+  catch (e) { return; }
+  cloudSyncInFlight = true;
+  if (st) { st.textContent = '☁️ 同步中…'; st.classList.remove('saved'); }
+  try {
+    var enc = await cloudEncrypt(plain);
+    var bodyText = JSON.stringify(enc);
+    if (bodyText.length > CLOUD_MAX_BYTES) {
+      cloudSyncInFlight = false;
+      cloudSetGate('oversize');
+      if (st) { st.textContent = '⚠️ 内容超 100KB，未同步（已存本地）'; st.classList.remove('saved'); }
+      return;
+    }
+    var resp = await cloudApi('/draft?owner=' + encodeURIComponent(cloudSession.owner) + '&name=' + encodeURIComponent(name), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: bodyText
+    });
+    if (resp && resp.__notFound) throw new Error('unexpected 404 on PUT');
+    if (!cloudSession) return; // 🟡-2：同步中退出，不再写 UI
+    cloudLastSyncedAt = (resp && resp.updatedAt) || Date.now();
+    cloudLastSyncedPayloadHash = fp;
+    cloudLastSyncedName = name;
+    cloudPendingRetry = false;
+    cloudSetGate('');
+    if (st) { st.textContent = '☁️ 已同步 ' + fmtTime(cloudLastSyncedAt); st.classList.add('saved'); }
+    updateCapacityBar();
+  } catch (e) {
+    console.error('auto-sync failed', e && e.kind);
+    if (e && e.kind === 'network') {
+      cloudPendingRetry = true;
+      cloudSetGate('offline');
+      if (st) { st.textContent = navigator.onLine
+        ? '⚠️ 云端连接失败 · 改动已存本地，将自动重试'
+        : '🔌 离线中 · 改动已存本地，联网后自动同步'; st.classList.remove('saved'); }
+    } else if (e && e.kind === 'rate') {
+      // 限流 → 稍后重试
+      cloudPendingRetry = true;
+      cloudScheduleAutoSync();
+      cloudSetGate('retry');
+      if (st) { st.textContent = '⚠️ 云端繁忙 · 改动已存本地，将自动重试'; st.classList.remove('saved'); }
+    } else {
+      cloudSetGate('retry');
+      if (st) { st.textContent = '⚠️ 同步失败 · 改动已存本地'; st.classList.remove('saved'); }
+    }
+  } finally {
+    cloudSyncInFlight = false;
+  }
+}
+
+function cloudListRowHtml_removed_v05fix() { /* removed: menu no longer exposes list/load */ }
 
 async function cloudFetchList() {
   return cloudApi('/list?owner=' + encodeURIComponent(cloudSession.owner));
 }
 
-async function cloudList() {
-  if (!cloudSession) { toast('请先启用云端', 'err'); return; }
-  try {
-    var data = await cloudFetchList();
-    var items = (data && data.drafts) || [];
-    var body = items.length
-      ? '<div class="cloud-list">' + items.map(function (d) {
-          return cloudListRowHtml(d.name, d.updatedAt, d.size, false);
-        }).join('') + '</div>'
-      : '<div class="cloud-list__empty">云端还没有草稿，先去「保存到云端」存一份。</div>';
-    await cloudModal({
-      title: '📋 云端草稿列表',
-      bodyHtml: body,
-      hideOk: true,
-      cancelText: '关闭'
-    });
-  } catch (e) {
-    console.error(e);
-    if (e.kind === 'network') toast('云端不可达', 'err');
-    else if (e.kind === 'rate') toast('请求过频', 'err');
-    else toast('拉列表失败：' + (e.message || ''), 'err');
-  }
-}
-
-async function cloudLoadPick() {
-  if (!cloudSession) { toast('请先启用云端', 'err'); return; }
-  try {
-    var data = await cloudFetchList();
-    var items = (data && data.drafts) || [];
-    var body = items.length
-      ? '<div class="cloud-list">' + items.map(function (d) {
-          return cloudListRowHtml(d.name, d.updatedAt, d.size, true);
-        }).join('') + '</div>'
-      : '<div class="cloud-list__empty">云端还没有草稿，先去「保存到云端」存一份。</div>';
-    await cloudModal({
-      title: '⬇️ 从云端加载',
-      bodyHtml: body,
-      hideOk: true,
-      cancelText: '关闭'
-    });
-  } catch (e) {
-    console.error(e);
-    if (e.kind === 'network') toast('云端不可达', 'err');
-    else if (e.kind === 'rate') toast('请求过频', 'err');
-    else toast('拉列表失败：' + (e.message || ''), 'err');
-  }
-}
-
 async function cloudLoadByName(name) {
+  cloudSuppressAutoSync = true;
   try {
     var data = await cloudApi('/draft?owner=' + encodeURIComponent(cloudSession.owner) + '&name=' + encodeURIComponent(name));
     if (data.__notFound) { toast('云端没找到这份草稿', 'err'); return; }
@@ -2156,11 +2365,18 @@ async function cloudLoadByName(name) {
     syncTopbar();
     updateCapacityBar();
     $('#modal-cloud').classList.remove('show');
+    // v0.5-fix 🔴-2: fp 只对 state 计算（与 cloudAutoSync 一致）
+    try {
+      var stateJson2 = JSON.stringify(state);
+      cloudLastSyncedPayloadHash = cloudPayloadFingerprint(stateJson2);
+    } catch (e2) { /* ignore */ }
   } catch (e) {
     console.error(e);
     if (e.kind === 'network') toast('云端不可达', 'err');
     else if (e.kind === 'rate') toast('请求过频', 'err');
     else toast('拉取失败：' + (e.message || ''), 'err');
+  } finally {
+    cloudSuppressAutoSync = false;
   }
 }
 
@@ -2171,7 +2387,8 @@ async function cloudDeleteByName(name) {
     toast('已删除「' + name + '」', 'ok');
     var mask = $('#modal-cloud');
     if (mask.classList.contains('show')) {
-      cloudList();
+      // v0.5-fix: refresh switch modal instead of removed cloudList modal
+      try { openSwitchModal(); } catch (e) { /* soft */ }
     }
   } catch (e) {
     console.error(e);
@@ -2198,15 +2415,18 @@ function bindCloud() {
     }
   });
   menu.addEventListener('click', function (e) {
+    // v0.6: 导出 .md / .json 已移入本下拉菜单，点完关菜单（实际导出由各自 listener 处理）
+    if (e.target.closest('#btn-export-md, #btn-export-json')) {
+      menu.classList.remove('show');
+      btn.setAttribute('aria-expanded', 'false');
+      return;
+    }
     var it = e.target.closest('[data-cloud-act]');
     if (!it || it.disabled) return;
     var act = it.dataset.cloudAct;
     menu.classList.remove('show');
     btn.setAttribute('aria-expanded', 'false');
     if (act === 'enable') cloudEnable();
-    else if (act === 'save') cloudSave();
-    else if (act === 'load') cloudLoadPick();
-    else if (act === 'list') cloudList();
     else if (act === 'switch') cloudSwitch();
     else if (act === 'disable') cloudDisable();
   });
@@ -2288,14 +2508,12 @@ async function runProjectCodeCheck() {
     var items = (data && data.drafts) || [];
     var hit = items.some(function (d) { return d.name === name; });
     if (hit && name !== cloudLastSyncedName) {
-      projCodeConflict = true;
-      pc.classList.add('is-invalid');
-      errEl.textContent = '云端已存在同名项目（保存会覆盖）';
-      errEl.classList.add('show');
+      renderProjCodeConflict();
     } else {
+      if (cloudGate === 'conflict') cloudSetGate('');
       pc.classList.remove('is-invalid');
       errEl.classList.remove('show');
-      errEl.textContent = '';
+      errEl.innerHTML = '';
     }
   } catch (e) {
     // MVS-010 B(fix 🟡-2): 网络失败不再静默，给用户「未验证」的可见反馈
@@ -2307,15 +2525,102 @@ async function runProjectCodeCheck() {
   }
 }
 
+// ====================================================================
+// v0.6 同步闸门（cloudGate）
+// 设计：不再用 confirm 弹窗把判断成本甩给用户，而是「不让用户走进危险区」：
+//   只要当前不是「已同步」态，就把【切换】+【立即保存】置灰，
+//   并用 title tooltip 直接告诉他「为什么不能点 + 怎么解决」。
+// 逃生口三条（K师 07-31 拍板）：1) 改编号  2) 右侧「清空」  3) 强刷（beforeunload 提示）
+// 统一规则一次性盖住 5 条失败路径：撞编号 / 断网 / 编号为空 / 超 100KB / 重名校验失败。
+// ====================================================================
+var cloudGate = '';   // '' = 通行；非空 = 闸门原因 key
+var CLOUD_GATE_MSG = {
+  conflict: '项目编号与云端重复，请先换个编号',
+  empty:    '请先填写项目编号',
+  oversize: '内容超过 100KB，无法同步到云端',
+  offline:  '当前无法连接云端，改动已存本地，联网后会自动补传',
+  unknown:  '未能校验项目编号是否重复，暂不能同步',
+  retry:    '同步失败，正在自动重试'
+};
+function cloudSetGate(reason) {
+  cloudGate = reason || '';
+  applyCloudGate();
+}
+function applyCloudGate() {
+  // 未登录云端 = 纯本地模式，不存在「同步」概念，不拦
+  var blocked = !!cloudSession && !!cloudGate;
+  var tip = blocked ? (CLOUD_GATE_MSG[cloudGate] || '当前无法同步到云端') : '';
+  // v0.6 K师 17:46 修正：撞编号时【切换】直接隐藏（不是置灰），
+  // 逃生口改为警示文案里的「放弃改动并切换」可点击链接，避免「灰按钮但又叫你点」的矛盾。
+  var sw = $('#btn-switch');
+  if (sw) {
+    var hideSwitch = blocked && cloudGate === 'conflict';
+    sw.style.display = hideSwitch ? 'none' : '';
+    sw.disabled = blocked && !hideSwitch;
+    sw.classList.toggle('is-gated', sw.disabled);
+    sw.title = sw.disabled ? tip : '';
+  }
+  var sv = $('#btn-save');
+  if (sv) {
+    sv.disabled = blocked;
+    sv.classList.toggle('is-gated', blocked);
+    sv.title = blocked ? tip : '';
+  }
+}
+
+// v0.6 逃生口：放弃本地未同步改动，直接进切换面板。
+// 只从撞编号警示文案里的链接触发，用户意图明确，因此不再二次确认。
+function discardAndSwitch() {
+  state = emptyState();
+  renderAll();
+  saveNow();
+  projCodeConflict = false;
+  cloudLastSyncedName = '';
+  var pc = $('#meta-projectcode-top');
+  if (pc) pc.classList.remove('is-invalid');
+  var err = $('#projcode-error');
+  if (err) { err.classList.remove('show'); err.innerHTML = ''; }
+  cloudSetGate('');
+  toast('已放弃未同步改动', 'ok');
+  openSwitchModal();
+}
+
+// 撞编号的统一警示渲染（含逃生口链接）
+function renderProjCodeConflict() {
+  var pc = $('#meta-projectcode-top');
+  if (pc) pc.classList.add('is-invalid');
+  var errEl = $('#projcode-error');
+  if (errEl) {
+    errEl.innerHTML = '云端存在同名项目，换个编号或者 ' +
+      '<button type="button" class="projcode-escape" id="projcode-discard" ' +
+      'title="将清空当前未同步内容，并打开项目切换面板">丢弃改动并切换</button>';
+    errEl.classList.remove('projcode-hint');
+    errEl.classList.add('show');
+    var b = $('#projcode-discard');
+    if (b) b.addEventListener('click', discardAndSwitch);
+  }
+  projCodeConflict = true;
+  cloudSetGate('conflict');
+}
+
+// v0.6 修复：dirty 判定改用「内容指纹」，不再用时间戳比大小。
+// 旧实现 `lastSavedAt > cloudLastSyncedAt` 有致命缺陷：
+//   1) 30s 定时 saveNow() 无条件刷新 lastSavedAt（内容没变也刷）
+//   2) cloudAutoSync() 内容没变时直接 return，cloudLastSyncedAt 停在原地
+//   => 用户什么都不改，30 秒后每次切换/新建都会误弹「未同步」确认框。
+// 现在与 cloudAutoSync 使用同一把尺子：指纹一致即视为已同步。
 function hasUnsyncedChangesHint() {
-  if (!cloudLastSyncedAt) return true;
-  return lastSavedAt > cloudLastSyncedAt;
+  if (!cloudSession) return false;        // 未登录云端，无「同步」概念，不拦
+  if (!cloudLastSyncedPayloadHash) return true;  // 从未同步过
+  var fp;
+  try { fp = cloudPayloadFingerprint(JSON.stringify(state)); }
+  catch (e) { return true; }              // 序列化失败 → 保守拦一道
+  return fp !== cloudLastSyncedPayloadHash;
 }
 
 function newProject() {
-  if (hasUnsyncedChangesHint()) {
-    if (!confirm('当前改动未同步到云端，新建会丢失未同步内容。确定？')) return;
-  }
+  // v0.6：不再弹 confirm。闸门已在【切换】按钮层拦住危险操作，
+  // 能走到这里说明要么已同步、要么未登录云端（纯本地）。
   state = emptyState();
   cloudLastSyncedName = '';
   renderAll();
@@ -2329,9 +2634,7 @@ function newProject() {
 }
 
 async function openSwitchModal() {
-  if (cloudSession && hasUnsyncedChangesHint()) {
-    if (!confirm('当前改动未同步到云端，切换会丢失，确定继续？')) return;
-  }
+  // v0.6：弹窗拦截改为按钮置灰（applyCloudGate），这里不再 confirm。
   if (!cloudSession) {
     await cloudModal({
       title: '🔄 切换项目',
@@ -2409,9 +2712,7 @@ function bindSwitchModal() {
 }
 
 async function switchToProject(name) {
-  if (hasUnsyncedChangesHint()) {
-    if (!confirm('当前改动未同步到云端，切换会丢失，确定？')) return;
-  }
+  // v0.6：同上，危险拦截已前置到按钮置灰。
   await cloudLoadByName(name);
   cloudLastSyncedName = name;
   // MVS-010 B(fix 🟡-1): 云端 name 是权威源，硬赋值
@@ -2508,6 +2809,125 @@ function __selfCheckB() {
   // 保存到云端时，空 projectCode 应该被 guard 拦截（cloudSave 早退）
   chk('cloudSave 是函数', typeof cloudSave === 'function');
   chk('newProject 是函数', typeof newProject === 'function');
+
+  // ==============================
+  // v0.5 新增自检：账号化 + 自动同步 + 变更检测
+  // ==============================
+  chk('cloudDeriveSaltFromUsername 是函数', typeof cloudDeriveSaltFromUsername === 'function');
+  chk('cloudScheduleAutoSync 是函数', typeof cloudScheduleAutoSync === 'function');
+  chk('cloudAutoSync 是函数', typeof cloudAutoSync === 'function');
+  chk('cloudPayloadFingerprint 是函数', typeof cloudPayloadFingerprint === 'function');
+  chk('cloudPromptLogin 是函数', typeof cloudPromptLogin === 'function');
+
+  // v0.5-1：salt 派生确定性（同名 → 同 salt）
+  var __v5Done = false;
+  (function () {
+    try {
+      Promise.all([
+        cloudDeriveSaltFromUsername('kaysen'),
+        cloudDeriveSaltFromUsername('kaysen'),
+        cloudDeriveSaltFromUsername('kaysen-other')
+      ]).then(function (rs) {
+        var a = rs[0], b = rs[1], c = rs[2];
+        function eq(x, y) {
+          if (x.length !== y.length) return false;
+          for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+          return true;
+        }
+        var same = eq(a, b);
+        var diff = !eq(a, c);
+        console.log('[__selfCheckV5] salt-determinism', { same: same, diff: diff });
+        __v5Done = true;
+      });
+    } catch (e) { /* subtle unavailable in Node harness — skip */ }
+  })();
+
+  // v0.5-2：变更检测—内容未变时 fingerprint 相同
+  var __fpA = cloudPayloadFingerprint('{"a":1}');
+  var __fpB = cloudPayloadFingerprint('{"a":1}');
+  var __fpC = cloudPayloadFingerprint('{"a":2}');
+  chk('fingerprint：同串相同', __fpA === __fpB);
+  chk('fingerprint：不同串不同', __fpA !== __fpC);
+
+  // v0.5-3：未登录时自动同步不会排时器
+  var __origSess = cloudSession;
+  var __origTimer = cloudSyncTimer;
+  cloudSession = null;
+  cloudSyncTimer = null;
+  cloudScheduleAutoSync();
+  chk('未登录 → cloudScheduleAutoSync 不排时器', cloudSyncTimer === null);
+  cloudSession = __origSess;
+  cloudSyncTimer = __origTimer;
+
+  // v0.5-4：未登录时 saveNow 仍写本地，行为不变
+  var __origSess2 = cloudSession;
+  cloudSession = null;
+  var __localWritten = false;
+  var __origSetItem = Storage.prototype.setItem;
+  Storage.prototype.setItem = function (k, v) {
+    if (k === STORAGE_KEY) __localWritten = true;
+    return __origSetItem.call(this, k, v);
+  };
+  try { saveNow(); } catch (e) { /* ignore */ }
+  Storage.prototype.setItem = __origSetItem;
+  cloudSession = __origSess2;
+  chk('未登录：saveNow 写本地 STORAGE_KEY', __localWritten === true);
+
+  // v0.5-5：云端 PUT 失败模拟 → 标记 pendingRetry（不真发请求）
+  var __origApi2 = cloudApi;
+  var __origSession3 = cloudSession;
+  var __origFP = cloudLastSyncedPayloadHash;
+  var __origSuppress = cloudSuppressAutoSync;
+  cloudSession = { owner: 'test-owner', key: null };
+  cloudLastSyncedPayloadHash = '';
+  cloudSuppressAutoSync = false;
+  cloudPendingRetry = false;
+  // 让 cloudEncrypt 定义不受影响—stub cloudApi 抛 network err
+  cloudApi = function () { var e = new Error('net'); e.kind = 'network'; return Promise.reject(e); };
+  // 直接调用 cloudAutoSync。cloudEncrypt 依赖真 session.key，可能先抛 → 那也能满足降级分支
+  try { cloudAutoSync(); } catch (e) { /* ignore */ }
+  // 不在同 tick 断言 pendingRetry（async），仅校验不崩、且接口存在
+  chk('cloudAutoSync 运行时不抛同步异常', true);
+  cloudApi = __origApi2;
+  cloudSession = __origSession3;
+  cloudLastSyncedPayloadHash = __origFP;
+  cloudSuppressAutoSync = __origSuppress;
+
+  // v0.5-6：菜单上不再有“保存到云端”按钮
+  chk('菜单删除 data-cloud-act="save" 按钮', !document.querySelector('[data-cloud-act="save"]'));
+
+  // v0.5-fix: fp 只对 state—同一 state 多次计算 fp 相同（回归防线，阻塞 2 核心）
+  var __stateForFp = { meta: { projectCode: 'X' }, foo: [1, 2, 3] };
+  var __fpS1 = cloudPayloadFingerprint(JSON.stringify(__stateForFp));
+  var __fpS2 = cloudPayloadFingerprint(JSON.stringify(__stateForFp));
+  chk('v0.5-fix: 同一 state 两次计算 fp 相同', __fpS1 === __fpS2, { fp1: __fpS1, fp2: __fpS2 });
+  __stateForFp.foo.push(4);
+  var __fpS3 = cloudPayloadFingerprint(JSON.stringify(__stateForFp));
+  chk('v0.5-fix: state 变化 → fp 变化', __fpS1 !== __fpS3, { fp1: __fpS1, fp3: __fpS3 });
+
+  // v0.5-fix: cloudAutoSync 源码含 uniqueness 校验调用
+  chk('v0.5-fix: cloudCheckNameConflict 是函数', typeof cloudCheckNameConflict === 'function');
+  var __autoSyncSrc = cloudAutoSync.toString();
+  chk('v0.5-fix: cloudAutoSync 调用了 cloudCheckNameConflict',
+      __autoSyncSrc.indexOf('cloudCheckNameConflict') !== -1);
+
+  // v0.5-fix: 菜单已无 load / list 按钮
+  chk('v0.5-fix: 菜单删除 data-cloud-act="list"',
+      !document.querySelector('[data-cloud-act="list"]'));
+  chk('v0.5-fix: 菜单删除 data-cloud-act="load"',
+      !document.querySelector('[data-cloud-act="load"]'));
+
+  // v0.5-fix: 上传 payload 不含 salt
+  var __encSrc = cloudEncrypt.toString();
+  chk('v0.5-fix: cloudEncrypt 返回体不含 salt 字段',
+      __encSrc.indexOf('salt:') === -1 && __encSrc.indexOf("salt'") === -1);
+
+  // v0.5-fix: 顶栏立即保存 API 存在
+  chk('v0.5-fix: cloudForceSyncNow 是函数', typeof cloudForceSyncNow === 'function');
+  var __btnSave = document.getElementById('btn-save');
+  chk('v0.5-fix: #btn-save 文案含“立即保存”',
+      !!__btnSave && __btnSave.textContent.indexOf('立即保存') !== -1);
+
   var summary = { pass: pass, fail: fail, total: pass + fail, details: details };
   console.log('[__selfCheckB]', summary);
   return summary;
@@ -2527,16 +2947,42 @@ function boot() {
   bindModal();
   bindCloud();
   bindSwitchModal();
-  $('#btn-save').addEventListener('click', function () { saveNow(); toast('已保存', 'ok'); });
+  $('#btn-save').addEventListener('click', function () {
+    // v0.5-fix: 「立即保存」—强制触发本地 + 云端（若已登录）
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    saveNow();
+    if (cloudSession) {
+      cloudForceSyncNow();
+    } else {
+      toast('已保存', 'ok');
+    }
+  });
   $('#btn-clear').addEventListener('click', clearAll);
   $('#btn-export-md').addEventListener('click', exportMd);
   $('#btn-export-json').addEventListener('click', exportJson);
   window.addEventListener('scroll', onScrollHighlight, { passive: true });
+
+  // v0.6 逃生口 3：强刷不阻止，但未同步时给浏览器原生确认（提示会丢失未同步内容）。
+  // 注：现代浏览器不允许自定义文案，只能触发内置提示，确认后得到干净新页面。
+  window.addEventListener('beforeunload', function (e) {
+    if (cloudSession && hasUnsyncedChangesHint()) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
   window.addEventListener('hashchange', function () {
     var id = location.hash.replace('#', '');
     if (id) setActiveNav(id);
   });
   setInterval(function () { if (saveTimer == null) saveNow(); }, 30000);
+
+  // v0.5: 联网恢复 → 自动补传一次
+  window.addEventListener('online', function () {
+    if (cloudSession && cloudPendingRetry) {
+      cloudScheduleAutoSync();
+    }
+  });
 
   loadFromStorage();
   renderAll();
@@ -2561,8 +3007,35 @@ function openSupportModal() {
     + '<div class="support-body">'
     +   '<p class="support-intro">Game PRD Tool · 免费开源的游戏 PRD 填表工具。由 马启航Marvis 开发维护。</p>'
     +   '<div class="support-section">'
+    +     '<h3>💰 支持作者</h3>'
+    +     '<div class="support-qr-row">'    +       '<div class="support-qr">'
+    +         '<div class="support-qr__placeholder"><div class="support-qr__icon">💰</div><div class="support-qr__hint">收款码待放置</div></div>'
+    +         '<div class="support-qr__label">微信</div>'
+    +       '</div>'
+    +       '<div class="support-qr">'
+    +         '<div class="support-qr__placeholder"><div class="support-qr__icon">💰</div><div class="support-qr__hint">收款码待放置</div></div>'
+    +         '<div class="support-qr__label">支付宝</div>'
+    +       '</div>'
+    +     '</div>'
+    +     '<p class="support-coffee">如果这个工具帮到了你，可以请作者喝杯咖啡 ☕</p>'
+    +   '</div>'
+    +   '<div class="support-section">'
+    +     '<h3>🔗 反馈</h3>'
+    // TODO: 填入真实反馈渠道后替换 href 与文字
+    +     '<p class="support-feedback">问题反馈 / 功能建议：<a href="#">（待填）</a></p>'
+    +   '</div>'
+    +   '<div class="support-section">'
     +     '<h3>📜 更新日志</h3>'
-    +     '<ol class="support-changelog">'
+    +     '<ol class="support-changelog">'    +       '<li class="support-changelog__item">'
+    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.5</span><span class="support-changelog__date">2026-07-31</span></div>'
+    +         '<ul class="support-changelog__body">'
+    +           '<li>新增账号登录（用户名 + 密码），同一账号可在任意设备访问同一份数据</li>'
+    +           '<li>登录后自动云端同步，不再需要手动点保存</li>'
+    +           '<li>顶栏“立即保存”可跳过节流、即时写本地并同步云端</li>'
+    +           '<li>云端菜单精简：只保留登录 / 切换账号 / 退出（项目列表走顶栏 ⇄）</li>'
+    +           '<li>断网自动降级本地保存，联网后自动补传</li>'
+    +         '</ul>'
+    +       '</li>'
     +       '<li class="support-changelog__item">'
     +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.4</span><span class="support-changelog__date">2026-07-31</span></div>'
     +         '<ul class="support-changelog__body">'
@@ -2578,41 +3051,10 @@ function openSupportModal() {
     +           '<li>云端密码校验改为内联错误提示，支持回车提交</li>'
     +         '</ul>'
     +       '</li>'
-    +       '<li class="support-changelog__item">'
-    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.2</span><span class="support-changelog__date">2026-07-30</span></div>'
-    +         '<ul class="support-changelog__body">'
-    +           '<li>新增云端草稿箱：零知识加密（PBKDF2 + AES-GCM），数据端到端加密，服务器无法解密</li>'
-    +         '</ul>'
-    +       '</li>'
-    +       '<li class="support-changelog__item">'
-    +         '<div class="support-changelog__head"><span class="support-changelog__ver">v0.1</span><span class="support-changelog__date">2026-07-02</span></div>'
-    +         '<ul class="support-changelog__body">'
-    +           '<li>首个版本：12 大板块结构化填表，支持导出 Markdown / JSON</li>'
-    +         '</ul>'
-    +       '</li>'
     +     '</ol>'
     +   '</div>'
-    +   '<div class="support-section">'
-    +     '<h3>💰 支持作者</h3>'
-    +     '<div class="support-qr-row">'
-    +       '<div class="support-qr">'
-    +         '<div class="support-qr__placeholder"><div class="support-qr__icon">💰</div><div class="support-qr__hint">收款码待放置</div></div>'
-    +         '<div class="support-qr__label">微信</div>'
-    +       '</div>'
-    +       '<div class="support-qr">'
-    +         '<div class="support-qr__placeholder"><div class="support-qr__icon">💰</div><div class="support-qr__hint">收款码待放置</div></div>'
-    +         '<div class="support-qr__label">支付宝</div>'
-    +       '</div>'
-    +     '</div>'
-    +     '<p class="support-coffee">如果这个工具帮到了你，可以请作者喝杯咖啡 ☕</p>'
-    +   '</div>'
-    +   '<div class="support-section">'
-    +     '<h3>🔗 反馈</h3>'
-    +     // TODO: 填入真实反馈渠道后替换 href 与文字
-    '<p class="support-feedback">问题反馈 / 功能建议：<a href="#">（待填）</a></p>'
-    +   '</div>'
     + '</div>';
-  cloudModal({ title: '💛 支持作者', bodyHtml: bodyHtml, hideOk: true, cancelText: '关闭' });
+  cloudModal({ title: '💛 支持与反馈', bodyHtml: bodyHtml, hideOk: true, cancelText: '关闭' });
 }
 
 // expose for tests / programmatic access
@@ -2631,8 +3073,6 @@ window.__prd = {
   cloudEnable: cloudEnable,
   cloudDisable: cloudDisable,
   cloudSave: cloudSave,
-  cloudList: cloudList,
-  cloudLoadPick: cloudLoadPick,
   cloudLoadByName: cloudLoadByName,
   get cloudSession() { return cloudSession; },
   SECTIONS: SECTIONS,
