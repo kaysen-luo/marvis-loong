@@ -14,8 +14,21 @@
  *   DELETE /draft?owner=<hash>&name=<name>
  */
 
+import {
+  validateFeedbackBody,
+  generateTicketId,
+  buildTelegramMessage,
+  monthBucket,
+  dayBucketCN,
+  minuteBucket,
+  FEEDBACK_LIMITS,
+} from "./feedback";
+
 export interface Env {
   DRAFTS: KVNamespace;
+  // MVS-010 阶段一 反馈工单：均为可选，未设置则不推送
+  TG_BOT_TOKEN?: string;
+  TG_CHAT_ID?: string;
 }
 
 const ALLOWED_ORIGIN = "https://marvis-loong.pages.dev";
@@ -23,6 +36,8 @@ const ALLOWED_ORIGIN = "https://marvis-loong.pages.dev";
 const DEV_ORIGINS = new Set([
   "http://127.0.0.1:8899",
   "http://localhost:8899",
+  "http://127.0.0.1:8877",
+  "http://localhost:8877",
   "http://127.0.0.1:4321",
   "http://localhost:4321",
   "http://127.0.0.1:4322",
@@ -45,7 +60,7 @@ function corsHeaders(request: Request): HeadersInit {
   const origin = pickAllowOrigin(request);
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
@@ -246,10 +261,143 @@ async function handleDeleteDraft(request: Request, env: Env, url: URL): Promise<
   return jsonResponse(request, { ok: true });
 }
 
+// ---- feedback (MVS-010 阶段一) ----
+
+async function checkFeedbackRateLimit(env: Env, ip: string, now: number): Promise<{ ok: boolean; retryAfter?: number }> {
+  const minKey = `fbrl:${ip}:${minuteBucket(now)}`;
+  const dayKey = `fbrld:${ip}:${dayBucketCN(now)}`;
+  const [minRaw, dayRaw] = await Promise.all([env.DRAFTS.get(minKey), env.DRAFTS.get(dayKey)]);
+  const minN = minRaw ? parseInt(minRaw, 10) : 0;
+  const dayN = dayRaw ? parseInt(dayRaw, 10) : 0;
+  if (minN >= FEEDBACK_LIMITS.perMinute) return { ok: false, retryAfter: 60 };
+  if (dayN >= FEEDBACK_LIMITS.perDay) return { ok: false, retryAfter: 3600 };
+  await Promise.all([
+    env.DRAFTS.put(minKey, String(minN + 1), { expirationTtl: 65 }),
+    env.DRAFTS.put(dayKey, String(dayN + 1), { expirationTtl: 90_000 }),
+  ]);
+  return { ok: true };
+}
+
+async function pushTelegram(env: Env, text: string): Promise<boolean> {
+  const token = env.TG_BOT_TOKEN;
+  const chatId = env.TG_CHAT_ID;
+  if (!token || !chatId) return false;
+  // 5s 超时：TG 慢/被墙时不能让用户空等，也不拖 Worker 的 CPU/请求配额
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }),
+      signal: ctrl.signal,
+    });
+    return resp.ok;
+  } catch (_e) {
+    // 网络错/超时吞掉：反馈已经落 KV，通知失败不影响用户
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function handleFeedback(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  // 大小早关
+  const ct = request.headers.get("Content-Length");
+  if (ct && parseInt(ct, 10) > MAX_BODY_BYTES) return tooLarge(request);
+
+  let bodyText: string;
+  try { bodyText = await request.text(); } catch { return badRequest(request, "cannot read body"); }
+  if (bodyText.length > MAX_BODY_BYTES) return tooLarge(request);
+
+  let body: any;
+  try { body = JSON.parse(bodyText); } catch { return badRequest(request, "body must be JSON"); }
+
+  const v = validateFeedbackBody(body);
+  if (!v.ok) return badRequest(request, v.error);
+  const clean = v.value;
+
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const now = Date.now();
+
+  const rl = await checkFeedbackRateLimit(env, ip, now);
+  if (!rl.ok) {
+    return jsonResponse(request, { error: "rate limited" }, 429, { "Retry-After": String(rl.retryAfter || 60) });
+  }
+
+  // 生成不撞的工单号(最多重试 5 次)
+  let ticketId = "";
+  for (let i = 0; i < 5; i++) {
+    const candidate = generateTicketId((n) => {
+      const buf = new Uint8Array(n);
+      crypto.getRandomValues(buf);
+      return buf;
+    });
+    const exists = await env.DRAFTS.get(`fb:${candidate}`);
+    if (!exists) { ticketId = candidate; break; }
+  }
+  if (!ticketId) return serverError(request, "ticket id exhausted");
+
+  const record = {
+    ticketId,
+    product: clean.product,
+    version: clean.version,
+    content: clean.content,
+    contact: clean.contact,
+    ua: clean.ua,
+    ip,
+    createdAt: now,
+    status: "new" as const,
+  };
+
+  // 存档优先：先写 KV，再推 TG
+  await env.DRAFTS.put(`fb:${ticketId}`, JSON.stringify(record));
+
+  // 月索引(1000 条上限，防单 key 无限膨胀)
+  const idxKey = `fb:index:${monthBucket(now)}`;
+  try {
+    const raw = await env.DRAFTS.get(idxKey);
+    let ids: string[] = [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.ids)) ids = parsed.ids.filter((x: unknown) => typeof x === "string");
+    }
+    if (ids.length < 1000) {
+      ids.push(ticketId);
+      await env.DRAFTS.put(idxKey, JSON.stringify({ ids }));
+    }
+  } catch { /* 索引出错不影响主流程 */ }
+
+  const msg = buildTelegramMessage({
+    ticketId,
+    product: clean.product,
+    version: clean.version,
+    content: clean.content,
+    contact: clean.contact,
+    ua: clean.ua,
+    ts: now,
+  });
+
+  // 同步推 TG 拿到 notified 状态；若无 token 直接 false
+  let notified = false;
+  try {
+    notified = await pushTelegram(env, msg);
+  } catch (_e) {
+    notified = false;
+  }
+
+  return jsonResponse(request, { ok: true, ticketId, notified });
+}
+
 // ---- entry ----
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // Preflight
@@ -276,6 +424,10 @@ export default {
     try {
       if (url.pathname === "/list") {
         if (request.method === "GET") return handleList(request, env, url);
+        return methodNotAllowed(request);
+      }
+      if (url.pathname === "/feedback") {
+        if (request.method === "POST") return handleFeedback(request, env, ctx);
         return methodNotAllowed(request);
       }
       if (url.pathname === "/draft") {
