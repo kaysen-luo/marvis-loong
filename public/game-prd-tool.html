@@ -992,7 +992,7 @@ function buildNav() {
     a.className = 'nav__item';
     a.href = '#' + s.id;
     a.dataset.target = s.id;
-    a.innerHTML = '<span class="num">' + pad2(s.num) + '</span><span>' + s.name + '</span>';
+    a.innerHTML = '<span class="num">' + pad2(s.num) + '</span><span>' + cloudEscapeHtml(s.name) + '</span>';
     a.addEventListener('click', function (e) {
       e.preventDefault();
       var el = document.getElementById(s.id);
