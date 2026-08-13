@@ -116,15 +116,26 @@ const allTags = Array.from(new Set(sorted.flatMap((e) => e.data.tags ?? []))).so
       const overflow = links.filter((el) => el.offsetTop > firstTop + 2)
       if (overflow.length === 0) return
 
-      // 预留「+N」按钮的位置:先显示按钮再重新计算一次
+      // 显示「+N」按钮,它自己也占位,可能把最后一个标签挤到第二行。
+      // 因此迭代:只要按钮不在第一行,就再多藏一个标签,直到按钮回到第一行。
       toggleEl.hidden = false
-      toggleEl.textContent = `+${overflow.length}`
-      const recomputed = links.filter((el) => el.offsetTop > firstTop + 2)
-      const hiddenOnes = recomputed.length ? recomputed : overflow
-      hiddenOnes.forEach((el) => el.classList.add('is-hidden'))
-      toggleEl.textContent = `+${hiddenOnes.length}`
+      overflow.forEach((el) => el.classList.add('is-hidden'))
+      const hiddenSet = new Set<HTMLAnchorElement>(overflow)
+
+      for (let guard = 0; guard < links.length; guard++) {
+        toggleEl.textContent = `+${hiddenSet.size}`
+        if (toggleEl.offsetTop <= firstTop + 2) break
+        // 按钮还在第二行 -> 藏掉当前最后一个仍可见的标签
+        const stillVisible = links.filter((el) => !hiddenSet.has(el))
+        const last = stillVisible[stillVisible.length - 1]
+        if (!last) break
+        last.classList.add('is-hidden')
+        hiddenSet.add(last)
+      }
+
+      toggleEl.textContent = `+${hiddenSet.size}`
       toggleEl.setAttribute('aria-expanded', 'false')
-      toggleEl.dataset.count = String(hiddenOnes.length)
+      toggleEl.dataset.count = String(hiddenSet.size)
     }
 
     toggleEl.addEventListener('click', () => {
