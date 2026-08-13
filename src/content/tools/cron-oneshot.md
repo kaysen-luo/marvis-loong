@@ -2,7 +2,7 @@
 title: 'cron 一次性任务的几种用法'
 description: 'OpenClaw 的 cron 不只是"定时任务"——它是 agent 的可调度后台。这里收拢 5 种典型一次性场景的实操示例,以及周期 vs 一次性的判断标准和几个真踩过的坑。'
 date: 2026-05-07
-tags: ['脚本', '工具链', 'OpenClaw', 'SOP']
+tags: ['脚本', '工具链', 'OpenClaw']
 ---
 
 ## 引子:cron 不是「定时任务」的代名词

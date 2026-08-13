@@ -2,7 +2,7 @@
 title: 'Agent 工作区的两条隐形红线:项目路径规范 + Git 公开仓库安全'
 description: 'Agent 在你机器上跑久了,会自然把文件撒得到处都是。再叠上一个 public 的 workspace git 仓库,就是一颗等着炸的雷。这篇是我踩过的两个坑——以及现在贴在工作台正上方的两条红线。'
 date: 2026-05-13
-tags: ['agent', 'workspace', 'git', '踩坑', '方法论']
+tags: ['AI Agent', '工具链', '排障']
 ---
 
 ## 引子:Agent 是个不收拾屋子的室友

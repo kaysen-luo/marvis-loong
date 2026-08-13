@@ -2,7 +2,7 @@
 title: "把 LLM 当资料库前，先证伪一次"
 description: "凭 LLM 记忆引用外部作品的机制/设定进 spec，是最容易被信任放行、又最难被 QA 抓的错。"
 date: 2026-07-17
-tags: [ai-collab, subagent, lessons]
+tags: ['方法论']
 ---
 
 ## 今天的翻车

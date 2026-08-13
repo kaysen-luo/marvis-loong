@@ -45,6 +45,7 @@ const allTags = Array.from(new Set(sorted.flatMap((e) => e.data.tags ?? []))).so
               </a>
             )
           })}
+          <button type="button" class="tag-link tag-toggle" data-tag-toggle hidden aria-expanded="false"></button>
         </div>
       )
     }
@@ -93,6 +94,65 @@ const allTags = Array.from(new Set(sorted.flatMap((e) => e.data.tags ?? []))).so
 
   applyFilter()
   window.addEventListener('popstate', applyFilter)
+
+  // 标签栏:默认只显示一排,超出的折叠到「+N」按钮后面
+  function setupTagCollapse() {
+    const bar = document.querySelector<HTMLElement>('[data-tag-filter]')
+    const toggle = document.querySelector<HTMLButtonElement>('[data-tag-toggle]')
+    if (!bar || !toggle) return
+
+    const barEl = bar
+    const toggleEl = toggle
+    const links = Array.from(barEl.querySelectorAll<HTMLAnchorElement>('.tag-link:not(.tag-toggle)'))
+    let expanded = false
+
+    function measure() {
+      // 先全部显示以便测量真实布局
+      links.forEach((el) => el.classList.remove('is-hidden'))
+      toggleEl.hidden = true
+      if (expanded) return
+
+      const firstTop = links.length ? links[0].offsetTop : 0
+      const overflow = links.filter((el) => el.offsetTop > firstTop + 2)
+      if (overflow.length === 0) return
+
+      // 预留「+N」按钮的位置:先显示按钮再重新计算一次
+      toggleEl.hidden = false
+      toggleEl.textContent = `+${overflow.length}`
+      const recomputed = links.filter((el) => el.offsetTop > firstTop + 2)
+      const hiddenOnes = recomputed.length ? recomputed : overflow
+      hiddenOnes.forEach((el) => el.classList.add('is-hidden'))
+      toggleEl.textContent = `+${hiddenOnes.length}`
+      toggleEl.setAttribute('aria-expanded', 'false')
+      toggleEl.dataset.count = String(hiddenOnes.length)
+    }
+
+    toggleEl.addEventListener('click', () => {
+      expanded = !expanded
+      if (expanded) {
+        links.forEach((el) => el.classList.remove('is-hidden'))
+        toggleEl.textContent = '收起'
+        toggleEl.setAttribute('aria-expanded', 'true')
+      } else {
+        measure()
+      }
+    })
+
+    measure()
+    let t: ReturnType<typeof setTimeout>
+    window.addEventListener('resize', () => {
+      clearTimeout(t)
+      t = setTimeout(() => {
+        if (!expanded) measure()
+      }, 120)
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupTagCollapse)
+  } else {
+    setupTagCollapse()
+  }
 
   // 拦截 tag 链接,使用 history pushState 实现无刷新切换
   document.querySelectorAll<HTMLAnchorElement>('[data-tag-filter] .tag-link').forEach((el) => {
@@ -155,6 +215,17 @@ const allTags = Array.from(new Set(sorted.flatMap((e) => e.data.tags ?? []))).so
   }
   .tag-link.active .count {
     color: var(--accent);
+  }
+  .tag-link.is-hidden {
+    display: none;
+  }
+  .tag-toggle {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .tag-toggle[hidden] {
+    display: none;
   }
 
   .post-list {

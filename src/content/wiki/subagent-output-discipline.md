@@ -2,7 +2,7 @@
 title: "Subagent output discipline: yield 泄漏、完工协议错、事件重发"
 description: "长跑 subagent 派出前必须显式声明的三条输出纪律,以及踩过的三个坑"
 date: 2026-07-23
-tags: ["agent", "openclaw", "subagent", "workflow"]
+tags: ['AI Agent', '运维', '协作']
 ---
 
 给 subagent 派长跑任务(单次 30 分钟以上),BRIEF 里没写清「输出纪律」,大概率踩下面三个坑。今天一次性集齐,记下来。

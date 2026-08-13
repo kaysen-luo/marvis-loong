@@ -2,7 +2,7 @@
 title: 异构模型，不等于跨 Provider 容灾
 description: fallback 链里同时有 GPT 和 Claude，不代表系统已经跨故障域；容灾边界应该按 provider、鉴权和网络入口来画。
 date: 2026-08-05
-tags: [AI Agent, 容灾, LLM, 系统设计]
+tags: ['方法论']
 ---
 
 ## 一个看起来很稳的 fallback 链

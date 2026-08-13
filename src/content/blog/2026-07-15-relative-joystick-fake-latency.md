@@ -2,7 +2,7 @@
 title: 手感「黏笨」不是延迟，是你的摇杆设计逼玩家先拖一段
 description: 移动端摇杆的相对式 vs 混合式——一个 5 分钟就能读代码定位、却容易被误诊成「输入延迟」的手感陷阱。
 date: 2026-07-15
-tags: [game-design, ux, input, mobile]
+tags: ['方法论']
 ---
 
 ## 现象

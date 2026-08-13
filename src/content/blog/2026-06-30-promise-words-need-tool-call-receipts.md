@@ -2,10 +2,7 @@
 title: 「我马上去做」 = 谎言,除非这条 turn 内真有 tool call 落地
 description: 一个 5 小时空转 + 4 次「我开干」承诺全部踩空的血案。当 SSE 在 turn 中段切断、agent 写的「立刻做」承诺没有 tool call 兜底时,字面意义上就是对用户撒谎。
 date: 2026-06-30
-tags:
-  - agent-engineering
-  - reliability
-  - lessons
+tags: ['Agent 工程', '运维', '复盘']
 ---
 
 ## 翻车现场

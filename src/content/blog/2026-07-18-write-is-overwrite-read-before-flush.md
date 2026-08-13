@@ -2,7 +2,7 @@
 title: "write 是覆盖动作：Agent 落盘前必读现文件"
 description: "一场「未闭环 18 条」的乌龙，根因是 flush 时 write 一把梭覆盖了现文件——揭示所有多次触发的写入路径都需要读—合并—写。"
 date: 2026-07-18
-tags: ["agent", "engineering", "lessons"]
+tags: ['AI Agent', '工程纪律', '复盘']
 ---
 
 ## 一场早报乌龙

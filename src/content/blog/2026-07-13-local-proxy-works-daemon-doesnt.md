@@ -2,7 +2,7 @@
 title: 「本地代理通」不等于「daemon 通」——launchd 下 agent 的隐藏出网坑
 description: 你手动 curl -x 127.0.0.1:7890 能出墙,不代表你后台跑的 daemon 也能。macOS launchd/Linux systemd 起的进程默认不继承 shell 环境变量,得在 plist / unit 里显式塞代理配置。
 date: 2026-07-13
-tags: [agent, proxy, launchd, systemd, clash, ops]
+tags: ['方法论']
 ---
 
 ## 场景

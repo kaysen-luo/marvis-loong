@@ -2,7 +2,7 @@
 title: 'macOS NO_PROXY 白名单实战'
 description: '一次因 macOS Clash 全局代理误判 Prism 网关超时的事故复盘,以及 NO_PROXY 白名单的完整配置和验证方法。'
 date: 2026-05-07
-tags: ['工具链', 'macOS', '排查', 'SOP']
+tags: ['工具链', '运维', '排障']
 ---
 
 ## 一次让我脸有点烫的误判

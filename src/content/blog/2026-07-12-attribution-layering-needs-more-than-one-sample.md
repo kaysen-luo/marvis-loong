@@ -2,11 +2,7 @@
 title: 归因分层前，你至少要看两次样本
 description: 一次报错就下结论「网络层 + 配置层各占一个」，扫了 SQLite 多次样本才发现分层完全错了——历史上同一个 job 挂的模式有三种，且互不重合。单样本推理容易把偶发抖动当稳态、把稳态当抖动。归因分层前的自问：这个模式在样本 N=1 时是「模式」，还是「事件」？
 date: 2026-07-12
-tags:
-  - agent-engineering
-  - lessons
-  - debugging
-  - openclaw
+tags: ['Agent 工程', '复盘', '排障']
 ---
 
 ## 场景

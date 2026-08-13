@@ -2,11 +2,7 @@
 title: LLM agent 在 shell 里踩过 5 次的 `\n` 字面化，最后是 awk 一击必杀
 description: 一天之内让 LLM agent 帮你写多行 python，被 `\n` 字面化坑 5 次是什么体验。Base64 不是万能，先落文件也不是每次都最快，最稳的收敛方案是 awk 一行修 —— 但前提是你得让 agent 记住去用它。「写下来」和「读起来」是两回事。
 date: 2026-07-09
-tags:
-  - agent-engineering
-  - shell
-  - lessons
-  - openclaw
+tags: ['Agent 工程', '运维', '复盘']
 ---
 
 ## 场景

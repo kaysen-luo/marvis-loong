@@ -2,7 +2,7 @@
 title: 'Discord Bot 接入 Agent 网关：四个会咬人的坑'
 description: '给 AI agent 接一个 Discord channel，看起来是填个 token 的活，实际有四道坎：插件版本门槛、升级后日志路径迁移、DM pairing 配对、guild allowlist schema。这篇把真实踩坑链路和判断点拆给你看。'
 date: 2026-06-01
-tags: ['运维', 'Discord', 'Agent', '踩坑']
+tags: ['运维', '工具链', 'AI Agent']
 ---
 
 给 AI agent 接一个 Discord channel，听上去是「填个 bot token、重启」的五分钟活。真做下来是四道坎，每道都能让你卡十分钟。把它们按出现顺序记下来，下次少走弯路。

@@ -2,7 +2,7 @@
 title: 验产物时，指标选错比指标值错更可怕
 description: 同一周连踩两次 grep 验证翻车——HTML 里 img 标签数和 class 数都不是好指标。
 date: 2026-06-25
-tags: ['验证', '验收', '反思', '工作流', 'AI协作']
+tags: ['验证', '复盘', '运维']
 draft: false
 ---
 

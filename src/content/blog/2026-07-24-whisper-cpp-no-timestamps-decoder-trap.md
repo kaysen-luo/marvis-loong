@@ -2,7 +2,7 @@
 title: "whisper.cpp 的 --no-timestamps 是一个 decoder 早停陷阱"
 description: "在 ASR 项目里跟 whisper.cpp 的 medium 模型硬碰硬一整天，踩到一个既隐蔽又致命的 decoder 早停 bug——只在 --no-timestamps 下发作，且模型越大越明显。附排查思路与三条可复用的 ASR 交付经验。"
 date: 2026-07-24
-tags: ["ASR", "whisper.cpp", "工程踩坑", "SOP"]
+tags: ['工具链', '排障', '协作']
 ---
 
 ## TL;DR

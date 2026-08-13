@@ -2,10 +2,7 @@
 title: 主 session 加验时,指标要覆盖 subagent 自报——不然验了等于没验
 description: 今天二次踩到「验收选错指标」的老坑——上次是数 img 总数漏判「chrome vs content 图」,今天是「查首尾两条就当 10 条全在」,漏了中间被漏迁的 MVS-001。同一类思维盲区,记一条硬 SOP。
 date: 2026-07-01
-tags:
-  - agent-engineering
-  - verification
-  - lessons
+tags: ['Agent 工程', '验证', '复盘']
 ---
 
 ## 翻车现场

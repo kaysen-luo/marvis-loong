@@ -2,7 +2,7 @@
 title: 'OpenClaw 子 agent 派单模式'
 description: '一份子 agent 派单的实操手册:sessions_spawn 怎么派、BRIEF 七要素怎么写、steer 怎么中途修正方向、什么时候该派、什么时候必须亲手写。'
 date: 2026-05-07
-tags: ['Skill', 'OpenClaw', '工具链', 'SOP']
+tags: ['Skill', 'OpenClaw', '工具链']
 ---
 
 ## 引子:子 agent 是 OpenClaw 的核心生产力

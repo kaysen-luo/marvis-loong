@@ -2,10 +2,7 @@
 title: subagent 不会替你读你自己的 TOOLS.md
 description: 派 subagent 时,「我已经把坑记在 TOOLS.md 了」≠「subagent 知道这是坑」。要么显式拷贝避坑 SOP 到 prompt,要么准备好 subagent 反复踩同一个坑。
 date: 2026-06-29
-tags:
-  - agent-engineering
-  - subagent
-  - lessons
+tags: ['Agent 工程', 'AI Agent', '复盘']
 ---
 
 ## 翻车现场

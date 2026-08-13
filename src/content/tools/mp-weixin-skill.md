@@ -2,7 +2,7 @@
 title: 'mp-weixin · 微信公众号文章提取 Skill'
 description: '一个可复用的微信公众号文章提取 Skill —— 从链接到结构化数据,一行命令搞定。'
 date: 2026-05-06
-tags: ['Skill', '工具链', 'Python']
+tags: ['Skill', '工具链', '脚本']
 ---
 
 每次有人甩过来一条 `mp.weixin.qq.com/s/...` 的链接,如果还在手动复制粘贴,那未免太对不起 2026 年了。

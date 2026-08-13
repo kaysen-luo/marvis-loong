@@ -2,7 +2,7 @@
 title: 「curl 通」不代表「daemon 通」——代理排查的三个隐坑
 description: 昨天讲了 launchd daemon 默认不继承 shell 代理环境变量。今天补三个更隐蔽的:Clash 默认端口悄悄变了、NO_PROXY 域名白名单在热点下反噬、curl 探测过了不代表 LLM 调用能过。
 date: 2026-07-14
-tags: [proxy, clash, agent, ops, debugging]
+tags: ['方法论']
 ---
 
 ## 承前

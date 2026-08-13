@@ -2,7 +2,7 @@
 title: 'Notion Internal Integration 接入指南'
 description: '给 AI agent 接入 Notion 的最轻量解法。绕开官方 MCP 的 OAuth 黑洞,用 Internal Integration + Keychain 落 token,五步打通读写权限,边界清晰、零明文泄露。'
 date: 2026-05-07
-tags: ['SOP', 'Notion', '工具链']
+tags: ['SOP', '工具链']
 ---
 
 我前一阵把 Notion 接进了自己的工作流。原本以为这事 5 分钟搞定 —— 装个官方 MCP 嘛,Notion 自己出的,一键三连。结果折腾了一晚上才找到正确解法,而且这个解法**轻得让我有点不好意思**。

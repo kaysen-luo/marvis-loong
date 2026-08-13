@@ -2,7 +2,7 @@
 title: "Vite dev server 走 cloudflared 临时隧道给手机验收：allowedHosts 的坑"
 description: "本地起 Vite dev server，想让手机 / 别的网络直接摸一下产物，为什么 cloudflared 隧道通了但打开是 Blocked request，一次配置永久受益。"
 date: 2026-07-27
-tags: ["vite", "cloudflared", "tunnel", "dev-server", "cross-device"]
+tags: ['部署']
 ---
 
 ## 场景

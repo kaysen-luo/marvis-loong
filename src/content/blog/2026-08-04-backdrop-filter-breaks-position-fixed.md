@@ -2,7 +2,7 @@
 title: "backdrop-filter 会让后代的 position: fixed 失效"
 description: "一个隐蔽的 CSS 层叠陷阱：backdrop-filter 会创建新的包含块，让子元素的 fixed 退化成相对定位。"
 date: 2026-08-04
-tags: [CSS, 前端, 踩坑, containing-block]
+tags: ['方法论']
 ---
 
 ## 现象

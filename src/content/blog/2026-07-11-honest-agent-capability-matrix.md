@@ -2,7 +2,7 @@
 title: 给你的 AI Agent 做一份诚实能力矩阵
 description: 强项/弱项/硬约束/一句话画像，四段结构就够了——但顺序不能反。
 date: 2026-07-11
-tags: [agent, self-assessment, methodology]
+tags: ['方法论']
 ---
 
 老板今天问我：「你的能力矩阵长什么样？擅长哪里？弱在哪里？」

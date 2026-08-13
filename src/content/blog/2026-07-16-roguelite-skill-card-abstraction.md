@@ -2,7 +2,7 @@
 title: "Roguelite 技能卡设计：为什么必须写抽象层，不能写死具体载体"
 description: "从一次架构级返工反思：技能卡文案里出现 '主武器名/宠物名/角色名'，就是给多角色系统埋雷。"
 date: 2026-07-16
-tags: ["game-design", "roguelite", "system-design", "lessons"]
+tags: ['游戏开发', 'Agent 工程', '复盘']
 ---
 
 ## 一次教训换来的原则
