@@ -31,7 +31,15 @@ export interface Env {
   TG_CHAT_ID?: string;
 }
 
-const ALLOWED_ORIGIN = "https://marvis-loong.pages.dev";
+// 生产 origin 允许列表(2026-08-25 MVS-013 接入云端同步时由单值常量改为集合)。
+// 注意:零知识模型下也**绝不**能放开成 "*" —— 那会让任意站点用用户浏览器打
+// 本 Worker,虽拿不到明文,但可枚举/删除他人 owner 下的密文。
+const PROD_ORIGINS = new Set([
+  "https://marvis-loong.pages.dev",   // MVS-010 game-prd-tool
+  "https://story-mind-catcher.pages.dev", // MVS-013 story-mind-catcher
+]);
+// 兜底 origin:请求头缺失 / 非白名单时回这个值(等价于旧的单值 ALLOWED_ORIGIN 行为)
+const DEFAULT_ORIGIN = "https://marvis-loong.pages.dev";
 // dev origins let 本地 http server 测试通过(生产不影响)
 const DEV_ORIGINS = new Set([
   "http://127.0.0.1:8899",
@@ -42,18 +50,35 @@ const DEV_ORIGINS = new Set([
   "http://localhost:4321",
   "http://127.0.0.1:4322",
   "http://localhost:4322",
+  // MVS-013 vite dev server(vite.config.js: port 5173, strictPort:false → 递增备用端口)
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
+  "http://127.0.0.1:5174",
+  "http://localhost:5174",
+  "http://127.0.0.1:5175",
+  "http://localhost:5175",
+  // vite preview 默认端口
+  "http://127.0.0.1:4173",
+  "http://localhost:4173",
 ]);
 
-const MAX_BODY_BYTES = 100 * 1024; // 100KB 单份草稿上限
+// 单份草稿上限。2026-08-25 由 100KB 抬到 500KB:
+//   MVS-013(小说架构编辑器)实测典型档案(20 章/8 角色/40 碎片)加密后 90.8KB,
+//   已占旧上限 91%;重度(60 章)282KB 直接撑爆。加密本身有约 33% 膨胀
+//   (AES-GCM + base64),是硬开销。
+//   Cloudflare KV 单值上限 25MB,500KB 远在安全区内,成本可忽略。
+//   注:本值对 MVS-010 一并放宽,但 010 是结构化表单,天然到不了该量级。
+// 后续 B 方案(加密前先 gzip 压缩)落地后,等效容量还能再放大约 3 倍。
+const MAX_BODY_BYTES = 500 * 1024; // 500KB 单份草稿上限
 const MAX_NAME_LEN = 128;
 const MAX_OWNER_LEN = 64;
 const RATE_LIMIT_PER_MIN = 60;
 
 function pickAllowOrigin(request: Request): string {
   const origin = request.headers.get("Origin") || "";
-  if (origin === ALLOWED_ORIGIN) return ALLOWED_ORIGIN;
+  if (PROD_ORIGINS.has(origin)) return origin;
   if (DEV_ORIGINS.has(origin)) return origin;
-  return ALLOWED_ORIGIN;
+  return DEFAULT_ORIGIN;
 }
 
 function corsHeaders(request: Request): HeadersInit {
